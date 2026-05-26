@@ -1,0 +1,45 @@
+[package]
+name = "qubit-io-binary"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.94"
+authors = ["Haixing Hu <starfish.hu@gmail.com>"]
+license = "Apache-2.0"
+repository = "https://github.com/qubit-ltd/rs-io-binary"
+description = "Binary stream I/O adapters for Rust"
+homepage = "https://github.com/qubit-ltd/rs-io-binary"
+documentation = "https://docs.rs/qubit-io-binary"
+readme = "README.md"
+keywords = ["io", "binary", "leb128", "zigzag", "qubit"]
+categories = ["encoding", "rust-patterns"]
+include = [
+    "/Cargo.toml",
+    "/LICENSE",
+    "/README.md",
+    "/README.zh_CN.md",
+    "/RUST_CODING_STYLE.md",
+    "/RUST_CODING_STYLE.zh_CN.md",
+    "/doc/**/user_guide*.md",
+    "/examples/**",
+    "/resources/**",
+    "/src/**",
+    "/tests/**",
+]
+
+[lib]
+name = "qubit_io_binary"
+doctest = true
+
+[dependencies]
+qubit-codec-binary = { version = "0.1", path = "../rs-codec-binary" }
+qubit-io = { version = "0.6", path = "../rs-io" }
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
+
+[dev-dependencies]
+criterion = { version = "0.8", default-features = false }
+
+[[bench]]
+name = "stream"
+harness = false
