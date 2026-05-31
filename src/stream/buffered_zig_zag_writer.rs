@@ -100,10 +100,10 @@ macro_rules! impl_write_value {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
             self.output
-                .write_encoded(Codec::REQUIRED_MIN_BUFFER_LEN, value, |bytes, index, value| {
+                .write_encoded(Codec::MAX_UNITS_PER_VALUE, value, |bytes, index, value| {
                     // SAFETY: `write_encoded` guarantees enough writable bytes
                     // for the codec-declared maximum encoded width.
-                    unsafe { Codec::write_unchecked(bytes, index, value) }
+                    unsafe { Codec::encode_unchecked(value, bytes, index) }
                 })
         }
     };

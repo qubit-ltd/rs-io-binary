@@ -70,8 +70,8 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = Leb128Codec<$ty, NonStrict>;
 
-            self.write_leb128::<$ty, { Codec::REQUIRED_MIN_BUFFER_LEN }, _>(value, |bytes, value| unsafe {
-                Codec::write_unchecked(bytes, 0, value)
+            self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(value, |bytes, value| unsafe {
+                Codec::encode_unchecked(value, bytes, 0)
             })
         }
     };

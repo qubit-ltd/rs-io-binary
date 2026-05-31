@@ -136,7 +136,7 @@ fn test_buffered_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i8, NonStrict>::REQUIRED_MIN_BUFFER_LEN
+        ZigZagCodec::<i8, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -145,7 +145,7 @@ fn test_buffered_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i16, NonStrict>::REQUIRED_MIN_BUFFER_LEN
+        ZigZagCodec::<i16, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -154,7 +154,7 @@ fn test_buffered_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i32, NonStrict>::REQUIRED_MIN_BUFFER_LEN
+        ZigZagCodec::<i32, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -163,7 +163,7 @@ fn test_buffered_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i64, NonStrict>::REQUIRED_MIN_BUFFER_LEN
+        ZigZagCodec::<i64, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -172,7 +172,7 @@ fn test_buffered_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i128, NonStrict>::REQUIRED_MIN_BUFFER_LEN
+        ZigZagCodec::<i128, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -181,7 +181,7 @@ fn test_buffered_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<isize, NonStrict>::REQUIRED_MIN_BUFFER_LEN
+        ZigZagCodec::<isize, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,

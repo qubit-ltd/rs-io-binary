@@ -116,7 +116,7 @@ macro_rules! impl_value_read {
             self.input.read_fixed::<LEN, _, _>(|bytes, index| {
                 // SAFETY: `read_fixed` guarantees that `LEN` readable bytes
                 // starting at `index` are available in the internal buffer.
-                unsafe { Codec::read_unchecked(bytes, index) }
+                unsafe { Codec::decode_unchecked(bytes, index).0 }
             })
         }
     };

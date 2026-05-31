@@ -20,12 +20,12 @@ use qubit_codec_binary::{
 
 macro_rules! write_zig_zag_value {
     ($writer:expr, $value:expr, $ty:ty) => {
-        write_zig_zag::<{ ZigZagCodec::<$ty, NonStrict>::REQUIRED_MIN_BUFFER_LEN }, _, _, _>(
+        write_zig_zag::<{ ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE }, _, _, _>(
             $writer,
             $value,
             |bytes, value| {
                 // SAFETY: The local buffer is exactly the codec's minimum buffer length.
-                unsafe { ZigZagCodec::<$ty, NonStrict>::write_unchecked(bytes, 0, value) }
+                unsafe { ZigZagCodec::<$ty, NonStrict>::encode_unchecked(value, bytes, 0) }
             },
         )
     };

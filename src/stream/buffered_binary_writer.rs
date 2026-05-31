@@ -118,7 +118,7 @@ macro_rules! impl_value_write {
                     // SAFETY: `write_fixed` guarantees that `LEN` writable bytes
                     // starting at `index` are available in the internal buffer.
                     unsafe {
-                        Codec::write_unchecked(bytes, index, value);
+                        Codec::encode_unchecked(value, bytes, index);
                     }
                 })
         }

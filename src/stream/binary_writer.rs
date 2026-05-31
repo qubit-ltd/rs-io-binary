@@ -103,7 +103,7 @@ macro_rules! impl_value_write {
             const LEN: usize = Codec::REQUIRED_MIN_BUFFER_LEN;
             // SAFETY: `LEN` is declared by the codec and fits the fixed internal buffer.
             unsafe {
-                Codec::write_unchecked(&mut self.buffer, 0, value);
+                Codec::encode_unchecked(value, &mut self.buffer, 0);
                 self.inner.write_all_unchecked(&self.buffer, 0, LEN)
             }
         }

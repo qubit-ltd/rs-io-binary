@@ -41,7 +41,7 @@ const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 l
 pub(crate) fn read_leb128_payload<const N: usize, T, R, F>(reader: &mut R, decode: F) -> Result<T>
 where
     R: Read + ?Sized,
-    F: FnOnce(&[u8]) -> std::result::Result<(T, usize), Leb128DecodeError>,
+    F: FnOnce(&[u8]) -> std::result::Result<(T, core::num::NonZeroUsize), Leb128DecodeError>,
 {
     let mut bytes = [0u8; N];
     for index in 0..N {

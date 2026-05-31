@@ -96,8 +96,8 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = Leb128Codec<$ty, $policy>;
 
-            self.read_leb128::<$ty, { Codec::REQUIRED_MIN_BUFFER_LEN }, _>(|bytes| unsafe {
-                Codec::read_unchecked(bytes, 0)
+            self.read_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(|bytes| unsafe {
+                Codec::decode_unchecked(bytes, 0)
             })
         }
     };
@@ -158,7 +158,7 @@ where
     #[inline]
     fn read_leb128<T, const N: usize, F>(&mut self, decode: F) -> Result<T>
     where
-        F: FnOnce(&[u8; 19]) -> std::result::Result<(T, usize), Leb128DecodeError>,
+        F: FnOnce(&[u8; 19]) -> std::result::Result<(T, core::num::NonZeroUsize), Leb128DecodeError>,
     {
         debug_assert!(N <= self.buffer.len(), "LEB128 read length exceeds internal buffer");
         for index in 0..N {

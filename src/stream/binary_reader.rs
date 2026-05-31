@@ -100,7 +100,7 @@ macro_rules! impl_value_read {
             // SAFETY: `LEN` is declared by the codec and fits the fixed internal buffer.
             unsafe {
                 ReadExt::read_exact_unchecked(&mut self.inner, &mut self.buffer, 0, LEN)?;
-                Ok(Codec::read_unchecked(&self.buffer, 0))
+                Ok(Codec::decode_unchecked(&self.buffer, 0).0)
             }
         }
     };

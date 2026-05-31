@@ -27,7 +27,9 @@ macro_rules! write_binary_value {
             $value,
             |bytes, value| {
                 // SAFETY: The local buffer is exactly the codec's minimum buffer length.
-                unsafe { BinaryCodec::<$ty, $order>::write_unchecked(bytes, 0, value) }
+                unsafe {
+                    BinaryCodec::<$ty, $order>::encode_unchecked(value, bytes, 0);
+                }
             },
         )
     };
