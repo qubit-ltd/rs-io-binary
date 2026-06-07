@@ -17,7 +17,11 @@ use qubit_io_binary::{
 #[cfg(all(unix, target_pointer_width = "64", target_os = "macos"))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x1000;
 
-#[cfg(all(unix, target_pointer_width = "64", any(target_os = "android", target_os = "linux")))]
+#[cfg(all(
+    unix,
+    target_pointer_width = "64",
+    any(target_os = "android", target_os = "linux")
+))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x20;
 
 #[cfg(all(unix, target_pointer_width = "64"))]
@@ -31,7 +35,14 @@ const MAP_FAILED: *mut c_void = -1_isize as *mut c_void;
 
 #[cfg(all(unix, target_pointer_width = "64"))]
 unsafe extern "C" {
-    fn mmap(addr: *mut c_void, len: usize, prot: i32, flags: i32, fd: i32, offset: i64) -> *mut c_void;
+    fn mmap(
+        addr: *mut c_void,
+        len: usize,
+        prot: i32,
+        flags: i32,
+        fd: i32,
+        offset: i64,
+    ) -> *mut c_void;
     fn munmap(addr: *mut c_void, len: usize) -> i32;
 }
 
@@ -44,7 +55,8 @@ struct MappedBytes {
 #[cfg(all(unix, target_pointer_width = "64"))]
 impl MappedBytes {
     fn new_zeroed(len: usize) -> Self {
-        // SAFETY: The mapping is anonymous, private, read-only, and requests no fixed address.
+        // SAFETY: The mapping is anonymous, private, read-only, and requests no
+        // fixed address.
         let ptr = unsafe {
             mmap(
                 null_mut(),
@@ -55,13 +67,19 @@ impl MappedBytes {
                 0,
             )
         };
-        assert_ne!(MAP_FAILED, ptr, "failed to reserve sparse zeroed test mapping");
+        assert_ne!(
+            MAP_FAILED, ptr,
+            "failed to reserve sparse zeroed test mapping"
+        );
         Self { ptr, len }
     }
 
     fn as_str(&self) -> &str {
-        // SAFETY: Anonymous mappings are zero-filled, and NUL bytes are valid UTF-8.
-        let bytes = unsafe { std::slice::from_raw_parts(self.ptr.cast::<u8>(), self.len) };
+        // SAFETY: Anonymous mappings are zero-filled, and NUL bytes are valid
+        // UTF-8.
+        let bytes = unsafe {
+            std::slice::from_raw_parts(self.ptr.cast::<u8>(), self.len)
+        };
         // SAFETY: The byte slice consists entirely of valid UTF-8 NUL bytes.
         unsafe { std::str::from_utf8_unchecked(bytes) }
     }
@@ -70,7 +88,8 @@ impl MappedBytes {
 #[cfg(all(unix, target_pointer_width = "64"))]
 impl Drop for MappedBytes {
     fn drop(&mut self) {
-        // SAFETY: `ptr` and `len` come from a successful `mmap` call in `new_zeroed`.
+        // SAFETY: `ptr` and `len` come from a successful `mmap` call in
+        // `new_zeroed`.
         let result = unsafe { munmap(self.ptr, self.len) };
         debug_assert_eq!(0, result);
     }
@@ -92,7 +111,9 @@ impl Write for FailingWriter {
 fn test_string_write_ext_writes_all_length_prefix_kinds() {
     let mut output = Vec::new();
 
-    output.write_utf8_payload("raw").expect("payload should be written");
+    output
+        .write_utf8_payload("raw")
+        .expect("payload should be written");
     output
         .write_utf8_string_uleb("hi")
         .expect("ULEB string should be written");
@@ -126,9 +147,11 @@ fn test_string_write_ext_writes_all_length_prefix_kinds() {
 
     assert_eq!(
         vec![
-            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02, b'r', b't', 0x00, 0x02, b'b', b'e',
-            0x02, 0x00, b'l', b'r', 0x02, 0x00, b'l', b'e', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x00, 0x00, 0x00,
-            0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd', b'n', 0x02, 0x00, 0x00, 0x00, b'd', b'n'
+            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02,
+            b'r', b't', 0x00, 0x02, b'b', b'e', 0x02, 0x00, b'l', b'r', 0x02,
+            0x00, b'l', b'e', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x00, 0x00,
+            0x00, 0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd', b'n', 0x02,
+            0x00, 0x00, 0x00, b'd', b'n'
         ],
         output
     );

@@ -34,7 +34,10 @@ struct ChunkedReader {
 
 impl ByteThenErrorReader {
     const fn new(byte: u8) -> Self {
-        Self { byte, returned: false }
+        Self {
+            byte,
+            returned: false,
+        }
     }
 }
 
@@ -77,7 +80,8 @@ impl Read for InterruptedOnceReader {
         }
         let remaining = self.bytes.len() - self.position;
         let count = remaining.min(buffer.len());
-        buffer[..count].copy_from_slice(&self.bytes[self.position..self.position + count]);
+        buffer[..count]
+            .copy_from_slice(&self.bytes[self.position..self.position + count]);
         self.position += count;
         Ok(count)
     }
@@ -87,7 +91,8 @@ impl Read for ChunkedReader {
     fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
         let remaining = self.bytes.len() - self.position;
         let count = remaining.min(buffer.len()).min(self.max_chunk_len);
-        buffer[..count].copy_from_slice(&self.bytes[self.position..self.position + count]);
+        buffer[..count]
+            .copy_from_slice(&self.bytes[self.position..self.position + count]);
         self.position += count;
         Ok(count)
     }
@@ -98,58 +103,94 @@ fn test_buffered_leb128_reader_reads_values_across_buffer_boundaries() {
     let mut bytes = Vec::new();
     bytes.write_uleb_u8(u8::MAX).expect("u8 should be encoded");
     bytes.write_uleb_u16(300).expect("u16 should be encoded");
-    bytes.write_uleb_u32(0x1f600).expect("u32 should be encoded");
+    bytes
+        .write_uleb_u32(0x1f600)
+        .expect("u32 should be encoded");
     bytes
         .write_uleb_u64(0x0102_0304_0506_0708)
         .expect("u64 should be encoded");
     bytes
         .write_uleb_u128(0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("u128 should be encoded");
-    bytes.write_uleb_usize(usize::MAX).expect("usize should be encoded");
+    bytes
+        .write_uleb_usize(usize::MAX)
+        .expect("usize should be encoded");
     bytes.write_sleb_i8(i8::MIN).expect("i8 should be encoded");
     bytes.write_sleb_i16(-300).expect("i16 should be encoded");
-    bytes.write_sleb_i32(-0x1f600).expect("i32 should be encoded");
+    bytes
+        .write_sleb_i32(-0x1f600)
+        .expect("i32 should be encoded");
     bytes
         .write_sleb_i64(-0x0102_0304_0506_0708)
         .expect("i64 should be encoded");
     bytes
         .write_sleb_i128(-0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("i128 should be encoded");
-    bytes.write_sleb_isize(isize::MIN).expect("isize should be encoded");
+    bytes
+        .write_sleb_isize(isize::MIN)
+        .expect("isize should be encoded");
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(Cursor::new(bytes), 3);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+        Cursor::new(bytes),
+        3,
+    );
 
     assert!(!reader.is_strict());
     assert_eq!(u8::MAX, reader.read_u8().expect("u8 should be read"));
     assert_eq!(300, reader.read_u16().expect("u16 should be read"));
     assert_eq!(0x1f600, reader.read_u32().expect("u32 should be read"));
-    assert_eq!(0x0102_0304_0506_0708, reader.read_u64().expect("u64 should be read"));
+    assert_eq!(
+        0x0102_0304_0506_0708,
+        reader.read_u64().expect("u64 should be read")
+    );
     assert_eq!(
         0x0102_0304_0506_0708_1112_1314_1516_1718,
         reader.read_u128().expect("u128 should be read")
     );
-    assert_eq!(usize::MAX, reader.read_usize().expect("usize should be read"));
+    assert_eq!(
+        usize::MAX,
+        reader.read_usize().expect("usize should be read")
+    );
     assert_eq!(i8::MIN, reader.read_i8().expect("i8 should be read"));
     assert_eq!(-300, reader.read_i16().expect("i16 should be read"));
     assert_eq!(-0x1f600, reader.read_i32().expect("i32 should be read"));
-    assert_eq!(-0x0102_0304_0506_0708, reader.read_i64().expect("i64 should be read"));
+    assert_eq!(
+        -0x0102_0304_0506_0708,
+        reader.read_i64().expect("i64 should be read")
+    );
     assert_eq!(
         -0x0102_0304_0506_0708_1112_1314_1516_1718,
         reader.read_i128().expect("i128 should be read")
     );
-    assert_eq!(isize::MIN, reader.read_isize().expect("isize should be read"));
+    assert_eq!(
+        isize::MIN,
+        reader.read_isize().expect("isize should be read")
+    );
 }
 
 #[test]
 fn test_buffered_leb128_reader_accessors_raw_seek_string_and_into_inner() {
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![3, b'a', b'b', b'c', 9]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+            3, b'a', b'b', b'c', 9,
+        ]));
 
     assert!(!reader.is_strict());
     assert_eq!(0, reader.inner().position());
-    assert_eq!("abc", reader.read_utf8_string(3).expect("string should be read"));
-    assert_eq!(4, reader.stream_position().expect("current seek should succeed"));
+    assert_eq!(
+        "abc",
+        reader.read_utf8_string(3).expect("string should be read")
+    );
+    assert_eq!(
+        4,
+        reader
+            .stream_position()
+            .expect("current seek should succeed")
+    );
     let mut byte = [0_u8; 1];
-    reader.read_exact(&mut byte).expect("raw byte should be read");
+    reader
+        .read_exact(&mut byte)
+        .expect("raw byte should be read");
     assert_eq!([9], byte);
 
     let inner = reader.into_inner();
@@ -158,8 +199,12 @@ fn test_buffered_leb128_reader_accessors_raw_seek_string_and_into_inner() {
 }
 
 #[test]
-fn test_buffered_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![3, b'x', b'y', b'z']));
+fn test_buffered_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix()
+ {
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+            3, b'x', b'y', b'z',
+        ]));
 
     assert_eq!(
         "xyz",
@@ -170,15 +215,77 @@ fn test_buffered_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix
 }
 
 #[test]
+fn test_buffered_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![3, b'a', b'b', b'c']),
+        2,
+    );
+
+    assert_eq!(
+        "abc",
+        reader
+            .read_utf8_string(3)
+            .expect("strict length-prefixed UTF-8 string should be read")
+    );
+
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![3, b'd', b'e', b'f']),
+        2,
+    );
+
+    assert_eq!(
+        "def",
+        reader
+            .read_utf8_string_u64(3)
+            .expect("strict u64 length-prefixed UTF-8 string should be read")
+    );
+
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![0x80, 0x00]),
+        2,
+    );
+
+    assert_eq!(
+        ErrorKind::InvalidData,
+        reader
+            .read_utf8_string(3)
+            .expect_err("non-canonical strict string length should fail")
+            .kind()
+    );
+
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![0x80, 0x00]),
+        2,
+    );
+
+    assert_eq!(
+        ErrorKind::InvalidData,
+        reader
+            .read_utf8_string_u64(3)
+            .expect_err("non-canonical strict u64 string length should fail")
+            .kind()
+    );
+}
+
+#[test]
 fn test_buffered_leb128_reader_reports_invalid_and_truncated_values() {
-    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(Cursor::new(vec![0x80, 0x00]), 2);
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![0x80, 0x00]),
+        2,
+    );
     assert!(reader.is_strict());
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_u16().expect_err("non-canonical value should fail").kind()
+        reader
+            .read_u16()
+            .expect_err("non-canonical value should fail")
+            .kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(Cursor::new(vec![0x80, 0x00]), 2);
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![0x80, 0x00]),
+        2,
+    );
     let error = reader
         .read_u16()
         .expect_err("non-canonical value should fail");
@@ -188,16 +295,25 @@ fn test_buffered_leb128_reader_reports_invalid_and_truncated_values() {
         "I/O error should preserve the original LEB128 decode error"
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(Cursor::new(vec![0x80]), 2);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+        Cursor::new(vec![0x80]),
+        2,
+    );
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_u64().expect_err("truncated value should report EOF").kind()
+        reader
+            .read_u64()
+            .expect_err("truncated value should report EOF")
+            .kind()
     );
 }
 
 #[test]
 fn test_buffered_leb128_reader_reports_refill_error_after_partial_payload() {
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(ByteThenErrorReader::new(0x80), 2);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+        ByteThenErrorReader::new(0x80),
+        2,
+    );
 
     let error = reader
         .read_u16()
@@ -209,7 +325,8 @@ fn test_buffered_leb128_reader_reports_refill_error_after_partial_payload() {
 #[test]
 fn test_buffered_leb128_reader_refills_without_backshift_when_tail_has_room() {
     let inner = ChunkedReader::new(vec![0x80, 0x01], 1);
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(inner, 19);
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity(inner, 19);
 
     assert_eq!(128, reader.read_u16().expect("split value should be read"));
 }
@@ -217,22 +334,39 @@ fn test_buffered_leb128_reader_refills_without_backshift_when_tail_has_room() {
 #[test]
 fn test_buffered_leb128_reader_retries_interrupted_refill() {
     let inner = InterruptedOnceReader::new(vec![0x80, 0x01]);
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(inner, 19);
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity(inner, 19);
 
-    assert_eq!(128, reader.read_u16().expect("read should retry interruption"));
+    assert_eq!(
+        128,
+        reader.read_u16().expect("read should retry interruption")
+    );
 }
 
 #[test]
-fn test_buffered_leb128_reader_consumes_invalid_payload_before_reporting_error() {
-    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(Cursor::new(vec![0x80, 0x00, 0x01]), 2);
+fn test_buffered_leb128_reader_consumes_invalid_payload_before_reporting_error()
+{
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        Cursor::new(vec![0x80, 0x00, 0x01]),
+        2,
+    );
 
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_u16().expect_err("non-canonical value should fail").kind()
+        reader
+            .read_u16()
+            .expect_err("non-canonical value should fail")
+            .kind()
     );
-    assert_eq!(1, reader.read_u8().expect("next value should remain readable"));
+    assert_eq!(
+        1,
+        reader.read_u8().expect("next value should remain readable")
+    );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(Cursor::new(vec![0x80, 0x02, 0x01]), 2);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+        Cursor::new(vec![0x80, 0x02, 0x01]),
+        2,
+    );
     assert_eq!(
         ErrorKind::InvalidData,
         reader
@@ -240,84 +374,100 @@ fn test_buffered_leb128_reader_consumes_invalid_payload_before_reporting_error()
             .expect_err("out-of-range u8 encoding should fail")
             .kind()
     );
-    assert_eq!(1, reader.read_u8().expect("next value should remain readable"));
+    assert_eq!(
+        1,
+        reader.read_u8().expect("next value should remain readable")
+    );
 }
 
 #[test]
 fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_u8().expect_err("truncated u8").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_u16().expect_err("truncated u16").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_u32().expect_err("truncated u32").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_u64().expect_err("truncated u64").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_u128().expect_err("truncated u128").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_usize().expect_err("truncated usize").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_i8().expect_err("truncated i8").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_i16().expect_err("truncated i16").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_i32().expect_err("truncated i32").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_i64().expect_err("truncated i64").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_i128().expect_err("truncated i128").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_isize().expect_err("truncated isize").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<u8, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -326,7 +476,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_u8().expect_err("unterminated u8").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<u16, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -335,7 +486,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_u16().expect_err("unterminated u16").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<u32, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -344,7 +496,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_u32().expect_err("unterminated u32").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<u64, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -353,7 +506,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_u64().expect_err("unterminated u64").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<u128, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -362,7 +516,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_u128().expect_err("unterminated u128").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<usize, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -371,7 +526,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_usize().expect_err("unterminated usize").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<i8, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -380,7 +536,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_i8().expect_err("unterminated i8").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<i16, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -389,7 +546,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_i16().expect_err("unterminated i16").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<i32, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -398,7 +556,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_i32().expect_err("unterminated i32").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<i64, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -407,7 +566,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_i64().expect_err("unterminated i64").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<i128, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
@@ -416,7 +576,8 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
         reader.read_i128().expect_err("unterminated i128").kind()
     );
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
         Leb128Codec::<isize, NonStrict>::MAX_UNITS_PER_VALUE
     ]));
