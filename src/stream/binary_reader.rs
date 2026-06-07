@@ -15,6 +15,11 @@ use std::io::{
 };
 
 use crate::ReadExt;
+#[cfg(not(any(
+    target_pointer_width = "32",
+    target_pointer_width = "64"
+)))]
+use crate::util::usize_from_u32_len;
 use crate::util::{
     decode_infallible_unchecked,
     read_utf8_payload,
@@ -218,7 +223,17 @@ macro_rules! impl_for_order {
                 &mut self,
                 max_len: usize,
             ) -> Result<String> {
-                let len = self.read_u32()? as usize;
+                let len = self.read_u32()?;
+                #[cfg(any(
+                    target_pointer_width = "32",
+                    target_pointer_width = "64"
+                ))]
+                let len = len as usize;
+                #[cfg(not(any(
+                    target_pointer_width = "32",
+                    target_pointer_width = "64"
+                )))]
+                let len = usize_from_u32_len(len)?;
                 read_utf8_payload(&mut self.inner, len, max_len)
             }
         }

@@ -25,5 +25,11 @@ pub(crate) use streams::{
     write_utf8_string_with_u32_len,
 };
 
+#[cfg(not(any(
+    target_pointer_width = "32",
+    target_pointer_width = "64"
+)))]
+pub(crate) use streams::usize_from_u32_len;
+
 #[cfg(not(target_pointer_width = "64"))]
 pub(crate) use streams::usize_from_u64_len;

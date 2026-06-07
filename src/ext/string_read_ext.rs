@@ -11,6 +11,11 @@ use std::io::{
 };
 
 use crate::util::read_utf8_payload as read_utf8_payload_impl;
+#[cfg(not(any(
+    target_pointer_width = "32",
+    target_pointer_width = "64"
+)))]
+use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
 use crate::{
@@ -308,19 +313,40 @@ where
         byte_order: ByteOrder,
         max_len: usize,
     ) -> Result<String> {
-        let len = self.read_u32(byte_order)? as usize;
+        let len = self.read_u32(byte_order)?;
+        #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+        let len = len as usize;
+        #[cfg(not(any(
+            target_pointer_width = "32",
+            target_pointer_width = "64"
+        )))]
+        let len = usize_from_u32_len(len)?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
     #[inline]
     fn read_utf8_string_u32_be(&mut self, max_len: usize) -> Result<String> {
-        let len = self.read_u32_be()? as usize;
+        let len = self.read_u32_be()?;
+        #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+        let len = len as usize;
+        #[cfg(not(any(
+            target_pointer_width = "32",
+            target_pointer_width = "64"
+        )))]
+        let len = usize_from_u32_len(len)?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
     #[inline]
     fn read_utf8_string_u32_le(&mut self, max_len: usize) -> Result<String> {
-        let len = self.read_u32_le()? as usize;
+        let len = self.read_u32_le()?;
+        #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+        let len = len as usize;
+        #[cfg(not(any(
+            target_pointer_width = "32",
+            target_pointer_width = "64"
+        )))]
+        let len = usize_from_u32_len(len)?;
         read_utf8_payload_impl(self, len, max_len)
     }
 }

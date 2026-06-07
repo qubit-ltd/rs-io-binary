@@ -384,6 +384,19 @@ pub(crate) fn checked_u64_len(len: usize) -> Result<u64> {
     }
 }
 
+/// Converts a `u32` length prefix to a local `usize` payload length.
+#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+pub(crate) fn usize_from_u32_len(len: u32) -> Result<usize> {
+    usize::try_from(len).map_err(|_| {
+        Error::new(
+            ErrorKind::InvalidData,
+            format!(
+                "string length {len} exceeds maximum supported usize length"
+            ),
+        )
+    })
+}
+
 /// Converts a `u64` length prefix to a local `usize` payload length.
 #[cfg(not(target_pointer_width = "64"))]
 pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
