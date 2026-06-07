@@ -59,6 +59,8 @@ reference documentation is available on [docs.rs](https://docs.rs/qubit-io-binar
 ### Re-Exports
 
 - **Binary codec types**: re-exported from `qubit-codec-binary`.
+- **LEB128 policy types**: `Leb128DecodePolicy`, `Strict`, and `NonStrict` are
+  available for typed reader configuration.
 - **Core I/O traits**: selected generic helpers are re-exported from `qubit-io`.
 
 ## Documentation
@@ -119,6 +121,11 @@ assert_eq!(300, input.read_uleb_u32()?);
 | `ZigZagReader` / `ZigZagWriter` | Read and write ZigZag signed integers |
 | `Buffered*Reader` / `Buffered*Writer` | Batch repeated binary operations through an internal buffer |
 
+Non-buffered wrappers expose `inner()` and `inner_mut()` because they hold no
+prefetched or pending bytes. Buffered wrappers expose `inner()` for inspection
+and `into_inner()` for recovery; mutate the stream through the wrapper itself so
+the internal buffer stays consistent.
+
 ## Layering
 
 - `qubit-codec-binary` contains buffer-level codecs.
@@ -130,6 +137,9 @@ assert_eq!(300, input.read_uleb_u32()?);
 Extension traits perform direct reads and writes into stack buffers for small
 values. Buffered wrappers amortize repeated small operations while preserving the
 same public codec semantics.
+
+For persistent formats, prefer fixed-width length fields such as
+`write_utf8_string_uleb_u64` over target-width `usize` string length helpers.
 
 ## Testing & Code Coverage
 

@@ -77,7 +77,8 @@ assert_eq!(-42, input.read_sleb_i64()?);
 
 Non-strict readers accept any well-terminated representation that fits the target
 type. Strict readers, such as `read_uleb_u64_strict`, also reject non-canonical
-encodings.
+encodings. Typed readers select this behavior with `Leb128DecodePolicy`, using
+`Leb128Reader<R, NonStrict>` or `Leb128Reader<R, Strict>`.
 
 For persistent formats, prefer fixed-width integer methods such as
 `write_uleb_u64` over target-width methods such as `write_uleb_usize`.
@@ -117,17 +118,20 @@ use qubit_io_binary::{
 };
 
 let mut bytes = Vec::new();
-bytes.write_utf8_string_u16_be("hello")?;
+bytes.write_utf8_string_uleb_u64("hello")?;
 
 let mut input = Cursor::new(bytes);
-let value = input.read_utf8_string_u16_be(16)?;
+let value = input.read_utf8_string_uleb_u64(16)?;
 
 assert_eq!("hello", value);
 # Ok::<(), std::io::Error>(())
 ```
 
 The `max_len` argument on read methods protects callers from oversized encoded
-lengths.
+lengths. `read_utf8_string_uleb` and `write_utf8_string_uleb` use `usize` length
+prefixes and are target-width dependent. Prefer the `u64` LEB128 string helpers
+or fixed-width `u16` / `u32` length helpers for files and cross-platform
+protocols.
 
 ## Reader and Writer Wrappers
 
@@ -153,8 +157,12 @@ assert_eq!(0x1234, reader.read_u16()?);
 # Ok::<(), std::io::Error>(())
 ```
 
-Buffered wrappers own an internal buffer and are useful when wrapping unbuffered
-file-backed streams.
+Non-buffered wrappers expose `inner()` and `inner_mut()` because they do not
+hold prefetched or pending bytes. Buffered wrappers own an internal buffer and
+are useful when wrapping unbuffered file-backed streams. They expose `inner()`
+for inspection and `into_inner()` for recovery; use the wrapper's own `Read`,
+`Write`, and `Seek` implementations for raw operations so buffered state remains
+consistent.
 
 ## Relationship to Other Crates
 

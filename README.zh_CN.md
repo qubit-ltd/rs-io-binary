@@ -53,6 +53,8 @@
 ### Re-Export
 
 - **Binary codec 类型**：从 `qubit-codec-binary` 重导出。
+- **LEB128 policy 类型**：重导出 `Leb128DecodePolicy`、`Strict` 和
+  `NonStrict`，用于 typed reader 配置。
 - **核心 I/O trait**：从 `qubit-io` 重导出部分通用 helper。
 
 ## 文档
@@ -113,6 +115,11 @@ assert_eq!(300, input.read_uleb_u32()?);
 | `ZigZagReader` / `ZigZagWriter` | 读写 ZigZag signed integer |
 | `Buffered*Reader` / `Buffered*Writer` | 通过内部缓冲批量处理重复 binary 操作 |
 
+非 buffered wrapper 暴露 `inner()` 和 `inner_mut()`，因为它们没有预读或待
+flush 状态。Buffered wrapper 只暴露 `inner()` 用于查看，并通过 `into_inner()`
+取回底层 stream；需要混合 raw I/O 时应通过 wrapper 自身的 `Read` / `Write` /
+`Seek` 实现操作，避免破坏内部缓冲状态。
+
 ## 分层
 
 - `qubit-codec-binary` 提供缓冲区级 codec。
@@ -123,6 +130,9 @@ assert_eq!(300, input.read_uleb_u32()?);
 
 Extension trait 对小型值直接读写栈上缓冲区。Buffered wrapper 会摊薄重复小操作成本，
 同时保持同样的公开 codec 语义。
+
+持久化格式优先使用 `write_utf8_string_uleb_u64` 这类固定宽度长度字段，不要使用
+target-width 的 `usize` 字符串长度 helper。
 
 ## 测试与代码覆盖率
 

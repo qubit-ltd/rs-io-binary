@@ -75,7 +75,9 @@ assert_eq!(-42, input.read_sleb_i64()?);
 ```
 
 非 strict reader 接受能正常终止且适配目标类型的表示。strict reader，例如
-`read_uleb_u64_strict`，还会拒绝非 canonical 编码。
+`read_uleb_u64_strict`，还会拒绝非 canonical 编码。Typed reader 通过
+`Leb128DecodePolicy` 选择该行为，例如 `Leb128Reader<R, NonStrict>` 或
+`Leb128Reader<R, Strict>`。
 
 持久化格式优先使用 `write_uleb_u64` 这样的固定宽度方法，不要使用
 `write_uleb_usize` 这类 target-width 方法。
@@ -113,16 +115,19 @@ use qubit_io_binary::{
 };
 
 let mut bytes = Vec::new();
-bytes.write_utf8_string_u16_be("hello")?;
+bytes.write_utf8_string_uleb_u64("hello")?;
 
 let mut input = Cursor::new(bytes);
-let value = input.read_utf8_string_u16_be(16)?;
+let value = input.read_utf8_string_uleb_u64(16)?;
 
 assert_eq!("hello", value);
 # Ok::<(), std::io::Error>(())
 ```
 
 读取方法的 `max_len` 参数用于防止超大编码长度触发不受控分配。
+`read_utf8_string_uleb` 和 `write_utf8_string_uleb` 使用 `usize` 长度前缀，
+是 target-width dependent。文件格式和跨平台协议优先使用 `u64` LEB128
+字符串 helper，或固定宽度的 `u16` / `u32` 长度 helper。
 
 ## Reader 和 Writer Wrapper
 
@@ -147,7 +152,11 @@ assert_eq!(0x1234, reader.read_u16()?);
 # Ok::<(), std::io::Error>(())
 ```
 
-Buffered wrapper 自带内部缓冲，适合包装未缓冲的 file-backed stream。
+非 buffered wrapper 暴露 `inner()` 和 `inner_mut()`，因为它们没有预读或待
+flush 字节。Buffered wrapper 自带内部缓冲，适合包装未缓冲的 file-backed
+stream；它们只暴露 `inner()` 用于查看，并通过 `into_inner()` 取回底层
+stream。混合 raw I/O 时请使用 wrapper 自身的 `Read`、`Write` 和 `Seek` 实现，
+以保持内部缓冲状态一致。
 
 ## 与其他 Crate 的关系
 
