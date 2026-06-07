@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Error,
@@ -17,24 +15,19 @@ use std::io::{
     SeekFrom,
 };
 
-use crate::ReadExt;
-
-/// Default capacity used by buffered codec readers and writers.
-pub(crate) const DEFAULT_BUFFER_CAPACITY: usize = 8 * 1024;
-
-/// Minimum capacity required by the largest scalar codec payload.
-pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
+use qubit_io::{
+    BufferedByteInput,
+    DEFAULT_BUFFER_CAPACITY,
+};
 
 /// Buffered input core shared by codec-oriented readers.
 ///
-/// This type owns a wrapped input object and an internal byte buffer. It keeps
-/// unread bytes in `buffer[position..limit]` so codec readers can decode scalar
-/// values without repeatedly allocating temporary storage.
+/// This type delegates byte buffering to [`BufferedByteInput`] and exposes
+/// codec-oriented helpers that decode fixed-width or variable-width values
+/// directly from the unread byte window.
+#[derive(Debug)]
 pub(crate) struct BufferedInput<R> {
-    inner: R,
-    buffer: Vec<u8>,
-    position: usize,
-    limit: usize,
+    input: BufferedByteInput<R>,
 }
 
 impl<R> BufferedInput<R> {
@@ -55,9 +48,7 @@ impl<R> BufferedInput<R> {
 
     /// Creates a buffered input core with at least the requested capacity.
     ///
-    /// The actual capacity is raised to [`MIN_CODEC_BUFFER_CAPACITY`] when the
-    /// requested value is smaller, so every scalar codec payload can fit in the
-    /// buffer.
+    /// The actual capacity is raised to `1` when the requested value is `0`.
     ///
     /// # Arguments
     ///
@@ -67,15 +58,11 @@ impl<R> BufferedInput<R> {
     /// # Returns
     ///
     /// A new buffered input whose internal buffer capacity is
-    /// `capacity.max(MIN_CODEC_BUFFER_CAPACITY)`.
+    /// `capacity.max(1)`.
     #[inline]
     pub(crate) fn with_capacity(inner: R, capacity: usize) -> Self {
-        let capacity = capacity.max(MIN_CODEC_BUFFER_CAPACITY);
         Self {
-            inner,
-            buffer: vec![0; capacity],
-            position: 0,
-            limit: 0,
+            input: BufferedByteInput::with_capacity(inner, capacity),
         }
     }
 
@@ -86,7 +73,7 @@ impl<R> BufferedInput<R> {
     /// A shared reference to the inner input object.
     #[inline]
     pub(crate) const fn inner(&self) -> &R {
-        &self.inner
+        self.input.inner()
     }
 
     /// Consumes this buffered input and returns the wrapped input object.
@@ -98,48 +85,19 @@ impl<R> BufferedInput<R> {
     /// The wrapped input object.
     #[inline]
     pub(crate) fn into_inner(self) -> R {
-        self.inner
+        let (inner, _) = self.input.into_parts();
+        inner
     }
+}
 
-    /// Returns the number of unread bytes currently buffered.
-    ///
-    /// # Returns
-    ///
-    /// The length of `buffer[position..limit]`, in bytes.
+impl<R> Read for BufferedInput<R>
+where
+    R: Read,
+{
+    /// Reads bytes through the internal buffer.
     #[inline]
-    fn available(&self) -> usize {
-        self.limit - self.position
-    }
-
-    /// Returns the unused capacity at the end of the buffer.
-    ///
-    /// # Returns
-    ///
-    /// The number of writable bytes in `buffer[limit..]`.
-    #[inline]
-    fn tail_capacity(&self) -> usize {
-        self.buffer.len() - self.limit
-    }
-
-    /// Invalidates all buffered bytes.
-    ///
-    /// After this call, the buffer is considered empty and subsequent reads will
-    /// refill it from the wrapped reader.
-    #[inline]
-    fn discard_buffer(&mut self) {
-        self.position = 0;
-        self.limit = 0;
-    }
-
-    /// Moves unread bytes to the front of the buffer.
-    ///
-    /// This preserves the unread range while reclaiming tail capacity for
-    /// future reads. If there are no unread bytes, the buffer is discarded.
-    #[inline]
-    fn backshift(&mut self) {
-        self.buffer.copy_within(self.position..self.limit, 0);
-        self.limit -= self.position;
-        self.position = 0;
+    fn read(&mut self, output: &mut [u8]) -> Result<usize> {
+        self.read_raw(output)
     }
 }
 
@@ -147,72 +105,6 @@ impl<R> BufferedInput<R>
 where
     R: Read,
 {
-    /// Appends one more chunk from the wrapped reader to the internal buffer.
-    ///
-    /// This method reads into `buffer[limit..]` and advances `limit` by the
-    /// number of bytes read. It retries automatically when the wrapped reader
-    /// returns [`ErrorKind::Interrupted`].
-    ///
-    /// # Returns
-    ///
-    /// `Ok(true)` if at least one byte was appended, or `Ok(false)` if the
-    /// wrapped reader reached EOF.
-    ///
-    /// # Errors
-    ///
-    /// Returns any non-interrupted I/O error produced by the wrapped reader.
-    fn read_more(&mut self) -> Result<bool> {
-        let count = self.tail_capacity();
-        debug_assert!(count > 0, "buffer has no tail capacity");
-        loop {
-            // SAFETY: `limit` is always within `buffer`, and `count` is the
-            // remaining capacity from `limit` to the end of `buffer`.
-            match unsafe { self.inner.read_unchecked(&mut self.buffer, self.limit, count) } {
-                Ok(0) => return Ok(false),
-                Ok(read) => {
-                    self.limit += read;
-                    return Ok(true);
-                }
-                Err(error) if error.kind() == ErrorKind::Interrupted => continue,
-                Err(error) => return Err(error),
-            }
-        }
-    }
-
-    /// Ensures that at least `count` unread bytes are available.
-    ///
-    /// The method may discard consumed bytes or move unread bytes to the front
-    /// of the buffer before reading more data.
-    ///
-    /// # Arguments
-    ///
-    /// * `count` - The minimum number of unread bytes required in the buffer.
-    ///
-    /// # Errors
-    ///
-    /// Returns [`ErrorKind::UnexpectedEof`] if EOF is reached before `count`
-    /// bytes are available. Returns any non-interrupted I/O error produced by
-    /// the wrapped reader while refilling the buffer.
-    fn ensure_available_slow(&mut self, count: usize) -> Result<()> {
-        debug_assert!(count <= self.buffer.len(), "requested range exceeds buffer capacity");
-        while self.available() < count {
-            let available = self.available();
-            if available == 0 {
-                self.discard_buffer();
-            } else {
-                let missing = count - available;
-                if self.tail_capacity() < missing {
-                    self.backshift();
-                }
-            }
-            if !self.read_more()? {
-                self.position = self.limit;
-                return Err(Error::new(ErrorKind::UnexpectedEof, "failed to fill whole buffer"));
-            }
-        }
-        Ok(())
-    }
-
     /// Reads one fixed-width value directly from the internal buffer.
     ///
     /// The method ensures that `N` bytes are buffered, calls `decode` at the
@@ -239,16 +131,17 @@ where
     /// are available. Returns any non-interrupted I/O error produced by the
     /// wrapped reader while refilling the buffer.
     #[inline]
-    pub(crate) fn read_fixed<const N: usize, T, F>(&mut self, decode: F) -> Result<T>
+    pub(crate) fn read_fixed<const N: usize, T, F>(
+        &mut self,
+        decode: F,
+    ) -> Result<T>
     where
         F: FnOnce(&[u8], usize) -> T,
     {
-        debug_assert!(N <= self.buffer.len(), "requested range exceeds buffer capacity");
-        if self.available() < N {
-            self.ensure_available_slow(N)?;
-        }
-        let index = self.position;
-        let value = decode(&self.buffer, index);
+        self.input.ensure_available(N)?;
+        let (bytes, index, available) = self.input.unread_raw_parts();
+        debug_assert!(available >= N, "requested range is not buffered");
+        let value = decode(bytes, index);
         // Keep the cursor update based on the saved `index` instead of
         // writing `self.position += N`. This fixed-width read path is hot
         // enough that the exact expression shape has measured impact: using
@@ -257,7 +150,11 @@ where
         // ran. Re-reading and incrementing `self.position` after the callback
         // makes the optimizer reason about the field again and was slower in
         // the production-style binary read benchmark.
-        self.position = index + N;
+        // SAFETY: `ensure_available` proved that at least `N` bytes are
+        // readable from the current cursor.
+        unsafe {
+            self.input.consume_unchecked(N);
+        }
         Ok(value)
     }
 
@@ -265,10 +162,10 @@ where
     ///
     /// The method calls `decode_available` with the unread byte range currently
     /// available in the internal buffer, capped at `N`. The decoder must
-    /// scan for the variable-width terminator and decode the payload in the same
-    /// pass. This avoids the older buffered path that first scanned for a
-    /// terminator and then asked the codec to scan and decode the same bytes
-    /// again.
+    /// scan for the variable-width terminator and decode the payload in the
+    /// same pass. This avoids the older buffered path that first scanned
+    /// for a terminator and then asked the codec to scan and decode the
+    /// same bytes again.
     ///
     /// # Type Parameters
     ///
@@ -305,43 +202,73 @@ where
         map_error: M,
     ) -> Result<T>
     where
-        F: FnMut(&[u8], usize, usize) -> std::result::Result<Option<(T, usize)>, (E, usize)>,
+        F: FnMut(
+            &[u8],
+            usize,
+            usize,
+        )
+            -> std::result::Result<Option<(T, usize)>, (E, usize)>,
         M: FnOnce(E) -> Error,
     {
         debug_assert!(
-            N <= self.buffer.len(),
+            N <= self.input.capacity(),
             "variable payload length exceeds buffer capacity"
         );
         loop {
-            let available = self.available().min(N);
+            let available = self.input.available().min(N);
             if available > 0 {
-                let index = self.position;
-                match decode_available(&self.buffer, index, available) {
+                let (bytes, index, _) = self.input.unread_raw_parts();
+                match decode_available(bytes, index, available) {
                     Ok(Some((value, consumed))) => {
-                        debug_assert!(consumed > 0, "decoded payload consumed no bytes");
-                        debug_assert!(consumed <= available, "decoded beyond available bytes");
-                        self.position = index + consumed;
+                        debug_assert!(
+                            consumed > 0,
+                            "decoded payload consumed no bytes"
+                        );
+                        debug_assert!(
+                            consumed <= available,
+                            "decoded beyond available bytes"
+                        );
+                        // SAFETY: The decoder reported a consumed byte count
+                        // within the current unread window.
+                        unsafe {
+                            self.input.consume_unchecked(consumed);
+                        }
                         return Ok(value);
                     }
                     Ok(None) => {
-                        debug_assert!(available < N, "decoder must reject maximum-width unterminated payload");
+                        debug_assert!(
+                            available < N,
+                            "decoder must reject maximum-width unterminated payload"
+                        );
                     }
                     Err((error, consumed)) => {
-                        debug_assert!(consumed > 0, "invalid payload consumed no bytes");
-                        debug_assert!(consumed <= available, "invalid payload exceeded buffer");
-                        self.position = index + consumed;
+                        debug_assert!(
+                            consumed > 0,
+                            "invalid payload consumed no bytes"
+                        );
+                        debug_assert!(
+                            consumed <= available,
+                            "invalid payload exceeded buffer"
+                        );
+                        // SAFETY: The decoder reported a consumed byte count
+                        // within the current unread window.
+                        unsafe {
+                            self.input.consume_unchecked(consumed);
+                        }
                         return Err(map_error(error));
                     }
                 }
             }
-            if self.available() == 0 {
-                self.discard_buffer();
-            } else if self.tail_capacity() == 0 {
-                self.backshift();
-            }
-            if !self.read_more()? {
-                self.position = self.limit;
-                return Err(Error::new(ErrorKind::UnexpectedEof, "failed to fill whole buffer"));
+            if !self.input.fill_more()? {
+                let available = self.input.available();
+                // SAFETY: `available` is the current unread byte count.
+                unsafe {
+                    self.input.consume_unchecked(available);
+                }
+                return Err(Error::new(
+                    ErrorKind::UnexpectedEof,
+                    "failed to fill whole buffer",
+                ));
             }
         }
     }
@@ -358,32 +285,16 @@ where
     ///
     /// # Returns
     ///
-    /// The number of bytes written to `output`. A return value of `0` means that
-    /// `output` was empty or EOF was reached before any bytes were read.
+    /// The number of bytes written to `output`. A return value of `0` means
+    /// that `output` was empty or EOF was reached before any bytes were
+    /// read.
     ///
     /// # Errors
     ///
-    /// Returns any I/O error produced by the wrapped reader. Interrupted reads
-    /// are retried when the method refills the internal buffer through
-    /// [`Self::read_more`]; direct delegated reads follow the wrapped reader's
-    /// own [`Read::read`] behavior.
+    /// Returns any I/O error produced by the wrapped reader. Refills and
+    /// large direct reads follow the delegated [`BufferedByteInput`] behavior.
     pub(crate) fn read_raw(&mut self, output: &mut [u8]) -> Result<usize> {
-        if output.is_empty() {
-            return Ok(0);
-        }
-        if self.available() == 0 {
-            self.discard_buffer();
-            if output.len() >= self.buffer.len() {
-                return self.inner.read(output);
-            }
-            if !self.read_more()? {
-                return Ok(0);
-            }
-        }
-        let count = output.len().min(self.available());
-        output[..count].copy_from_slice(&self.buffer[self.position..self.position + count]);
-        self.position += count;
-        Ok(count)
+        self.input.read(output)
     }
 
     /// Seeks the wrapped reader and discards buffered bytes after success.
@@ -409,45 +320,6 @@ where
     where
         R: Seek,
     {
-        let position = match position {
-            SeekFrom::Current(offset) => {
-                // `buffer` is a `Vec<u8>`, whose maximum allocation size fits
-                // in `isize`; that always fits in `i64`.
-                let unread = self.available() as i64;
-                let adjusted = offset.checked_sub(unread).ok_or_else(|| {
-                    Error::new(
-                        ErrorKind::InvalidInput,
-                        "current seek offset underflows after buffered adjustment",
-                    )
-                })?;
-                self.inner.seek(SeekFrom::Current(adjusted))
-            }
-            other => self.inner.seek(other),
-        }?;
-        self.discard_buffer();
-        Ok(position)
-    }
-}
-
-impl<R> Read for BufferedInput<R>
-where
-    R: Read,
-{
-    /// Reads bytes through the internal buffer.
-    ///
-    /// # Arguments
-    ///
-    /// * `output` - Destination slice that receives the bytes read.
-    ///
-    /// # Returns
-    ///
-    /// The number of bytes written to `output`.
-    ///
-    /// # Errors
-    ///
-    /// Returns any I/O error produced by the wrapped reader.
-    #[inline]
-    fn read(&mut self, output: &mut [u8]) -> Result<usize> {
-        self.read_raw(output)
+        self.input.seek(position)
     }
 }

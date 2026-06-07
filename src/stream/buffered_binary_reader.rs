@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use core::marker::PhantomData;
 use std::io::{
@@ -17,6 +15,7 @@ use std::io::{
 };
 
 use crate::stream::BufferedInput;
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::decode_infallible_unchecked;
 use qubit_codec_binary::{
     BigEndian,
@@ -62,7 +61,10 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: BufferedInput::with_capacity(inner, capacity),
+            input: BufferedInput::with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            ),
             marker: PhantomData,
         }
     }
@@ -119,16 +121,66 @@ macro_rules! impl_for_order {
         where
             R: Read,
         {
-            impl_value_read!($order, read_u8, u8, "Reads an unsigned 8-bit integer.");
-            impl_value_read!($order, read_i8, i8, "Reads a signed 8-bit integer.");
-            impl_value_read!($order, read_u16, u16, "Reads an unsigned 16-bit integer.");
-            impl_value_read!($order, read_u32, u32, "Reads an unsigned 32-bit integer.");
-            impl_value_read!($order, read_u64, u64, "Reads an unsigned 64-bit integer.");
-            impl_value_read!($order, read_u128, u128, "Reads an unsigned 128-bit integer.");
-            impl_value_read!($order, read_i16, i16, "Reads a signed 16-bit integer.");
-            impl_value_read!($order, read_i32, i32, "Reads a signed 32-bit integer.");
-            impl_value_read!($order, read_i64, i64, "Reads a signed 64-bit integer.");
-            impl_value_read!($order, read_i128, i128, "Reads a signed 128-bit integer.");
+            impl_value_read!(
+                $order,
+                read_u8,
+                u8,
+                "Reads an unsigned 8-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_i8,
+                i8,
+                "Reads a signed 8-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_u16,
+                u16,
+                "Reads an unsigned 16-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_u32,
+                u32,
+                "Reads an unsigned 32-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_u64,
+                u64,
+                "Reads an unsigned 64-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_u128,
+                u128,
+                "Reads an unsigned 128-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_i16,
+                i16,
+                "Reads a signed 16-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_i32,
+                i32,
+                "Reads a signed 32-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_i64,
+                i64,
+                "Reads a signed 64-bit integer."
+            );
+            impl_value_read!(
+                $order,
+                read_i128,
+                i128,
+                "Reads a signed 128-bit integer."
+            );
             impl_value_read!($order, read_f32, f32, "Reads a 32-bit float.");
             impl_value_read!($order, read_f64, f64, "Reads a 64-bit float.");
         }

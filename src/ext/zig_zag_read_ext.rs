@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Read,
@@ -22,9 +20,11 @@ use qubit_codec_binary::{
 
 macro_rules! read_zig_zag_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
-        read_leb128_payload::<{ ZigZagCodec::<$ty, $policy>::MAX_UNITS_PER_VALUE }, ZigZagCodec<$ty, $policy>, _>(
-            $reader,
-        )
+        read_leb128_payload::<
+            { ZigZagCodec::<$ty, $policy>::MAX_UNITS_PER_VALUE },
+            ZigZagCodec<$ty, $policy>,
+            _,
+        >($reader)
     };
 }
 

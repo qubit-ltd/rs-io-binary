@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Result,
@@ -23,17 +21,19 @@ use qubit_codec_binary::{
 
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
-        write_binary::<{ BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE }, _, _, _>(
-            $writer,
-            $value,
-            |bytes, value| {
-                type Codec = BinaryCodec<$ty, $order>;
-                // SAFETY: The local buffer is exactly the codec's maximum buffer length.
-                unsafe {
-                    let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
-                }
-            },
-        )
+        write_binary::<
+            { BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE },
+            _,
+            _,
+            _,
+        >($writer, $value, |bytes, value| {
+            type Codec = BinaryCodec<$ty, $order>;
+            // SAFETY: The local buffer is exactly the codec's maximum buffer
+            // length.
+            unsafe {
+                let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
+            }
+        })
     };
 }
 
@@ -265,7 +265,11 @@ pub trait BinaryWriteExt: Write {
 impl<W> BinaryWriteExt for W where W: Write + ?Sized {}
 
 #[inline]
-fn write_binary<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
+fn write_binary<const N: usize, T, W, F>(
+    writer: &mut W,
+    value: T,
+    encode: F,
+) -> Result<()>
 where
     W: Write + ?Sized,
     F: FnOnce(&mut [u8], T),

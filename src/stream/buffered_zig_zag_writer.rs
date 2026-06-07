@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Result,
@@ -16,6 +14,7 @@ use std::io::{
 };
 
 use crate::stream::BufferedOutput;
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     NonStrict,
@@ -58,7 +57,10 @@ impl<W> BufferedZigZagWriter<W> {
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(inner, capacity),
+            output: BufferedOutput::with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            ),
         }
     }
 
@@ -70,7 +72,6 @@ impl<W> BufferedZigZagWriter<W> {
     pub const fn inner(&self) -> &W {
         self.output.inner()
     }
-
 }
 
 impl<W> BufferedZigZagWriter<W>
@@ -91,12 +92,19 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
-            self.output
-                .write_encoded(Codec::MAX_UNITS_PER_VALUE, value, |bytes, index, value| {
+            self.output.write_encoded(
+                Codec::MAX_UNITS_PER_VALUE,
+                value,
+                |bytes, index, value| {
                     // SAFETY: `write_encoded` guarantees enough writable bytes
                     // for the codec-declared maximum encoded width.
-                    unsafe { encode_infallible_unchecked::<Codec>(value, bytes, index) }
-                })
+                    unsafe {
+                        encode_infallible_unchecked::<Codec>(
+                            value, bytes, index,
+                        )
+                    }
+                },
+            )
         }
     };
 }
@@ -120,19 +128,19 @@ where
     /// Writes bytes through the internal buffer.
     #[inline]
     fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        self.output.write_raw(buffer)
+        Write::write(&mut self.output, buffer)
     }
 
     /// Writes all bytes through the internal buffer.
     #[inline]
     fn write_all(&mut self, buffer: &[u8]) -> Result<()> {
-        self.output.write_all_buffered(buffer)
+        Write::write_all(&mut self.output, buffer)
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        self.output.flush_all()
+        Write::flush(&mut self.output)
     }
 }
 

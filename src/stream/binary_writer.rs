@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use core::marker::PhantomData;
 use std::io::{
@@ -102,9 +100,14 @@ macro_rules! impl_value_write {
             type Codec = BinaryCodec<$ty, $order>;
 
             const LEN: usize = Codec::MAX_UNITS_PER_VALUE;
-            // SAFETY: `LEN` is declared by the codec and fits the fixed internal buffer.
+            // SAFETY: `LEN` is declared by the codec and fits the fixed
+            // internal buffer.
             unsafe {
-                let _ = encode_infallible_unchecked::<Codec>(value, &mut self.buffer, 0);
+                let _ = encode_infallible_unchecked::<Codec>(
+                    value,
+                    &mut self.buffer,
+                    0,
+                );
                 self.inner.write_all_unchecked(&self.buffer, 0, LEN)
             }
         }
@@ -117,16 +120,66 @@ macro_rules! impl_for_order {
         where
             W: Write,
         {
-            impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
-            impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
-            impl_value_write!($order, write_u16, u16, "Writes an unsigned 16-bit integer.");
-            impl_value_write!($order, write_u32, u32, "Writes an unsigned 32-bit integer.");
-            impl_value_write!($order, write_u64, u64, "Writes an unsigned 64-bit integer.");
-            impl_value_write!($order, write_u128, u128, "Writes an unsigned 128-bit integer.");
-            impl_value_write!($order, write_i16, i16, "Writes a signed 16-bit integer.");
-            impl_value_write!($order, write_i32, i32, "Writes a signed 32-bit integer.");
-            impl_value_write!($order, write_i64, i64, "Writes a signed 64-bit integer.");
-            impl_value_write!($order, write_i128, i128, "Writes a signed 128-bit integer.");
+            impl_value_write!(
+                $order,
+                write_u8,
+                u8,
+                "Writes an unsigned 8-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i8,
+                i8,
+                "Writes a signed 8-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u16,
+                u16,
+                "Writes an unsigned 16-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u32,
+                u32,
+                "Writes an unsigned 32-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u64,
+                u64,
+                "Writes an unsigned 64-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u128,
+                u128,
+                "Writes an unsigned 128-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i16,
+                i16,
+                "Writes a signed 16-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i32,
+                i32,
+                "Writes a signed 32-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i64,
+                i64,
+                "Writes a signed 64-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i128,
+                i128,
+                "Writes a signed 128-bit integer."
+            );
             impl_value_write!($order, write_f32, f32, "Writes a 32-bit float.");
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
 
@@ -135,7 +188,8 @@ macro_rules! impl_for_order {
             pub fn write_utf8_string_u16(&mut self, value: &str) -> Result<()> {
                 self.write_u16(checked_u16_len(value.len())?)?;
                 let bytes = value.as_bytes();
-                // SAFETY: The range covers the full byte slice produced by `str::as_bytes`.
+                // SAFETY: The range covers the full byte slice produced by
+                // `str::as_bytes`.
                 unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
             }
 
@@ -144,7 +198,8 @@ macro_rules! impl_for_order {
             pub fn write_utf8_string_u32(&mut self, value: &str) -> Result<()> {
                 self.write_u32(checked_u32_len(value.len())?)?;
                 let bytes = value.as_bytes();
-                // SAFETY: The range covers the full byte slice produced by `str::as_bytes`.
+                // SAFETY: The range covers the full byte slice produced by
+                // `str::as_bytes`.
                 unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
             }
         }

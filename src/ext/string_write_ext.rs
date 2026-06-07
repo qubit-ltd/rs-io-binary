@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Result,
     Write,
@@ -70,9 +68,13 @@ pub trait StringWriteExt: Write {
     /// - `byte_order`: Byte order used by the length prefix.
     ///
     /// # Errors
-    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length does not
-    /// fit into `u16`, or an I/O error from the underlying writer.
-    fn write_utf8_string_u16(&mut self, value: &str, byte_order: ByteOrder) -> Result<()>;
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// does not fit into `u16`, or an I/O error from the underlying writer.
+    fn write_utf8_string_u16(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()>;
 
     /// Writes a UTF-8 string with a big-endian `u16` byte-length prefix.
     ///
@@ -80,8 +82,8 @@ pub trait StringWriteExt: Write {
     /// - `value`: String slice to write.
     ///
     /// # Errors
-    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length does not
-    /// fit into `u16`, or an I/O error from the underlying writer.
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// does not fit into `u16`, or an I/O error from the underlying writer.
     fn write_utf8_string_u16_be(&mut self, value: &str) -> Result<()>;
 
     /// Writes a UTF-8 string with a little-endian `u16` byte-length prefix.
@@ -90,8 +92,8 @@ pub trait StringWriteExt: Write {
     /// - `value`: String slice to write.
     ///
     /// # Errors
-    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length does not
-    /// fit into `u16`, or an I/O error from the underlying writer.
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// does not fit into `u16`, or an I/O error from the underlying writer.
     fn write_utf8_string_u16_le(&mut self, value: &str) -> Result<()>;
 
     /// Writes a UTF-8 string with a runtime-order `u32` byte-length prefix.
@@ -101,9 +103,13 @@ pub trait StringWriteExt: Write {
     /// - `byte_order`: Byte order used by the length prefix.
     ///
     /// # Errors
-    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length does not
-    /// fit into `u32`, or an I/O error from the underlying writer.
-    fn write_utf8_string_u32(&mut self, value: &str, byte_order: ByteOrder) -> Result<()>;
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// does not fit into `u32`, or an I/O error from the underlying writer.
+    fn write_utf8_string_u32(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()>;
 
     /// Writes a UTF-8 string with a big-endian `u32` byte-length prefix.
     ///
@@ -111,8 +117,8 @@ pub trait StringWriteExt: Write {
     /// - `value`: String slice to write.
     ///
     /// # Errors
-    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length does not
-    /// fit into `u32`, or an I/O error from the underlying writer.
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// does not fit into `u32`, or an I/O error from the underlying writer.
     fn write_utf8_string_u32_be(&mut self, value: &str) -> Result<()>;
 
     /// Writes a UTF-8 string with a little-endian `u32` byte-length prefix.
@@ -121,8 +127,8 @@ pub trait StringWriteExt: Write {
     /// - `value`: String slice to write.
     ///
     /// # Errors
-    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length does not
-    /// fit into `u32`, or an I/O error from the underlying writer.
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// does not fit into `u32`, or an I/O error from the underlying writer.
     fn write_utf8_string_u32_le(&mut self, value: &str) -> Result<()>;
 }
 
@@ -150,32 +156,52 @@ where
     }
 
     #[inline]
-    fn write_utf8_string_u16(&mut self, value: &str, byte_order: ByteOrder) -> Result<()> {
-        write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16(len, byte_order))
+    fn write_utf8_string_u16(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()> {
+        write_utf8_string_with_u16_len(self, value, |writer, len| {
+            writer.write_u16(len, byte_order)
+        })
     }
 
     #[inline]
     fn write_utf8_string_u16_be(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16_be(len))
+        write_utf8_string_with_u16_len(self, value, |writer, len| {
+            writer.write_u16_be(len)
+        })
     }
 
     #[inline]
     fn write_utf8_string_u16_le(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16_le(len))
+        write_utf8_string_with_u16_len(self, value, |writer, len| {
+            writer.write_u16_le(len)
+        })
     }
 
     #[inline]
-    fn write_utf8_string_u32(&mut self, value: &str, byte_order: ByteOrder) -> Result<()> {
-        write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32(len, byte_order))
+    fn write_utf8_string_u32(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()> {
+        write_utf8_string_with_u32_len(self, value, |writer, len| {
+            writer.write_u32(len, byte_order)
+        })
     }
 
     #[inline]
     fn write_utf8_string_u32_be(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32_be(len))
+        write_utf8_string_with_u32_len(self, value, |writer, len| {
+            writer.write_u32_be(len)
+        })
     }
 
     #[inline]
     fn write_utf8_string_u32_le(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32_le(len))
+        write_utf8_string_with_u32_len(self, value, |writer, len| {
+            writer.write_u32_le(len)
+        })
     }
 }

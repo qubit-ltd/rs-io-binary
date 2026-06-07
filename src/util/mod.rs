@@ -1,16 +1,15 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 mod allocation;
 mod streams;
 
 pub(crate) use streams::{
+    MIN_CODEC_BUFFER_CAPACITY,
     checked_u16_len,
     checked_u32_len,
     checked_u64_len,
@@ -21,8 +20,10 @@ pub(crate) use streams::{
     read_leb128_from_reader,
     read_leb128_payload,
     read_utf8_payload,
-    usize_from_u64_len,
     write_utf8_payload,
     write_utf8_string_with_u16_len,
     write_utf8_string_with_u32_len,
 };
+
+#[cfg(not(target_pointer_width = "64"))]
+pub(crate) use streams::usize_from_u64_len;

@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Read,
@@ -23,9 +21,15 @@ use qubit_codec_binary::{
 
 macro_rules! read_binary_value {
     ($reader:expr, $ty:ty, $order:ty) => {
-        read_binary::<{ BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE }, _, _, _>($reader, |bytes| {
+        read_binary::<
+            { BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE },
+            _,
+            _,
+            _,
+        >($reader, |bytes| {
             type Codec = BinaryCodec<$ty, $order>;
-            // SAFETY: The local buffer is exactly the codec's minimum buffer length.
+            // SAFETY: The local buffer is exactly the codec's minimum buffer
+            // length.
             unsafe { decode_infallible_unchecked::<Codec>(bytes, 0) }
         })
     };

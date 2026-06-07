@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use core::marker::PhantomData;
 use std::io::{
@@ -17,6 +15,7 @@ use std::io::{
 };
 
 use crate::stream::BufferedOutput;
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     BigEndian,
@@ -62,7 +61,10 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(inner, capacity),
+            output: BufferedOutput::with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            ),
             marker: PhantomData,
         }
     }
@@ -82,7 +84,6 @@ where
     pub const fn inner(&self) -> &W {
         self.output.inner()
     }
-
 }
 
 impl<W, O> BufferedBinaryWriter<W, O>
@@ -105,14 +106,19 @@ macro_rules! impl_value_write {
             type Codec = BinaryCodec<$ty, $order>;
 
             const LEN: usize = Codec::MAX_UNITS_PER_VALUE;
-            self.output
-                .write_fixed::<LEN, _, _>(value, |bytes, index, value| {
-                    // SAFETY: `write_fixed` guarantees that `LEN` writable bytes
-                    // starting at `index` are available in the internal buffer.
+            self.output.write_fixed::<LEN, _, _>(
+                value,
+                |bytes, index, value| {
+                    // SAFETY: `write_fixed` guarantees that `LEN` writable
+                    // bytes starting at `index` are available in
+                    // the internal buffer.
                     unsafe {
-                        let _ = encode_infallible_unchecked::<Codec>(value, bytes, index);
+                        let _ = encode_infallible_unchecked::<Codec>(
+                            value, bytes, index,
+                        );
                     }
-                })
+                },
+            )
         }
     };
 }
@@ -123,16 +129,66 @@ macro_rules! impl_for_order {
         where
             W: Write,
         {
-            impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
-            impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
-            impl_value_write!($order, write_u16, u16, "Writes an unsigned 16-bit integer.");
-            impl_value_write!($order, write_u32, u32, "Writes an unsigned 32-bit integer.");
-            impl_value_write!($order, write_u64, u64, "Writes an unsigned 64-bit integer.");
-            impl_value_write!($order, write_u128, u128, "Writes an unsigned 128-bit integer.");
-            impl_value_write!($order, write_i16, i16, "Writes a signed 16-bit integer.");
-            impl_value_write!($order, write_i32, i32, "Writes a signed 32-bit integer.");
-            impl_value_write!($order, write_i64, i64, "Writes a signed 64-bit integer.");
-            impl_value_write!($order, write_i128, i128, "Writes a signed 128-bit integer.");
+            impl_value_write!(
+                $order,
+                write_u8,
+                u8,
+                "Writes an unsigned 8-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i8,
+                i8,
+                "Writes a signed 8-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u16,
+                u16,
+                "Writes an unsigned 16-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u32,
+                u32,
+                "Writes an unsigned 32-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u64,
+                u64,
+                "Writes an unsigned 64-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_u128,
+                u128,
+                "Writes an unsigned 128-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i16,
+                i16,
+                "Writes a signed 16-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i32,
+                i32,
+                "Writes a signed 32-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i64,
+                i64,
+                "Writes a signed 64-bit integer."
+            );
+            impl_value_write!(
+                $order,
+                write_i128,
+                i128,
+                "Writes a signed 128-bit integer."
+            );
             impl_value_write!($order, write_f32, f32, "Writes a 32-bit float.");
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
         }
@@ -149,19 +205,19 @@ where
     /// Writes bytes through the internal buffer.
     #[inline]
     fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        self.output.write_raw(buffer)
+        Write::write(&mut self.output, buffer)
     }
 
     /// Writes all bytes through the internal buffer.
     #[inline]
     fn write_all(&mut self, buffer: &[u8]) -> Result<()> {
-        self.output.write_all_buffered(buffer)
+        Write::write_all(&mut self.output, buffer)
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        self.output.flush_all()
+        Write::flush(&mut self.output)
     }
 }
 

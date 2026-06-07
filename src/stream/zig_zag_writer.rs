@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Result,
@@ -39,7 +37,10 @@ impl<W> ZigZagWriter<W> {
     #[must_use]
     #[inline]
     pub const fn new(inner: W) -> Self {
-        Self { inner, buffer: [0; 19] }
+        Self {
+            inner,
+            buffer: [0; 19],
+        }
     }
 
     /// Returns a shared reference to the underlying writer.
@@ -71,9 +72,12 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
-            self.write_zig_zag::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(value, |bytes, value| unsafe {
-                encode_infallible_unchecked::<Codec>(value, bytes, 0)
-            })
+            self.write_zig_zag::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
+                value,
+                |bytes, value| unsafe {
+                    encode_infallible_unchecked::<Codec>(value, bytes, 0)
+                },
+            )
         }
     };
 }
@@ -83,7 +87,11 @@ where
     W: Write,
 {
     #[inline]
-    fn write_zig_zag<T, const N: usize, F>(&mut self, value: T, encode: F) -> Result<()>
+    fn write_zig_zag<T, const N: usize, F>(
+        &mut self,
+        value: T,
+        encode: F,
+    ) -> Result<()>
     where
         F: FnOnce(&mut [u8; 19], T) -> usize,
     {

@@ -1,20 +1,18 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 //! # Qubit Binary IO
 //!
 //! Binary stream I/O adapters for Rust.
 //!
-//! This crate combines `qubit-io-binary` stream helpers with `qubit-codec-binary`
-//! buffer codecs to provide binary reader and writer extension traits and
-//! wrapper types.
+//! This crate combines `qubit-io-binary` stream helpers with
+//! `qubit-codec-binary` buffer codecs to provide binary reader and writer
+//! extension traits and wrapper types.
 
 mod ext;
 pub mod prelude;
@@ -37,9 +35,9 @@ pub use qubit_codec_binary::{
     ByteOrder,
     ByteOrderSpec,
     Leb128Codec,
-    Leb128DecodePolicy,
     Leb128DecodeError,
     Leb128DecodeErrorKind,
+    Leb128DecodePolicy,
     LittleEndian,
     NonStrict,
     Strict,

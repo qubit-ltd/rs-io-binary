@@ -1,12 +1,10 @@
-/*******************************************************************************
- *
- *    Copyright (c) 2026 Haixing Hu.
- *
- *    SPDX-License-Identifier: Apache-2.0
- *
- *    Licensed under the Apache License, Version 2.0.
- *
- ******************************************************************************/
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 
 use std::io::{
     Result,
@@ -42,7 +40,10 @@ impl<W> Leb128Writer<W> {
     #[must_use]
     #[inline]
     pub const fn new(inner: W) -> Self {
-        Self { inner, buffer: [0; 19] }
+        Self {
+            inner,
+            buffer: [0; 19],
+        }
     }
 
     /// Returns a shared reference to the underlying writer.
@@ -74,9 +75,12 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = Leb128Codec<$ty, NonStrict>;
 
-            self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(value, |bytes, value| unsafe {
-                encode_infallible_unchecked::<Codec>(value, bytes, 0)
-            })
+            self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
+                value,
+                |bytes, value| unsafe {
+                    encode_infallible_unchecked::<Codec>(value, bytes, 0)
+                },
+            )
         }
     };
 }
@@ -86,7 +90,11 @@ where
     W: Write,
 {
     #[inline]
-    fn write_leb128<T, const N: usize, F>(&mut self, value: T, encode: F) -> Result<()>
+    fn write_leb128<T, const N: usize, F>(
+        &mut self,
+        value: T,
+        encode: F,
+    ) -> Result<()>
     where
         F: FnOnce(&mut [u8; 19], T) -> usize,
     {
@@ -125,7 +133,8 @@ where
     pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
         let bytes = value.as_bytes();
-        // SAFETY: The range covers the full byte slice produced by `str::as_bytes`.
+        // SAFETY: The range covers the full byte slice produced by
+        // `str::as_bytes`.
         unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
     }
 
@@ -148,7 +157,8 @@ where
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;
         let bytes = value.as_bytes();
-        // SAFETY: The range covers the full byte slice produced by `str::as_bytes`.
+        // SAFETY: The range covers the full byte slice produced by
+        // `str::as_bytes`.
         unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
     }
 }
