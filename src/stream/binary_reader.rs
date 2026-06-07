@@ -17,7 +17,10 @@ use std::io::{
 };
 
 use crate::ReadExt;
-use crate::util::read_utf8_payload;
+use crate::util::{
+    decode_infallible_unchecked,
+    read_utf8_payload,
+};
 use qubit_codec_binary::{
     BigEndian,
     BinaryCodec,
@@ -70,14 +73,14 @@ where
     /// Returns a shared reference to the underlying reader.
     #[must_use]
     #[inline]
-    pub const fn get_ref(&self) -> &R {
+    pub const fn inner(&self) -> &R {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying reader.
     #[must_use]
     #[inline]
-    pub fn get_mut(&mut self) -> &mut R {
+    pub fn inner_mut(&mut self) -> &mut R {
         &mut self.inner
     }
 
@@ -96,11 +99,11 @@ macro_rules! impl_value_read {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = BinaryCodec<$ty, $order>;
 
-            const LEN: usize = Codec::REQUIRED_MIN_BUFFER_LEN;
+            const LEN: usize = Codec::MIN_UNITS_PER_VALUE;
             // SAFETY: `LEN` is declared by the codec and fits the fixed internal buffer.
             unsafe {
                 ReadExt::read_exact_unchecked(&mut self.inner, &mut self.buffer, 0, LEN)?;
-                Ok(Codec::decode_unchecked(&self.buffer, 0).0)
+                Ok(decode_infallible_unchecked::<Codec>(&self.buffer, 0))
             }
         }
     };

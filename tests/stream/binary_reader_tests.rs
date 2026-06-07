@@ -100,8 +100,8 @@ fn test_binary_reader_reads_little_endian_and_exposes_accessors() {
     let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
 
     assert_eq!(ByteOrder::LittleEndian, reader.byte_order());
-    assert_eq!(0, reader.get_ref().position());
-    reader.get_mut().set_position(0);
+    assert_eq!(0, reader.inner().position());
+    reader.inner_mut().set_position(0);
     let mut prefix = [0u8; 2];
     std::io::Read::read_exact(&mut reader, &mut prefix).expect("bytes should be read");
     assert_eq!([0xaa, 0xbb], prefix);

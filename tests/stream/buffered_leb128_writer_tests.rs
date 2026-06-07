@@ -73,7 +73,6 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner() 
     let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
 
     assert_eq!(0, writer.inner().position());
-    writer.inner_mut().set_position(0);
     writer.write_utf8_string("abc").expect("string should be buffered");
     assert_eq!(1, writer.write(&[9]).expect("raw byte should be buffered"));
     writer.write_all(&[10]).expect("raw byte should be buffered");
@@ -116,4 +115,15 @@ fn test_buffered_leb128_writer_write_utf8_string_reports_length_flush_error() {
         .expect_err("length prefix flush should fail");
 
     assert_eq!(ErrorKind::Other, error.kind());
+}
+
+#[test]
+fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
+    let mut writer = BufferedLeb128Writer::new(Vec::new());
+
+    writer
+        .write_utf8_string_u64("hé")
+        .expect("u64 length-prefixed string should be written");
+
+    assert_eq!(vec![3, b'h', 0xC3, 0xA9], writer.into_inner().expect("writer should flush"));
 }

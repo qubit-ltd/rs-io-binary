@@ -87,17 +87,6 @@ impl<W> BufferedOutput<W> {
         &self.inner
     }
 
-    /// Returns an exclusive reference to the wrapped writer.
-    ///
-    /// # Returns
-    ///
-    /// A mutable reference to the underlying writer.  Pending bytes may still be
-    /// present in the internal buffer and are not flushed by this method.
-    #[inline]
-    pub(crate) fn inner_mut(&mut self) -> &mut W {
-        &mut self.inner
-    }
-
     /// Returns the unused capacity in the internal buffer.
     ///
     /// # Returns

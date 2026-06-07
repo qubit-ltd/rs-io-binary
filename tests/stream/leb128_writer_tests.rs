@@ -22,8 +22,8 @@ impl Write for FailingWriter {
 fn test_leb128_writer_writes_all_methods_and_exposes_accessors() {
     let mut writer = Leb128Writer::new(Vec::new());
 
-    assert_eq!(0, writer.get_ref().len());
-    writer.get_mut().extend_from_slice(&[]);
+    assert_eq!(0, writer.inner().len());
+    writer.inner_mut().extend_from_slice(&[]);
     writer.write_u8(u8::MAX).expect("u8 should be written");
     writer.write_u16(300).expect("u16 should be written");
     writer.write_u32(0x1f600).expect("u32 should be written");
@@ -60,6 +60,17 @@ fn test_leb128_writer_write_utf8_string_writes_length_prefixed_payload() {
     writer
         .write_utf8_string("hé")
         .expect("writing a length-prefixed UTF-8 string should succeed");
+
+    assert_eq!(writer.into_inner(), vec![3, b'h', 0xC3, 0xA9]);
+}
+
+#[test]
+fn test_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
+    let mut writer = qubit_io_binary::Leb128Writer::new(Vec::new());
+
+    writer
+        .write_utf8_string_u64("hé")
+        .expect("writing a u64 length-prefixed UTF-8 string should succeed");
 
     assert_eq!(writer.into_inner(), vec![3, b'h', 0xC3, 0xA9]);
 }

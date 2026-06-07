@@ -13,6 +13,7 @@ use std::io::{
     Write,
 };
 
+use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     Leb128Codec,
     NonStrict,
@@ -24,8 +25,9 @@ macro_rules! write_leb128_value {
             $writer,
             $value,
             |bytes, value| {
-                // SAFETY: The local buffer is exactly the codec's minimum buffer length.
-                unsafe { Leb128Codec::<$ty, NonStrict>::encode_unchecked(value, bytes, 0) }
+                type Codec = Leb128Codec<$ty, NonStrict>;
+                // SAFETY: The local buffer is exactly the codec's maximum buffer length.
+                unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) }
             },
         )
     };

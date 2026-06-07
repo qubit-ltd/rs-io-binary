@@ -54,8 +54,8 @@ fn test_zig_zag_reader_reads_all_methods() {
 fn test_zig_zag_reader_exposes_accessors_and_reports_errors() {
     let mut reader = ZigZagReader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
     assert!(reader.is_strict());
-    assert_eq!(0, reader.get_ref().position());
-    reader.get_mut().set_position(0);
+    assert_eq!(0, reader.inner().position());
+    reader.inner_mut().set_position(0);
     assert_eq!(
         ErrorKind::InvalidData,
         reader.read_i16().expect_err("non-canonical value should fail").kind()

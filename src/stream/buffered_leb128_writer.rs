@@ -16,6 +16,10 @@ use std::io::{
 };
 
 use crate::stream::BufferedOutput;
+use crate::util::{
+    checked_u64_len,
+    encode_infallible_unchecked,
+};
 use qubit_codec_binary::{
     Leb128Codec,
     NonStrict,
@@ -30,8 +34,8 @@ use qubit_codec_binary::{
 ///
 /// Pending buffered bytes are not flushed from [`Drop`]. Call [`Write::flush`]
 /// or [`Self::into_inner`] to guarantee that all bytes reach the wrapped
-/// writer. [`Self::inner`] and [`Self::inner_mut`] can observe the wrapped
-/// writer before pending bytes have been flushed.
+/// writer. [`Self::inner`] can observe the wrapped writer before pending bytes
+/// have been flushed.
 ///
 /// # Target-width integers
 ///
@@ -70,15 +74,6 @@ impl<W> BufferedLeb128Writer<W> {
         self.output.inner()
     }
 
-    /// Returns an exclusive reference to the underlying writer.
-    ///
-    /// Pending bytes may still be held in this wrapper's internal buffer.
-    /// Flush first if the underlying writer must observe all previous writes.
-    #[must_use]
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut W {
-        self.output.inner_mut()
-    }
 }
 
 impl<W> BufferedLeb128Writer<W>
@@ -101,6 +96,17 @@ where
         self.write_usize(value.len())?;
         self.output.write_all_buffered(value.as_bytes())
     }
+
+    /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
+    ///
+    /// Prefer this method over [`Self::write_utf8_string`] for persistent files
+    /// and cross-platform protocols because the length field is independent of
+    /// the current Rust target's pointer width.
+    #[inline]
+    pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
+        self.write_u64(checked_u64_len(value.len())?)?;
+        self.output.write_all_buffered(value.as_bytes())
+    }
 }
 
 macro_rules! impl_write_value {
@@ -114,7 +120,7 @@ macro_rules! impl_write_value {
                 .write_encoded(Codec::MAX_UNITS_PER_VALUE, value, |bytes, index, value| {
                     // SAFETY: `write_encoded` guarantees enough writable bytes
                     // for the codec-declared maximum encoded width.
-                    unsafe { Codec::encode_unchecked(value, bytes, index) }
+                    unsafe { encode_infallible_unchecked::<Codec>(value, bytes, index) }
                 })
         }
     };

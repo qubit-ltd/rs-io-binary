@@ -14,15 +14,22 @@ use qubit_io_binary::prelude::{
     BigEndian,
     ByteOrder,
     ByteOrderSpec,
+    Leb128DecodePolicy,
     Leb128ReadExt,
     Leb128WriteExt,
+    NonStrict,
     ZigZagReadExt,
     ZigZagWriteExt,
 };
 
+fn leb128_policy_is_strict<P: Leb128DecodePolicy>() -> bool {
+    P::STRICT
+}
+
 #[test]
 fn test_prelude_imports_binary_extension_traits_and_markers() {
     assert_eq!(ByteOrder::BigEndian, BigEndian::ORDER);
+    assert!(!leb128_policy_is_strict::<NonStrict>());
 
     let mut buffer = Vec::new();
     buffer.write_uleb_u16(300).expect("Leb128WriteExt should be in prelude");

@@ -20,6 +20,7 @@ use crate::WriteExt;
 use crate::util::{
     checked_u16_len,
     checked_u32_len,
+    encode_infallible_unchecked,
 };
 use qubit_codec_binary::{
     BigEndian,
@@ -74,14 +75,14 @@ where
     /// Returns a shared reference to the underlying writer.
     #[must_use]
     #[inline]
-    pub const fn get_ref(&self) -> &W {
+    pub const fn inner(&self) -> &W {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying writer.
     #[must_use]
     #[inline]
-    pub fn get_mut(&mut self) -> &mut W {
+    pub fn inner_mut(&mut self) -> &mut W {
         &mut self.inner
     }
 
@@ -100,10 +101,10 @@ macro_rules! impl_value_write {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = BinaryCodec<$ty, $order>;
 
-            const LEN: usize = Codec::REQUIRED_MIN_BUFFER_LEN;
+            const LEN: usize = Codec::MAX_UNITS_PER_VALUE;
             // SAFETY: `LEN` is declared by the codec and fits the fixed internal buffer.
             unsafe {
-                Codec::encode_unchecked(value, &mut self.buffer, 0);
+                let _ = encode_infallible_unchecked::<Codec>(value, &mut self.buffer, 0);
                 self.inner.write_all_unchecked(&self.buffer, 0, LEN)
             }
         }

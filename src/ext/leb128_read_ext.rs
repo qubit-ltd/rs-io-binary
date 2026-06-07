@@ -22,11 +22,9 @@ use qubit_codec_binary::{
 
 macro_rules! read_leb128_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
-        read_leb128_payload::<{ Leb128Codec::<$ty, $policy>::MAX_UNITS_PER_VALUE }, _, _, _>($reader, |bytes| {
-            // SAFETY: The local buffer is exactly the codec's minimum buffer length,
-            // or it contains an earlier terminating byte before decoding.
-            unsafe { Leb128Codec::<$ty, $policy>::decode_unchecked(bytes, 0) }
-        })
+        read_leb128_payload::<{ Leb128Codec::<$ty, $policy>::MAX_UNITS_PER_VALUE }, Leb128Codec<$ty, $policy>, _>(
+            $reader,
+        )
     };
 }
 

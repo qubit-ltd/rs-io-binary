@@ -4,6 +4,7 @@ use std::io::{
 };
 
 use qubit_io_binary::{
+    Leb128DecodeError,
     Leb128ReadExt,
     Leb128WriteExt,
 };
@@ -115,6 +116,16 @@ fn test_leb128_read_ext_reports_invalid_data_and_eof() {
             .read_uleb_u16_strict()
             .expect_err("non-canonical value should fail")
             .kind()
+    );
+
+    let mut input = Cursor::new([0x80, 0x00]);
+    let error = input
+        .read_uleb_u16_strict()
+        .expect_err("non-canonical value should fail");
+    let source = error.get_ref().expect("decode error should be preserved");
+    assert!(
+        source.downcast_ref::<Leb128DecodeError>().is_some(),
+        "I/O error should preserve the original LEB128 decode error"
     );
 
     let mut input = Cursor::new([0x80]);

@@ -97,6 +97,9 @@ fn test_string_write_ext_writes_all_length_prefix_kinds() {
         .write_utf8_string_uleb("hi")
         .expect("ULEB string should be written");
     output
+        .write_utf8_string_uleb_u64("u6")
+        .expect("u64 ULEB string should be written");
+    output
         .write_utf8_string_u16("rt", ByteOrder::BigEndian)
         .expect("runtime u16 BE string should be written");
     output
@@ -123,9 +126,9 @@ fn test_string_write_ext_writes_all_length_prefix_kinds() {
 
     assert_eq!(
         vec![
-            b'r', b'a', b'w', 0x02, b'h', b'i', 0x00, 0x02, b'r', b't', 0x00, 0x02, b'b', b'e', 0x02, 0x00, b'l', b'r',
-            0x02, 0x00, b'l', b'e', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x02, 0x00,
-            0x00, 0x00, b'd', b'n', 0x02, 0x00, 0x00, 0x00, b'd', b'n'
+            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02, b'r', b't', 0x00, 0x02, b'b', b'e',
+            0x02, 0x00, b'l', b'r', 0x02, 0x00, b'l', b'e', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x00, 0x00, 0x00,
+            0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd', b'n', 0x02, 0x00, 0x00, 0x00, b'd', b'n'
         ],
         output
     );
@@ -172,6 +175,15 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
         writer
             .write_utf8_string_uleb("hi")
             .expect_err("writer error should be returned")
+            .kind()
+    );
+
+    let mut writer = FailingWriter;
+    assert_eq!(
+        ErrorKind::Other,
+        writer
+            .write_utf8_string_uleb_u64("hi")
+            .expect_err("u64 ULEB writer error should be returned")
             .kind()
     );
 

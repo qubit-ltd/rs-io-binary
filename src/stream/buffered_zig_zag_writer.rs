@@ -16,6 +16,7 @@ use std::io::{
 };
 
 use crate::stream::BufferedOutput;
+use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     NonStrict,
     ZigZagCodec,
@@ -30,8 +31,8 @@ use qubit_codec_binary::{
 ///
 /// Pending buffered bytes are not flushed from [`Drop`]. Call [`Write::flush`]
 /// or [`Self::into_inner`] to guarantee that all bytes reach the wrapped
-/// writer. [`Self::inner`] and [`Self::inner_mut`] can observe the wrapped
-/// writer before pending bytes have been flushed.
+/// writer. [`Self::inner`] can observe the wrapped writer before pending bytes
+/// have been flushed.
 ///
 /// # Target-width integers
 ///
@@ -70,15 +71,6 @@ impl<W> BufferedZigZagWriter<W> {
         self.output.inner()
     }
 
-    /// Returns an exclusive reference to the underlying writer.
-    ///
-    /// Pending bytes may still be held in this wrapper's internal buffer.
-    /// Flush first if the underlying writer must observe all previous writes.
-    #[must_use]
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut W {
-        self.output.inner_mut()
-    }
 }
 
 impl<W> BufferedZigZagWriter<W>
@@ -103,7 +95,7 @@ macro_rules! impl_write_value {
                 .write_encoded(Codec::MAX_UNITS_PER_VALUE, value, |bytes, index, value| {
                     // SAFETY: `write_encoded` guarantees enough writable bytes
                     // for the codec-declared maximum encoded width.
-                    unsafe { Codec::encode_unchecked(value, bytes, index) }
+                    unsafe { encode_infallible_unchecked::<Codec>(value, bytes, index) }
                 })
         }
     };

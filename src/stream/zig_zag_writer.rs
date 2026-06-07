@@ -16,6 +16,7 @@ use std::io::{
 };
 
 use crate::WriteExt;
+use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     NonStrict,
     ZigZagCodec,
@@ -44,14 +45,14 @@ impl<W> ZigZagWriter<W> {
     /// Returns a shared reference to the underlying writer.
     #[must_use]
     #[inline]
-    pub const fn get_ref(&self) -> &W {
+    pub const fn inner(&self) -> &W {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying writer.
     #[must_use]
     #[inline]
-    pub fn get_mut(&mut self) -> &mut W {
+    pub fn inner_mut(&mut self) -> &mut W {
         &mut self.inner
     }
 
@@ -71,7 +72,7 @@ macro_rules! impl_write_value {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
             self.write_zig_zag::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(value, |bytes, value| unsafe {
-                Codec::encode_unchecked(value, bytes, 0)
+                encode_infallible_unchecked::<Codec>(value, bytes, 0)
             })
         }
     };

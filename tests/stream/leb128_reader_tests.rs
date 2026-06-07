@@ -59,8 +59,8 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
 
     let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
     assert!(reader.is_strict());
-    assert_eq!(0, reader.get_ref().position());
-    reader.get_mut().set_position(0);
+    assert_eq!(0, reader.inner().position());
+    reader.inner_mut().set_position(0);
     assert_eq!(
         ErrorKind::InvalidData,
         reader.read_u16().expect_err("non-canonical value should fail").kind()
@@ -96,6 +96,18 @@ fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
 }
 
 #[test]
+fn test_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
+    let bytes = vec![3, b'h', 0xC3, 0xA9];
+    let mut reader = qubit_io_binary::Leb128Reader::<_, qubit_io_binary::NonStrict>::new(std::io::Cursor::new(bytes));
+
+    let text = reader
+        .read_utf8_string_u64(3)
+        .expect("reading a u64 length-prefixed UTF-8 string should succeed");
+
+    assert_eq!(text, "hé");
+}
+
+#[test]
 fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
     let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![3, b'a', b'b', b'c']));
 
@@ -109,7 +121,7 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
     assert_eq!(
         ErrorKind::InvalidData,
         reader
-            .read_utf8_string(3)
+            .read_utf8_string_u64(3)
             .expect_err("non-canonical strict length should fail")
             .kind()
     );

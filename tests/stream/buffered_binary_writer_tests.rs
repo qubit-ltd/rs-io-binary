@@ -268,7 +268,6 @@ fn test_buffered_binary_writer_accessors_write_all_seek_and_into_inner() {
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
     assert_eq!(0, writer.inner().position());
-    writer.inner_mut().set_position(0);
     writer.write_u8(1).expect("u8 should be buffered");
     assert_eq!(2, writer.write(&[2, 3]).expect("raw bytes should be buffered"));
     assert_eq!(

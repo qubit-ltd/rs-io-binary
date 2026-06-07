@@ -12,7 +12,10 @@ use std::io::{
     Result,
 };
 
-use crate::util::read_utf8_payload as read_utf8_payload_impl;
+use crate::util::{
+    read_utf8_payload as read_utf8_payload_impl,
+    usize_from_u64_len,
+};
 use crate::{
     BinaryReadExt,
     ByteOrder,
@@ -72,6 +75,43 @@ pub trait StringReadExt: Read {
     /// when the encoded length exceeds `max_len`, or [`std::io::ErrorKind::InvalidData`]
     /// when the payload is not valid UTF-8.
     fn read_utf8_string_uleb_strict(&mut self, max_len: usize) -> Result<String>;
+
+    /// Reads a UTF-8 string with an unsigned LEB128 `u64` byte-length prefix.
+    ///
+    /// Prefer this method over [`Self::read_utf8_string_uleb`] for persistent
+    /// files and cross-platform protocols because the length field is
+    /// independent of the current Rust target's pointer width.
+    ///
+    /// # Parameters
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
+    ///
+    /// # Returns
+    /// The decoded string.
+    ///
+    /// # Errors
+    /// Returns an I/O error for length or payload reads, [`std::io::ErrorKind::InvalidData`]
+    /// when the encoded `u64` length does not fit the local `usize`, when the
+    /// encoded length exceeds `max_len`, or when the payload is not valid UTF-8.
+    fn read_utf8_string_uleb_u64(&mut self, max_len: usize) -> Result<String>;
+
+    /// Reads a UTF-8 string with a canonical unsigned LEB128 `u64` byte-length prefix.
+    ///
+    /// Prefer this method over [`Self::read_utf8_string_uleb_strict`] for
+    /// persistent files and cross-platform protocols because the length field
+    /// is independent of the current Rust target's pointer width.
+    ///
+    /// # Parameters
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
+    ///
+    /// # Returns
+    /// The decoded string.
+    ///
+    /// # Errors
+    /// Returns an I/O error for length or payload reads, [`std::io::ErrorKind::InvalidData`]
+    /// when the length prefix is malformed or non-canonical, when the encoded
+    /// `u64` length does not fit the local `usize`, when the encoded length
+    /// exceeds `max_len`, or when the payload is not valid UTF-8.
+    fn read_utf8_string_uleb_u64_strict(&mut self, max_len: usize) -> Result<String>;
 
     /// Reads a UTF-8 string with a runtime-order `u16` byte-length prefix.
     ///
@@ -178,6 +218,18 @@ where
     #[inline]
     fn read_utf8_string_uleb_strict(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_uleb_usize_strict()?;
+        read_utf8_payload_impl(self, len, max_len)
+    }
+
+    #[inline]
+    fn read_utf8_string_uleb_u64(&mut self, max_len: usize) -> Result<String> {
+        let len = usize_from_u64_len(self.read_uleb_u64()?)?;
+        read_utf8_payload_impl(self, len, max_len)
+    }
+
+    #[inline]
+    fn read_utf8_string_uleb_u64_strict(&mut self, max_len: usize) -> Result<String> {
+        let len = usize_from_u64_len(self.read_uleb_u64_strict()?)?;
         read_utf8_payload_impl(self, len, max_len)
     }
 

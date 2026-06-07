@@ -13,6 +13,7 @@ use std::io::{
     Write,
 };
 
+use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     BigEndian,
     BinaryCodec,
@@ -22,13 +23,14 @@ use qubit_codec_binary::{
 
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
-        write_binary::<{ BinaryCodec::<$ty, $order>::REQUIRED_MIN_BUFFER_LEN }, _, _, _>(
+        write_binary::<{ BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE }, _, _, _>(
             $writer,
             $value,
             |bytes, value| {
-                // SAFETY: The local buffer is exactly the codec's minimum buffer length.
+                type Codec = BinaryCodec<$ty, $order>;
+                // SAFETY: The local buffer is exactly the codec's maximum buffer length.
                 unsafe {
-                    BinaryCodec::<$ty, $order>::encode_unchecked(value, bytes, 0);
+                    let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
                 }
             },
         )

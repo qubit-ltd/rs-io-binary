@@ -47,8 +47,8 @@ fn test_binary_writer_writes_little_endian_and_exposes_accessors() {
     let mut writer = BinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
-    assert_eq!(0, writer.get_ref().position());
-    writer.get_mut().set_position(0);
+    assert_eq!(0, writer.inner().position());
+    writer.inner_mut().set_position(0);
     writer.write_u8(0x12).expect("u8 should be written");
     writer.write_i8(-2).expect("i8 should be written");
     writer.write_u16(0x1234).expect("u16 should be written");

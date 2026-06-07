@@ -17,6 +17,7 @@ use std::io::{
 };
 
 use crate::stream::BufferedOutput;
+use crate::util::encode_infallible_unchecked;
 use qubit_codec_binary::{
     BigEndian,
     BinaryCodec,
@@ -35,8 +36,8 @@ use qubit_codec_binary::{
 ///
 /// Pending buffered bytes are not flushed from [`Drop`]. Call [`Write::flush`]
 /// or [`Self::into_inner`] to guarantee that all bytes reach the wrapped
-/// writer. [`Self::inner`] and [`Self::inner_mut`] can observe the wrapped
-/// writer before pending bytes have been flushed.
+/// writer. [`Self::inner`] can observe the wrapped writer before pending bytes
+/// have been flushed.
 pub struct BufferedBinaryWriter<W, O = BigEndian> {
     output: BufferedOutput<W>,
     marker: PhantomData<fn() -> O>,
@@ -82,15 +83,6 @@ where
         self.output.inner()
     }
 
-    /// Returns an exclusive reference to the underlying writer.
-    ///
-    /// Pending bytes may still be held in this wrapper's internal buffer.
-    /// Flush first if the underlying writer must observe all previous writes.
-    #[must_use]
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut W {
-        self.output.inner_mut()
-    }
 }
 
 impl<W, O> BufferedBinaryWriter<W, O>
@@ -112,13 +104,13 @@ macro_rules! impl_value_write {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = BinaryCodec<$ty, $order>;
 
-            const LEN: usize = Codec::REQUIRED_MIN_BUFFER_LEN;
+            const LEN: usize = Codec::MAX_UNITS_PER_VALUE;
             self.output
                 .write_fixed::<LEN, _, _>(value, |bytes, index, value| {
                     // SAFETY: `write_fixed` guarantees that `LEN` writable bytes
                     // starting at `index` are available in the internal buffer.
                     unsafe {
-                        Codec::encode_unchecked(value, bytes, index);
+                        let _ = encode_infallible_unchecked::<Codec>(value, bytes, index);
                     }
                 })
         }

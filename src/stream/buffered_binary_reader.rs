@@ -17,6 +17,7 @@ use std::io::{
 };
 
 use crate::stream::BufferedInput;
+use crate::util::decode_infallible_unchecked;
 use qubit_codec_binary::{
     BigEndian,
     BinaryCodec,
@@ -83,16 +84,6 @@ where
         self.input.inner()
     }
 
-    /// Returns an exclusive reference to the underlying reader.
-    ///
-    /// Mutating the underlying reader directly can invalidate prefetched bytes
-    /// already held in this wrapper's internal buffer.
-    #[must_use]
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut R {
-        self.input.inner_mut()
-    }
-
     /// Consumes this wrapper and returns the underlying reader.
     ///
     /// Any bytes already prefetched into the internal buffer but not consumed
@@ -112,11 +103,11 @@ macro_rules! impl_value_read {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = BinaryCodec<$ty, $order>;
 
-            const LEN: usize = Codec::REQUIRED_MIN_BUFFER_LEN;
+            const LEN: usize = Codec::MIN_UNITS_PER_VALUE;
             self.input.read_fixed::<LEN, _, _>(|bytes, index| {
                 // SAFETY: `read_fixed` guarantees that `LEN` readable bytes
                 // starting at `index` are available in the internal buffer.
-                unsafe { Codec::decode_unchecked(bytes, index).0 }
+                unsafe { decode_infallible_unchecked::<Codec>(bytes, index) }
             })
         }
     };

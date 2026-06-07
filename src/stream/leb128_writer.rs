@@ -16,6 +16,10 @@ use std::io::{
 };
 
 use crate::WriteExt;
+use crate::util::{
+    checked_u64_len,
+    encode_infallible_unchecked,
+};
 use qubit_codec_binary::{
     Leb128Codec,
     NonStrict,
@@ -44,14 +48,14 @@ impl<W> Leb128Writer<W> {
     /// Returns a shared reference to the underlying writer.
     #[must_use]
     #[inline]
-    pub const fn get_ref(&self) -> &W {
+    pub const fn inner(&self) -> &W {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying writer.
     #[must_use]
     #[inline]
-    pub fn get_mut(&mut self) -> &mut W {
+    pub fn inner_mut(&mut self) -> &mut W {
         &mut self.inner
     }
 
@@ -71,7 +75,7 @@ macro_rules! impl_write_value {
             type Codec = Leb128Codec<$ty, NonStrict>;
 
             self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(value, |bytes, value| unsafe {
-                Codec::encode_unchecked(value, bytes, 0)
+                encode_infallible_unchecked::<Codec>(value, bytes, 0)
             })
         }
     };
@@ -120,6 +124,29 @@ where
     #[inline]
     pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
+        let bytes = value.as_bytes();
+        // SAFETY: The range covers the full byte slice produced by `str::as_bytes`.
+        unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
+    }
+
+    /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
+    ///
+    /// Prefer this method over [`Self::write_utf8_string`] for persistent files
+    /// and cross-platform protocols because the length field is independent of
+    /// the current Rust target's pointer width.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: String slice to write.
+    ///
+    /// # Errors
+    ///
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// cannot be represented as `u64`, or an I/O error from the underlying
+    /// writer.
+    #[inline]
+    pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
+        self.write_u64(checked_u64_len(value.len())?)?;
         let bytes = value.as_bytes();
         // SAFETY: The range covers the full byte slice produced by `str::as_bytes`.
         unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }

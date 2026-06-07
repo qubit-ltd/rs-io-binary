@@ -10,20 +10,20 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Error,
-    ErrorKind,
     Read,
     Result,
     Seek,
     SeekFrom,
 };
 
-use crate::ReadExt;
-use crate::util::read_utf8_payload;
+use crate::util::{
+    read_leb128_from_reader,
+    read_utf8_payload,
+    usize_from_u64_len,
+};
 use qubit_codec_binary::{
-    DecodePolicy,
     Leb128Codec,
-    Leb128DecodeError,
+    Leb128DecodePolicy,
     NonStrict,
     Strict,
 };
@@ -47,7 +47,7 @@ pub struct Leb128Reader<R, P = NonStrict> {
 
 impl<R, P> Leb128Reader<R, P>
 where
-    P: DecodePolicy,
+    P: Leb128DecodePolicy,
 {
     /// Creates a LEB128 reader.
     #[must_use]
@@ -70,14 +70,14 @@ where
     /// Returns a shared reference to the underlying reader.
     #[must_use]
     #[inline]
-    pub const fn get_ref(&self) -> &R {
+    pub const fn inner(&self) -> &R {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying reader.
     #[must_use]
     #[inline]
-    pub fn get_mut(&mut self) -> &mut R {
+    pub fn inner_mut(&mut self) -> &mut R {
         &mut self.inner
     }
 
@@ -96,9 +96,7 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = Leb128Codec<$ty, $policy>;
 
-            self.read_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(|bytes| unsafe {
-                Codec::decode_unchecked(bytes, 0)
-            })
+            read_leb128_from_reader::<{ Codec::MAX_UNITS_PER_VALUE }, Codec, _>(&mut self.inner, &mut self.buffer)
         }
     };
 }
@@ -146,37 +144,19 @@ macro_rules! impl_for_policy {
                 let len = self.read_usize()?;
                 read_utf8_payload(&mut self.inner, len, max_len)
             }
+
+            /// Reads a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
+            ///
+            /// Prefer this method over [`Self::read_utf8_string`] for persistent
+            /// files and cross-platform protocols because the length field is
+            /// independent of the current Rust target's pointer width.
+            #[inline]
+            pub fn read_utf8_string_u64(&mut self, max_len: usize) -> Result<String> {
+                let len = usize_from_u64_len(self.read_u64()?)?;
+                read_utf8_payload(&mut self.inner, len, max_len)
+            }
         }
     };
-}
-
-impl<R, P> Leb128Reader<R, P>
-where
-    R: Read,
-    P: DecodePolicy,
-{
-    #[inline]
-    fn read_leb128<T, const N: usize, F>(&mut self, decode: F) -> Result<T>
-    where
-        F: FnOnce(&[u8; 19]) -> std::result::Result<(T, core::num::NonZeroUsize), Leb128DecodeError>,
-    {
-        debug_assert!(N <= self.buffer.len(), "LEB128 read length exceeds internal buffer");
-        for index in 0..N {
-            // SAFETY: `index` is produced by `0..N`, where `N` is a
-            // codec-declared length that fits the fixed internal buffer.
-            unsafe {
-                self.inner.read_exact_unchecked(&mut self.buffer, index, 1)?;
-            }
-            if read_byte(&self.buffer, index) & 0x80 == 0 {
-                return decode(&self.buffer)
-                    .map(|(value, _)| value)
-                    .map_err(map_leb128_decode_error);
-            }
-        }
-        decode(&self.buffer)
-            .map(|(value, _)| value)
-            .map_err(map_leb128_decode_error)
-    }
 }
 
 impl_for_policy!(NonStrict);
@@ -226,18 +206,4 @@ where
     fn seek(&mut self, position: SeekFrom) -> Result<u64> {
         self.inner.seek(position)
     }
-}
-
-#[inline]
-fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
-    Error::new(ErrorKind::InvalidData, error)
-}
-
-/// Reads one byte from the internal LEB128 buffer without an extra bounds check.
-#[inline(always)]
-fn read_byte(buffer: &[u8; 19], index: usize) -> u8 {
-    debug_assert!(index < buffer.len(), "LEB128 read index exceeds internal buffer");
-    // SAFETY: `read_leb128` only calls this with an index produced by
-    // `0..N`, where N is a codec-declared length that fits `buffer`.
-    unsafe { *buffer.as_ptr().add(index) }
 }

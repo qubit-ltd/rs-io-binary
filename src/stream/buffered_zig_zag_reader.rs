@@ -10,8 +10,6 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Error,
-    ErrorKind,
     Read,
     Result,
     Seek,
@@ -19,9 +17,12 @@ use std::io::{
 };
 
 use crate::stream::BufferedInput;
+use crate::util::{
+    decode_available_leb128,
+    map_leb128_decode_error,
+};
 use qubit_codec_binary::{
-    DecodePolicy,
-    Leb128DecodeError,
+    Leb128DecodePolicy,
     NonStrict,
     Strict,
     ZigZagCodec,
@@ -51,7 +52,7 @@ pub struct BufferedZigZagReader<R, P = NonStrict> {
 
 impl<R, P> BufferedZigZagReader<R, P>
 where
-    P: DecodePolicy,
+    P: Leb128DecodePolicy,
 {
     /// Creates a buffered ZigZag reader with the default buffer capacity.
     #[must_use]
@@ -90,16 +91,6 @@ where
         self.input.inner()
     }
 
-    /// Returns an exclusive reference to the underlying reader.
-    ///
-    /// Mutating the underlying reader directly can invalidate prefetched bytes
-    /// already held in this wrapper's internal buffer.
-    #[must_use]
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut R {
-        self.input.inner_mut()
-    }
-
     /// Consumes this wrapper and returns the underlying reader.
     ///
     /// Any bytes already prefetched into the internal buffer but not consumed
@@ -120,18 +111,7 @@ macro_rules! impl_read_value {
 
             self.input
                 .read_variable_decoded::<{ Codec::MAX_UNITS_PER_VALUE }, _, _, _, _>(
-                    |bytes, index, available| {
-                        // SAFETY: `read_variable_decoded` only passes bytes already
-                        // present in the internal buffer and caps `available` at
-                        // the codec maximum width.
-                        match unsafe { Codec::decode_unchecked(&bytes[..index + available], index) } {
-                            Ok((value, consumed)) => Ok(Some((value, consumed.get()))),
-                            Err(error) => match error.consumed() {
-                                Some(consumed) => Err((error, consumed)),
-                                None => Ok(None),
-                            },
-                        }
-                    },
+                    decode_available_leb128::<Codec>,
                     map_leb128_decode_error,
                 )
         }
@@ -177,10 +157,4 @@ where
     fn seek(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek_raw(position)
     }
-}
-
-/// Converts a LEB128 decode error into an I/O error.
-#[inline]
-fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
-    Error::new(ErrorKind::InvalidData, error)
 }

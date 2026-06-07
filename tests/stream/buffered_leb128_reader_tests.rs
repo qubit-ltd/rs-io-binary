@@ -9,6 +9,7 @@ use std::io::{
 use qubit_io_binary::{
     BufferedLeb128Reader,
     Leb128Codec,
+    Leb128DecodeError,
     Leb128WriteExt,
     NonStrict,
     Strict,
@@ -145,7 +146,6 @@ fn test_buffered_leb128_reader_accessors_raw_seek_string_and_into_inner() {
 
     assert!(!reader.is_strict());
     assert_eq!(0, reader.inner().position());
-    reader.inner_mut().set_position(0);
     assert_eq!("abc", reader.read_utf8_string(3).expect("string should be read"));
     assert_eq!(4, reader.stream_position().expect("current seek should succeed"));
     let mut byte = [0_u8; 1];
@@ -158,12 +158,34 @@ fn test_buffered_leb128_reader_accessors_raw_seek_string_and_into_inner() {
 }
 
 #[test]
+fn test_buffered_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![3, b'x', b'y', b'z']));
+
+    assert_eq!(
+        "xyz",
+        reader
+            .read_utf8_string_u64(3)
+            .expect("u64 length-prefixed string should be read")
+    );
+}
+
+#[test]
 fn test_buffered_leb128_reader_reports_invalid_and_truncated_values() {
     let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(Cursor::new(vec![0x80, 0x00]), 2);
     assert!(reader.is_strict());
     assert_eq!(
         ErrorKind::InvalidData,
         reader.read_u16().expect_err("non-canonical value should fail").kind()
+    );
+
+    let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(Cursor::new(vec![0x80, 0x00]), 2);
+    let error = reader
+        .read_u16()
+        .expect_err("non-canonical value should fail");
+    let source = error.get_ref().expect("decode error should be preserved");
+    assert!(
+        source.downcast_ref::<Leb128DecodeError>().is_some(),
+        "I/O error should preserve the original LEB128 decode error"
     );
 
     let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(Cursor::new(vec![0x80]), 2);

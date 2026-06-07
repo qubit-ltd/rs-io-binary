@@ -47,7 +47,6 @@ fn test_buffered_zig_zag_reader_accessors_raw_seek_and_into_inner() {
 
     assert!(!reader.is_strict());
     assert_eq!(0, reader.inner().position());
-    reader.inner_mut().set_position(0);
     assert_eq!(-1, reader.read_i8().expect("ZigZag value should be read"));
     assert_eq!(1, reader.stream_position().expect("current seek should succeed"));
     let mut byte = [0_u8; 1];

@@ -13,6 +13,7 @@ use std::io::{
 };
 
 use crate::util::{
+    checked_u64_len,
     write_utf8_payload as write_utf8_payload_impl,
     write_utf8_string_with_u16_len,
     write_utf8_string_with_u32_len,
@@ -46,6 +47,21 @@ pub trait StringWriteExt: Write {
     /// # Errors
     /// Returns an I/O error from the underlying writer.
     fn write_utf8_string_uleb(&mut self, value: &str) -> Result<()>;
+
+    /// Writes a UTF-8 string with an unsigned LEB128 `u64` byte-length prefix.
+    ///
+    /// Prefer this method over [`Self::write_utf8_string_uleb`] for persistent
+    /// files and cross-platform protocols because the length field is
+    /// independent of the current Rust target's pointer width.
+    ///
+    /// # Parameters
+    /// - `value`: String slice to write.
+    ///
+    /// # Errors
+    /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
+    /// cannot be represented as `u64`, or an I/O error from the underlying
+    /// writer.
+    fn write_utf8_string_uleb_u64(&mut self, value: &str) -> Result<()>;
 
     /// Writes a UTF-8 string with a runtime-order `u16` byte-length prefix.
     ///
@@ -123,6 +139,13 @@ where
     fn write_utf8_string_uleb(&mut self, value: &str) -> Result<()> {
         let bytes = value.as_bytes();
         self.write_uleb_usize(bytes.len())?;
+        self.write_all(bytes)
+    }
+
+    #[inline]
+    fn write_utf8_string_uleb_u64(&mut self, value: &str) -> Result<()> {
+        let bytes = value.as_bytes();
+        self.write_uleb_u64(checked_u64_len(bytes.len())?)?;
         self.write_all(bytes)
     }
 

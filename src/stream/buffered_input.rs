@@ -89,20 +89,6 @@ impl<R> BufferedInput<R> {
         &self.inner
     }
 
-    /// Returns an exclusive reference to the wrapped input object.
-    ///
-    /// Mutating the inner object directly may invalidate assumptions about the
-    /// bytes already buffered by this value. Callers must keep the buffered
-    /// state and the wrapped input position consistent.
-    ///
-    /// # Returns
-    ///
-    /// An exclusive reference to the inner input object.
-    #[inline]
-    pub(crate) fn inner_mut(&mut self) -> &mut R {
-        &mut self.inner
-    }
-
     /// Consumes this buffered input and returns the wrapped input object.
     ///
     /// Any unread bytes currently held in the internal buffer are discarded.

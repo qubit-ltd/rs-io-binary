@@ -10,8 +10,6 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Error,
-    ErrorKind,
     Read,
     Result,
     Seek,
@@ -19,11 +17,15 @@ use std::io::{
 };
 
 use crate::stream::BufferedInput;
-use crate::util::read_utf8_payload;
+use crate::util::{
+    decode_available_leb128,
+    map_leb128_decode_error,
+    read_utf8_payload,
+    usize_from_u64_len,
+};
 use qubit_codec_binary::{
-    DecodePolicy,
     Leb128Codec,
-    Leb128DecodeError,
+    Leb128DecodePolicy,
     NonStrict,
     Strict,
 };
@@ -52,7 +54,7 @@ pub struct BufferedLeb128Reader<R, P = NonStrict> {
 
 impl<R, P> BufferedLeb128Reader<R, P>
 where
-    P: DecodePolicy,
+    P: Leb128DecodePolicy,
 {
     /// Creates a buffered LEB128 reader with the default buffer capacity.
     #[must_use]
@@ -91,16 +93,6 @@ where
         self.input.inner()
     }
 
-    /// Returns an exclusive reference to the underlying reader.
-    ///
-    /// Mutating the underlying reader directly can invalidate prefetched bytes
-    /// already held in this wrapper's internal buffer.
-    #[must_use]
-    #[inline]
-    pub fn inner_mut(&mut self) -> &mut R {
-        self.input.inner_mut()
-    }
-
     /// Consumes this wrapper and returns the underlying reader.
     ///
     /// Any bytes already prefetched into the internal buffer but not consumed
@@ -121,18 +113,7 @@ macro_rules! impl_read_value {
 
             self.input
                 .read_variable_decoded::<{ Codec::MAX_UNITS_PER_VALUE }, _, _, _, _>(
-                    |bytes, index, available| {
-                        // SAFETY: `read_variable_decoded` only passes bytes already
-                        // present in the internal buffer and caps `available` at
-                        // the codec maximum width.
-                        match unsafe { Codec::decode_unchecked(&bytes[..index + available], index) } {
-                            Ok((value, consumed)) => Ok(Some((value, consumed.get()))),
-                            Err(error) => match error.consumed() {
-                                Some(consumed) => Err((error, consumed)),
-                                None => Ok(None),
-                            },
-                        }
-                    },
+                    decode_available_leb128::<Codec>,
                     map_leb128_decode_error,
                 )
         }
@@ -168,6 +149,17 @@ macro_rules! impl_for_policy {
                 let len = self.read_usize()?;
                 read_utf8_payload(&mut self.input, len, max_len)
             }
+
+            /// Reads a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
+            ///
+            /// Prefer this method over [`Self::read_utf8_string`] for persistent
+            /// files and cross-platform protocols because the length field is
+            /// independent of the current Rust target's pointer width.
+            #[inline]
+            pub fn read_utf8_string_u64(&mut self, max_len: usize) -> Result<String> {
+                let len = usize_from_u64_len(self.read_u64()?)?;
+                read_utf8_payload(&mut self.input, len, max_len)
+            }
         }
     };
 }
@@ -195,10 +187,4 @@ where
     fn seek(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek_raw(position)
     }
-}
-
-/// Converts a LEB128 decode error into an I/O error.
-#[inline]
-fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
-    Error::new(ErrorKind::InvalidData, error)
 }

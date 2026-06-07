@@ -28,6 +28,22 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hello",
         input
+            .read_utf8_string_uleb_u64(8)
+            .expect("u64 ULEB string should be read")
+    );
+
+    let mut input = Cursor::new(vec![5, b'h', b'e', b'l', b'l', b'o']);
+    assert_eq!(
+        "hello",
+        input
+            .read_utf8_string_uleb_u64_strict(8)
+            .expect("strict u64 ULEB string should be read")
+    );
+
+    let mut input = Cursor::new(vec![5, b'h', b'e', b'l', b'l', b'o']);
+    assert_eq!(
+        "hello",
+        input
             .read_utf8_string_uleb_strict(8)
             .expect("strict ULEB string should be read")
     );
@@ -109,12 +125,30 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
             .kind()
     );
 
+    let mut input = Cursor::new(vec![3, b'a', b'b', b'c']);
+    assert_eq!(
+        ErrorKind::InvalidData,
+        input
+            .read_utf8_string_uleb_u64(2)
+            .expect_err("oversized u64 ULEB string should fail")
+            .kind()
+    );
+
     let mut input = Cursor::new(vec![0x80, 0x00, b'a']);
     assert_eq!(
         ErrorKind::InvalidData,
         input
             .read_utf8_string_uleb_strict(8)
             .expect_err("non-canonical ULEB length should fail")
+            .kind()
+    );
+
+    let mut input = Cursor::new(vec![0x80, 0x00, b'a']);
+    assert_eq!(
+        ErrorKind::InvalidData,
+        input
+            .read_utf8_string_uleb_u64_strict(8)
+            .expect_err("non-canonical u64 ULEB length should fail")
             .kind()
     );
 

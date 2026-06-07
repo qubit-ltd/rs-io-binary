@@ -312,14 +312,13 @@ fn test_buffered_binary_reader_accessors_raw_read_seek_and_into_inner() {
 
     assert_eq!(ByteOrder::LittleEndian, reader.byte_order());
     assert_eq!(0, reader.inner().position());
-    reader.inner_mut().set_position(1);
     assert_eq!(0, reader.read(&mut []).expect("empty read should succeed"));
-    assert_eq!(0x0302, reader.read_u16().expect("u16 should be read"));
+    assert_eq!(0x0201, reader.read_u16().expect("u16 should be read"));
     assert_eq!(
-        3,
+        2,
         reader.stream_position().expect("logical current seek should succeed")
     );
-    assert_eq!(4, reader.read_u8().expect("byte after current seek should be read"));
+    assert_eq!(3, reader.read_u8().expect("byte after current seek should be read"));
     assert_eq!(
         1,
         reader.seek(SeekFrom::Start(1)).expect("absolute seek should succeed")

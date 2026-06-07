@@ -22,8 +22,8 @@ impl Write for FailingWriter {
 fn test_zig_zag_writer_writes_all_methods_and_exposes_accessors() {
     let mut writer = ZigZagWriter::new(Vec::new());
 
-    assert_eq!(0, writer.get_ref().len());
-    writer.get_mut().extend_from_slice(&[]);
+    assert_eq!(0, writer.inner().len());
+    writer.inner_mut().extend_from_slice(&[]);
     writer.write_i8(i8::MIN).expect("i8 should be written");
     writer.write_i16(-300).expect("i16 should be written");
     writer.write_i32(-0x1f600).expect("i32 should be written");
