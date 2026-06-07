@@ -184,13 +184,10 @@ where
             written <= max_len,
             "encoder wrote beyond declared maximum length"
         );
-        // Keep this assignment based on the saved cursor instead of writing
-        // `self.length += written`. The encoder receives `&mut self.buffer`;
-        // on the fixed-width hot path, recomputing the cursor from
-        // `self.length` after that mutable borrow makes LLVM reload more
-        // state and measurably slows binary writes. Using `start + written`
-        // states the actual invariant directly: the cursor advances from the
-        // position that was checked before the codec wrote into the buffer.
+        // Keep the delegated buffer cursor update based on the range checked
+        // before the encoder ran. On the fixed-width hot path, avoiding a
+        // second round of cursor reasoning after the mutable buffer borrow has
+        // measured impact in the production-style binary write benchmark.
         // SAFETY: The spare-capacity check and codec contract guarantee that
         // `written` initialized bytes fit in the spare output window.
         unsafe {

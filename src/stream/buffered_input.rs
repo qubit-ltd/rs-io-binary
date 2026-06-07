@@ -142,14 +142,10 @@ where
         let (bytes, index, available) = self.input.unread_raw_parts();
         debug_assert!(available >= N, "requested range is not buffered");
         let value = decode(bytes, index);
-        // Keep the cursor update based on the saved `index` instead of
-        // writing `self.position += N`. This fixed-width read path is hot
-        // enough that the exact expression shape has measured impact: using
-        // `index + N` states the real invariant directly, namely that the
-        // cursor advances from the position that was checked before `decode`
-        // ran. Re-reading and incrementing `self.position` after the callback
-        // makes the optimizer reason about the field again and was slower in
-        // the production-style binary read benchmark.
+        // Keep the cursor update in the delegated buffer based on the range
+        // checked before `decode` ran. This fixed-width read path is hot
+        // enough that avoiding a second round of cursor reasoning has measured
+        // impact in the production-style binary read benchmark.
         // SAFETY: `ensure_available` proved that at least `N` bytes are
         // readable from the current cursor.
         unsafe {
