@@ -1,15 +1,6 @@
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Seek,
-    Write,
-};
+use std::io::{Cursor, Error, ErrorKind, Seek, Write};
 
-use qubit_io_binary::{
-    BufferedLeb128Writer,
-    Leb128WriteExt,
-};
+use qubit_io_binary::{BufferedLeb128Writer, Leb128WriteExt};
 
 struct FailingWriter;
 
@@ -91,8 +82,7 @@ fn test_buffered_leb128_writer_writes_values_across_buffer_boundaries() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner()
-{
+fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner() {
     let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
 
     assert_eq!(0, writer.inner().position());
@@ -156,8 +146,7 @@ fn test_buffered_leb128_writer_write_utf8_string_reports_length_flush_error() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix()
- {
+fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
     let mut writer = BufferedLeb128Writer::new(Vec::new());
 
     writer

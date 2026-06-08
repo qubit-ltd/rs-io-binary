@@ -6,23 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Result, Seek, SeekFrom, Write};
 
-use crate::stream::BufferedOutput;
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u64_len,
-    encode_infallible_unchecked,
-};
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
+use crate::stream::{BufferedOutput, BufferedOutputCodecExt};
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len};
+use qubit_codec_binary::{Leb128Codec, NonStrict};
 
 /// Buffered writer for canonical LEB128 integers.
 ///
@@ -41,11 +29,17 @@ use qubit_codec_binary::{
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as `write_u64` or `write_i64` for
 /// persistent files and cross-platform protocols.
-pub struct BufferedLeb128Writer<W> {
+pub struct BufferedLeb128Writer<W>
+where
+    W: Write,
+{
     output: BufferedOutput<W>,
 }
 
-impl<W> BufferedLeb128Writer<W> {
+impl<W> BufferedLeb128Writer<W>
+where
+    W: Write,
+{
     /// Creates a buffered LEB128 writer with the default buffer capacity.
     #[must_use]
     #[inline]
@@ -60,10 +54,7 @@ impl<W> BufferedLeb128Writer<W> {
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            output: BufferedOutput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
         }
     }
 
@@ -117,19 +108,7 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = Leb128Codec<$ty, NonStrict>;
 
-            self.output.write_encoded(
-                Codec::MAX_UNITS_PER_VALUE,
-                value,
-                |bytes, index, value| {
-                    // SAFETY: `write_encoded` guarantees enough writable bytes
-                    // for the codec-declared maximum encoded width.
-                    unsafe {
-                        encode_infallible_unchecked::<Codec>(
-                            value, bytes, index,
-                        )
-                    }
-                },
-            )
+            self.output.write_encoded::<Codec>(value)
         }
     };
 }

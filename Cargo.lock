@@ -237,18 +237,15 @@ dependencies = [
 
 [[package]]
 name = "qubit-codec"
-version = "0.5.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "35621b1a48e8ce9297764a3f1b423f753f103c27a809910d4ca8332bddf6cbd4"
+version = "0.6.0"
 dependencies = [
+ "qubit-io 0.8.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "thiserror",
 ]
 
 [[package]]
 name = "qubit-codec-binary"
 version = "0.1.0"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e1bb5a2e9bb6b9f69315cac536d85b0b27cd2d1410f601aac823301305b1d96f"
 dependencies = [
  "qubit-codec",
  "thiserror",
@@ -256,17 +253,22 @@ dependencies = [
 
 [[package]]
 name = "qubit-io"
-version = "0.7.0"
+version = "0.8.0"
+
+[[package]]
+name = "qubit-io"
+version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5696903b2de0e23b41036e5019d7899b7cd7988151e26cabdab8905ac5885dab"
+checksum = "30c7c6cb12d7662783e3979b0528ae087462c0dac6a922542a99eab05a215a44"
 
 [[package]]
 name = "qubit-io-binary"
 version = "0.1.0"
 dependencies = [
  "criterion",
+ "qubit-codec",
  "qubit-codec-binary",
- "qubit-io",
+ "qubit-io 0.8.0",
 ]
 
 [[package]]

@@ -31,8 +31,9 @@ name = "qubit_io_binary"
 doctest = true
 
 [dependencies]
-qubit-codec-binary = "0.1"
-qubit-io = "0.7"
+qubit-codec = { version = "0.6", path = "../rs-codec" }
+qubit-codec-binary = { version = "0.1", path = "../rs-codec-binary" }
+qubit-io = { version = "0.8", path = "../rs-io" }
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }

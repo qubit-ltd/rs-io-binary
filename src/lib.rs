@@ -20,44 +20,16 @@ mod stream;
 mod util;
 
 pub use ext::{
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagWriteExt,
+    BinaryReadExt, BinaryWriteExt, Leb128ReadExt, Leb128WriteExt, StringReadExt, StringWriteExt,
+    ZigZagReadExt, ZigZagWriteExt,
 };
 pub use qubit_codec_binary::{
-    BigEndian,
-    BinaryCodec,
-    ByteOrder,
-    ByteOrderSpec,
-    Leb128Codec,
-    Leb128DecodeError,
-    Leb128DecodeErrorKind,
-    Leb128DecodePolicy,
-    LittleEndian,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
+    BigEndian, BinaryCodec, ByteOrder, ByteOrderSpec, Leb128Codec, Leb128DecodeError,
+    Leb128DecodeErrorKind, Leb128DecodePolicy, LittleEndian, NonStrict, Strict, ZigZagCodec,
 };
-pub use qubit_io::{
-    ReadExt,
-    WriteExt,
-};
+pub use qubit_io::{ReadExt, WriteExt};
 pub use stream::{
-    BinaryReader,
-    BinaryWriter,
-    BufferedBinaryReader,
-    BufferedBinaryWriter,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-    BufferedZigZagReader,
-    BufferedZigZagWriter,
-    Leb128Reader,
-    Leb128Writer,
-    ZigZagReader,
-    ZigZagWriter,
+    BinaryReader, BinaryWriter, BufferedBinaryReader, BufferedBinaryWriter, BufferedLeb128Reader,
+    BufferedLeb128Writer, BufferedZigZagReader, BufferedZigZagWriter, Leb128Reader, Leb128Writer,
+    ZigZagReader, ZigZagWriter,
 };

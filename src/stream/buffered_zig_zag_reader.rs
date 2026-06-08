@@ -7,25 +7,11 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Read,
-    Result,
-    Seek,
-    SeekFrom,
-};
+use std::io::{Read, Result, Seek, SeekFrom};
 
-use crate::stream::BufferedInput;
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    decode_available_leb128,
-    map_leb128_decode_error,
-};
-use qubit_codec_binary::{
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
+use crate::stream::{BufferedInput, BufferedInputCodecExt};
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use qubit_codec_binary::{Leb128DecodePolicy, NonStrict, Strict, ZigZagCodec};
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.
 ///
@@ -44,13 +30,17 @@ use qubit_codec_binary::{
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as `read_i64` for persistent files and
 /// cross-platform protocols.
-pub struct BufferedZigZagReader<R, P = NonStrict> {
+pub struct BufferedZigZagReader<R, P = NonStrict>
+where
+    R: Read,
+{
     input: BufferedInput<R>,
     marker: PhantomData<fn() -> P>,
 }
 
 impl<R, P> BufferedZigZagReader<R, P>
 where
+    R: Read,
     P: Leb128DecodePolicy,
 {
     /// Creates a buffered ZigZag reader with the default buffer capacity.
@@ -68,10 +58,7 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: BufferedInput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            input: BufferedInput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
             marker: PhantomData,
         }
     }
@@ -111,11 +98,7 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = ZigZagCodec<$ty, $policy>;
 
-            self.input
-                .read_variable_decoded::<{ Codec::MAX_UNITS_PER_VALUE }, _, _, _, _>(
-                    decode_available_leb128::<Codec>,
-                    map_leb128_decode_error,
-                )
+            self.input.read_decoded::<Codec>()
         }
     };
 }
@@ -130,18 +113,8 @@ macro_rules! impl_for_policy {
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
             impl_read_value!($policy, read_i32, i32, "Reads a ZigZag `i32`.");
             impl_read_value!($policy, read_i64, i64, "Reads a ZigZag `i64`.");
-            impl_read_value!(
-                $policy,
-                read_i128,
-                i128,
-                "Reads a ZigZag `i128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_isize,
-                isize,
-                "Reads a ZigZag `isize`."
-            );
+            impl_read_value!($policy, read_i128, i128, "Reads a ZigZag `i128`.");
+            impl_read_value!($policy, read_isize, isize, "Reads a ZigZag `isize`.");
         }
     };
 }

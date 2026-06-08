@@ -6,17 +6,10 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Read,
-    Result,
-};
+use std::io::{Read, Result};
 
 use crate::util::read_leb128_payload;
-use qubit_codec_binary::{
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
+use qubit_codec_binary::{NonStrict, Strict, ZigZagCodec};
 
 macro_rules! read_zig_zag_value {
     ($reader:expr, $ty:ty, $policy:ty) => {

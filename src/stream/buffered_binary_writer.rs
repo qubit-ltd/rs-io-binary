@@ -7,23 +7,11 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Result,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Result, Seek, SeekFrom, Write};
 
-use crate::stream::BufferedOutput;
+use crate::stream::{BufferedOutput, BufferedOutputCodecExt};
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use crate::util::encode_infallible_unchecked;
-use qubit_codec_binary::{
-    BigEndian,
-    BinaryCodec,
-    ByteOrder,
-    ByteOrderSpec,
-    LittleEndian,
-};
+use qubit_codec_binary::{BigEndian, BinaryCodec, ByteOrder, ByteOrderSpec, LittleEndian};
 
 /// Buffered writer for fixed-width binary values.
 ///
@@ -37,13 +25,17 @@ use qubit_codec_binary::{
 /// or [`Self::into_inner`] to guarantee that all bytes reach the wrapped
 /// writer. [`Self::inner`] can observe the wrapped writer before pending bytes
 /// have been flushed.
-pub struct BufferedBinaryWriter<W, O = BigEndian> {
+pub struct BufferedBinaryWriter<W, O = BigEndian>
+where
+    W: Write,
+{
     output: BufferedOutput<W>,
     marker: PhantomData<fn() -> O>,
 }
 
 impl<W, O> BufferedBinaryWriter<W, O>
 where
+    W: Write,
     O: ByteOrderSpec,
 {
     /// Creates a buffered binary writer with the default buffer capacity.
@@ -61,10 +53,7 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            output: BufferedOutput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
             marker: PhantomData,
         }
     }
@@ -105,20 +94,7 @@ macro_rules! impl_value_write {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = BinaryCodec<$ty, $order>;
 
-            const LEN: usize = Codec::MAX_UNITS_PER_VALUE;
-            self.output.write_fixed::<LEN, _, _>(
-                value,
-                |bytes, index, value| {
-                    // SAFETY: `write_fixed` guarantees that `LEN` writable
-                    // bytes starting at `index` are available in
-                    // the internal buffer.
-                    unsafe {
-                        let _ = encode_infallible_unchecked::<Codec>(
-                            value, bytes, index,
-                        );
-                    }
-                },
-            )
+            self.output.write_encoded::<Codec>(value)
         }
     };
 }
@@ -129,66 +105,21 @@ macro_rules! impl_for_order {
         where
             W: Write,
         {
-            impl_value_write!(
-                $order,
-                write_u8,
-                u8,
-                "Writes an unsigned 8-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i8,
-                i8,
-                "Writes a signed 8-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u16,
-                u16,
-                "Writes an unsigned 16-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u32,
-                u32,
-                "Writes an unsigned 32-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u64,
-                u64,
-                "Writes an unsigned 64-bit integer."
-            );
+            impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
+            impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
+            impl_value_write!($order, write_u16, u16, "Writes an unsigned 16-bit integer.");
+            impl_value_write!($order, write_u32, u32, "Writes an unsigned 32-bit integer.");
+            impl_value_write!($order, write_u64, u64, "Writes an unsigned 64-bit integer.");
             impl_value_write!(
                 $order,
                 write_u128,
                 u128,
                 "Writes an unsigned 128-bit integer."
             );
-            impl_value_write!(
-                $order,
-                write_i16,
-                i16,
-                "Writes a signed 16-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i32,
-                i32,
-                "Writes a signed 32-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i64,
-                i64,
-                "Writes a signed 64-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i128,
-                i128,
-                "Writes a signed 128-bit integer."
-            );
+            impl_value_write!($order, write_i16, i16, "Writes a signed 16-bit integer.");
+            impl_value_write!($order, write_i32, i32, "Writes a signed 32-bit integer.");
+            impl_value_write!($order, write_i64, i64, "Writes a signed 64-bit integer.");
+            impl_value_write!($order, write_i128, i128, "Writes a signed 128-bit integer.");
             impl_value_write!($order, write_f32, f32, "Writes a 32-bit float.");
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
         }

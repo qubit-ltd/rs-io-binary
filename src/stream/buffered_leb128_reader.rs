@@ -7,28 +7,13 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Read,
-    Result,
-    Seek,
-    SeekFrom,
-};
+use std::io::{Read, Result, Seek, SeekFrom};
 
-use crate::stream::BufferedInput;
+use crate::stream::{BufferedInput, BufferedInputCodecExt};
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    decode_available_leb128,
-    map_leb128_decode_error,
-    read_utf8_payload,
-};
-use qubit_codec_binary::{
-    Leb128Codec,
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-};
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, read_utf8_payload};
+use qubit_codec_binary::{Leb128Codec, Leb128DecodePolicy, NonStrict, Strict};
 
 /// Buffered reader for LEB128 integers.
 ///
@@ -47,13 +32,17 @@ use qubit_codec_binary::{
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as `read_u64` or `read_i64` for
 /// persistent files and cross-platform protocols.
-pub struct BufferedLeb128Reader<R, P = NonStrict> {
+pub struct BufferedLeb128Reader<R, P = NonStrict>
+where
+    R: Read,
+{
     input: BufferedInput<R>,
     marker: PhantomData<fn() -> P>,
 }
 
 impl<R, P> BufferedLeb128Reader<R, P>
 where
+    R: Read,
     P: Leb128DecodePolicy,
 {
     /// Creates a buffered LEB128 reader with the default buffer capacity.
@@ -71,10 +60,7 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: BufferedInput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            input: BufferedInput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
             marker: PhantomData,
         }
     }
@@ -114,11 +100,7 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = Leb128Codec<$ty, $policy>;
 
-            self.input
-                .read_variable_decoded::<{ Codec::MAX_UNITS_PER_VALUE }, _, _, _, _>(
-                    decode_available_leb128::<Codec>,
-                    map_leb128_decode_error,
-                )
+            self.input.read_decoded::<Codec>()
         }
     };
 }
@@ -129,78 +111,23 @@ macro_rules! impl_for_policy {
         where
             R: Read,
         {
-            impl_read_value!(
-                $policy,
-                read_u8,
-                u8,
-                "Reads an unsigned LEB128 `u8`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u16,
-                u16,
-                "Reads an unsigned LEB128 `u16`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u32,
-                u32,
-                "Reads an unsigned LEB128 `u32`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u64,
-                u64,
-                "Reads an unsigned LEB128 `u64`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u128,
-                u128,
-                "Reads an unsigned LEB128 `u128`."
-            );
+            impl_read_value!($policy, read_u8, u8, "Reads an unsigned LEB128 `u8`.");
+            impl_read_value!($policy, read_u16, u16, "Reads an unsigned LEB128 `u16`.");
+            impl_read_value!($policy, read_u32, u32, "Reads an unsigned LEB128 `u32`.");
+            impl_read_value!($policy, read_u64, u64, "Reads an unsigned LEB128 `u64`.");
+            impl_read_value!($policy, read_u128, u128, "Reads an unsigned LEB128 `u128`.");
             impl_read_value!(
                 $policy,
                 read_usize,
                 usize,
                 "Reads an unsigned LEB128 `usize`."
             );
-            impl_read_value!(
-                $policy,
-                read_i8,
-                i8,
-                "Reads a signed LEB128 `i8`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i16,
-                i16,
-                "Reads a signed LEB128 `i16`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i32,
-                i32,
-                "Reads a signed LEB128 `i32`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i64,
-                i64,
-                "Reads a signed LEB128 `i64`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i128,
-                i128,
-                "Reads a signed LEB128 `i128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_isize,
-                isize,
-                "Reads a signed LEB128 `isize`."
-            );
+            impl_read_value!($policy, read_i8, i8, "Reads a signed LEB128 `i8`.");
+            impl_read_value!($policy, read_i16, i16, "Reads a signed LEB128 `i16`.");
+            impl_read_value!($policy, read_i32, i32, "Reads a signed LEB128 `i32`.");
+            impl_read_value!($policy, read_i64, i64, "Reads a signed LEB128 `i64`.");
+            impl_read_value!($policy, read_i128, i128, "Reads a signed LEB128 `i128`.");
+            impl_read_value!($policy, read_isize, isize, "Reads a signed LEB128 `isize`.");
 
             /// Reads a UTF-8 string prefixed by an unsigned LEB128 byte length.
             ///
@@ -208,10 +135,7 @@ macro_rules! impl_for_policy {
             /// target-width dependent. Prefer a fixed-width length prefix for
             /// persistent files and cross-platform protocols.
             #[inline]
-            pub fn read_utf8_string(
-                &mut self,
-                max_len: usize,
-            ) -> Result<String> {
+            pub fn read_utf8_string(&mut self, max_len: usize) -> Result<String> {
                 let len = self.read_usize()?;
                 read_utf8_payload(&mut self.input, len, max_len)
             }
@@ -224,10 +148,7 @@ macro_rules! impl_for_policy {
             /// length field is independent of the current Rust target's
             /// pointer width.
             #[inline]
-            pub fn read_utf8_string_u64(
-                &mut self,
-                max_len: usize,
-            ) -> Result<String> {
+            pub fn read_utf8_string_u64(&mut self, max_len: usize) -> Result<String> {
                 let len = self.read_u64()?;
                 #[cfg(target_pointer_width = "64")]
                 let len = len as usize;

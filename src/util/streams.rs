@@ -7,38 +7,23 @@
 // =============================================================================
 use core::convert::Infallible;
 use core::num::NonZeroUsize;
-use std::io::{
-    Error,
-    ErrorKind,
-    Read,
-    Result,
-    Write,
-};
+use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
-use qubit_codec_binary::{
-    Codec,
-    Leb128DecodeError,
-};
+use qubit_codec_binary::{Codec, Leb128DecodeError};
 
 use super::allocation::try_reserve_vec;
 
-const U32_LENGTH_OVERFLOW: &str =
-    "string length exceeds maximum encodable u32 length";
+const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 length";
 #[cfg(not(any(
     target_pointer_width = "16",
     target_pointer_width = "32",
     target_pointer_width = "64",
 )))]
-const U64_LENGTH_OVERFLOW: &str =
-    "string length exceeds maximum encodable u64 length";
+const U64_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u64 length";
 /// Minimum capacity required by the largest scalar codec payload.
 pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
-
-/// Result returned by a buffered LEB128 decode attempt.
-type AvailableLeb128DecodeResult<T> =
-    std::result::Result<Option<(T, usize)>, (Leb128DecodeError, usize)>;
 
 /// Decodes a value with an infallible byte codec without extra bounds checks.
 ///
@@ -47,10 +32,7 @@ type AvailableLeb128DecodeResult<T> =
 /// The caller must guarantee that `index` is a valid start position in `input`
 /// and that at least `C::min_units_per_value()` bytes are readable from it.
 #[inline(always)]
-pub(crate) unsafe fn decode_infallible_unchecked<C>(
-    input: &[u8],
-    index: usize,
-) -> C::Value
+pub(crate) unsafe fn decode_infallible_unchecked<C>(input: &[u8], index: usize) -> C::Value
 where
     C: Codec<Unit = u8, DecodeError = Infallible> + Default,
 {
@@ -118,9 +100,7 @@ where
 /// Returns an I/O error reported by `reader`, or [`ErrorKind::InvalidData`]
 /// when the codec rejects the payload.
 #[inline]
-pub(crate) fn read_leb128_payload<const N: usize, C, R>(
-    reader: &mut R,
-) -> Result<C::Value>
+pub(crate) fn read_leb128_payload<const N: usize, C, R>(reader: &mut R) -> Result<C::Value>
 where
     R: Read + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
@@ -195,51 +175,6 @@ where
         .map_err(map_leb128_decode_error)
 }
 
-/// Decodes from bytes currently available in a buffered input window.
-///
-/// # Parameters
-///
-/// - `bytes`: Internal buffered input storage.
-/// - `index`: Start index of the unread payload.
-/// - `available`: Number of readable bytes for this decode attempt.
-///
-/// # Returns
-///
-/// Returns `Ok(Some((value, consumed)))` when a complete value is decoded,
-/// `Ok(None)` when more input is required, or `Err((error, consumed))` when an
-/// invalid payload should be consumed before reporting the error.
-#[inline(always)]
-pub(crate) fn decode_available_leb128<C>(
-    bytes: &[u8],
-    index: usize,
-    available: usize,
-) -> AvailableLeb128DecodeResult<C::Value>
-where
-    C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
-{
-    debug_assert!(available > 0, "decode requires at least one available byte");
-    debug_assert!(
-        index + available <= bytes.len(),
-        "decode range exceeds buffered input"
-    );
-    // SAFETY: `BufferedInput::read_variable_decoded` guarantees that
-    // `index + available` is inside the internal buffer. The shortened slice
-    // prevents a variable-width codec from observing stale bytes beyond the
-    // currently available payload window.
-    let available_bytes = unsafe {
-        core::slice::from_raw_parts(bytes.as_ptr(), index + available)
-    };
-    // SAFETY: `available > 0`, and `index` is a valid boundary in
-    // `available_bytes`.
-    match unsafe { decode_leb128_unchecked::<C>(available_bytes, index) } {
-        Ok((value, consumed)) => Ok(Some((value, consumed.get()))),
-        Err(error) => match error.consumed() {
-            Some(consumed) => Err((error, consumed.get())),
-            None => Ok(None),
-        },
-    }
-}
-
 /// Converts a LEB128 decode error into an invalid-data I/O error.
 pub(crate) fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
     Error::new(ErrorKind::InvalidData, error)
@@ -278,11 +213,7 @@ fn one_byte_slice(bytes: &mut [u8], index: usize) -> &mut [u8] {
 /// Returns [`ErrorKind::InvalidData`] when `len` exceeds `max_len`, an
 /// allocation error when reserving the output buffer fails, an I/O error from
 /// `reader`, or [`ErrorKind::InvalidData`] when the payload is not valid UTF-8.
-pub(crate) fn read_utf8_payload<R>(
-    reader: &mut R,
-    len: usize,
-    max_len: usize,
-) -> Result<String>
+pub(crate) fn read_utf8_payload<R>(reader: &mut R, len: usize, max_len: usize) -> Result<String>
 where
     R: Read + ?Sized,
 {
@@ -378,9 +309,7 @@ pub(crate) fn checked_u64_len(len: usize) -> Result<u64> {
         target_pointer_width = "64",
     )))]
     {
-        u64::try_from(len).map_err(|_| {
-            Error::new(ErrorKind::InvalidInput, U64_LENGTH_OVERFLOW)
-        })
+        u64::try_from(len).map_err(|_| Error::new(ErrorKind::InvalidInput, U64_LENGTH_OVERFLOW))
     }
 }
 
@@ -390,9 +319,7 @@ pub(crate) fn usize_from_u32_len(len: u32) -> Result<usize> {
     usize::try_from(len).map_err(|_| {
         Error::new(
             ErrorKind::InvalidData,
-            format!(
-                "string length {len} exceeds maximum supported usize length"
-            ),
+            format!("string length {len} exceeds maximum supported usize length"),
         )
     })
 }
@@ -403,9 +330,7 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
     usize::try_from(len).map_err(|_| {
         Error::new(
             ErrorKind::InvalidData,
-            format!(
-                "string length {len} exceeds maximum supported usize length"
-            ),
+            format!("string length {len} exceeds maximum supported usize length"),
         )
     })
 }
@@ -414,9 +339,7 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
 fn length_exceeded_error(len: usize, max_len: usize) -> Error {
     Error::new(
         ErrorKind::InvalidData,
-        format!(
-            "string length {len} exceeds maximum length of {max_len} bytes"
-        ),
+        format!("string length {len} exceeds maximum length of {max_len} bytes"),
     )
 }
 

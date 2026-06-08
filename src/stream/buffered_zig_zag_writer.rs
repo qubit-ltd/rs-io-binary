@@ -6,20 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Result, Seek, SeekFrom, Write};
 
-use crate::stream::BufferedOutput;
+use crate::stream::{BufferedOutput, BufferedOutputCodecExt};
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use crate::util::encode_infallible_unchecked;
-use qubit_codec_binary::{
-    NonStrict,
-    ZigZagCodec,
-};
+use qubit_codec_binary::{NonStrict, ZigZagCodec};
 
 /// Buffered writer for canonical ZigZag + unsigned LEB128 integers.
 ///
@@ -38,11 +29,17 @@ use qubit_codec_binary::{
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as `write_i64` for persistent files and
 /// cross-platform protocols.
-pub struct BufferedZigZagWriter<W> {
+pub struct BufferedZigZagWriter<W>
+where
+    W: Write,
+{
     output: BufferedOutput<W>,
 }
 
-impl<W> BufferedZigZagWriter<W> {
+impl<W> BufferedZigZagWriter<W>
+where
+    W: Write,
+{
     /// Creates a buffered ZigZag writer with the default buffer capacity.
     #[must_use]
     #[inline]
@@ -57,10 +54,7 @@ impl<W> BufferedZigZagWriter<W> {
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            output: BufferedOutput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
         }
     }
 
@@ -92,19 +86,7 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
-            self.output.write_encoded(
-                Codec::MAX_UNITS_PER_VALUE,
-                value,
-                |bytes, index, value| {
-                    // SAFETY: `write_encoded` guarantees enough writable bytes
-                    // for the codec-declared maximum encoded width.
-                    unsafe {
-                        encode_infallible_unchecked::<Codec>(
-                            value, bytes, index,
-                        )
-                    }
-                },
-            )
+            self.output.write_encoded::<Codec>(value)
         }
     };
 }
