@@ -2,8 +2,6 @@
 //    Copyright (c) 2026 Haixing Hu.
 //
 //    SPDX-License-Identifier: Apache-2.0
-//
-//    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
 use std::error::Error as StdError;
@@ -11,21 +9,17 @@ use std::io::{
     Error,
     ErrorKind,
     Result,
-    Seek,
-    SeekFrom,
     Write,
 };
 
+use qubit_codec::BufferedEncodeOutput;
 use qubit_codec::{
     Codec,
     CodecBufferedEncoder,
-    CodecEncodeError,
 };
 
-use super::buffered_output::BufferedOutput;
-
-/// Codec-oriented helpers for [`BufferedOutput`].
-pub(crate) trait BufferedOutputCodecExt<W> {
+/// Codec-oriented helpers for [`BufferedEncodeOutput`].
+pub(crate) trait BufferedEncodeOutputExt<W> {
     /// Consumes this buffered output after flushing pending bytes.
     fn into_inner(self) -> Result<W>
     where
@@ -38,19 +32,9 @@ pub(crate) trait BufferedOutputCodecExt<W> {
         C: Codec<Unit = u8> + Default,
         C::Value: Copy,
         C::EncodeError: StdError + Send + Sync + 'static;
-
-    /// Writes all raw bytes through the internal buffer.
-    fn write_all_buffered(&mut self, input: &[u8]) -> Result<()>
-    where
-        W: Write;
-
-    /// Flushes pending bytes before seeking the wrapped writer.
-    fn seek_raw(&mut self, position: SeekFrom) -> Result<u64>
-    where
-        W: Write + Seek;
 }
 
-impl<W> BufferedOutputCodecExt<W> for BufferedOutput<W>
+impl<W> BufferedEncodeOutputExt<W> for BufferedEncodeOutput<W>
 where
     W: Write,
 {
@@ -75,7 +59,7 @@ where
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut encoder = CodecBufferedEncoder::new(C::default());
-        let mut map_error = map_codec_encode_error::<C::EncodeError>;
+        let mut map_error = |error| Error::new(ErrorKind::InvalidData, error);
         let input = [value];
         let written = unsafe {
             // SAFETY: The one-value input range is valid.
@@ -96,28 +80,4 @@ where
             ))
         }
     }
-
-    #[inline]
-    fn write_all_buffered(&mut self, input: &[u8]) -> Result<()>
-    where
-        W: Write,
-    {
-        self.write_units(input)
-    }
-
-    #[inline]
-    fn seek_raw(&mut self, position: SeekFrom) -> Result<u64>
-    where
-        W: Write + Seek,
-    {
-        Seek::seek(self, position)
-    }
-}
-
-/// Converts codec encode failures into stream I/O errors.
-fn map_codec_encode_error<E>(error: CodecEncodeError<E>) -> Error
-where
-    E: StdError + Send + Sync + 'static,
-{
-    Error::new(ErrorKind::InvalidData, error)
 }

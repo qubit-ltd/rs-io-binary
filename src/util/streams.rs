@@ -7,21 +7,32 @@
 // =============================================================================
 use core::convert::Infallible;
 use core::num::NonZeroUsize;
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{
+    Error,
+    ErrorKind,
+    Read,
+    Result,
+    Write,
+};
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
-use qubit_codec_binary::{Codec, Leb128DecodeError};
+use qubit_codec_binary::{
+    Codec,
+    Leb128DecodeError,
+};
 
 use super::allocation::try_reserve_vec;
 
-const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 length";
+const U32_LENGTH_OVERFLOW: &str =
+    "string length exceeds maximum encodable u32 length";
 #[cfg(not(any(
     target_pointer_width = "16",
     target_pointer_width = "32",
     target_pointer_width = "64",
 )))]
-const U64_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u64 length";
+const U64_LENGTH_OVERFLOW: &str =
+    "string length exceeds maximum encodable u64 length";
 /// Minimum capacity required by the largest scalar codec payload.
 pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
 
@@ -32,7 +43,10 @@ pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
 /// The caller must guarantee that `index` is a valid start position in `input`
 /// and that at least `C::min_units_per_value()` bytes are readable from it.
 #[inline(always)]
-pub(crate) unsafe fn decode_infallible_unchecked<C>(input: &[u8], index: usize) -> C::Value
+pub(crate) unsafe fn decode_infallible_unchecked<C>(
+    input: &[u8],
+    index: usize,
+) -> C::Value
 where
     C: Codec<Unit = u8, DecodeError = Infallible> + Default,
 {
@@ -100,7 +114,9 @@ where
 /// Returns an I/O error reported by `reader`, or [`ErrorKind::InvalidData`]
 /// when the codec rejects the payload.
 #[inline]
-pub(crate) fn read_leb128_payload<const N: usize, C, R>(reader: &mut R) -> Result<C::Value>
+pub(crate) fn read_leb128_payload<const N: usize, C, R>(
+    reader: &mut R,
+) -> Result<C::Value>
 where
     R: Read + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
@@ -213,7 +229,11 @@ fn one_byte_slice(bytes: &mut [u8], index: usize) -> &mut [u8] {
 /// Returns [`ErrorKind::InvalidData`] when `len` exceeds `max_len`, an
 /// allocation error when reserving the output buffer fails, an I/O error from
 /// `reader`, or [`ErrorKind::InvalidData`] when the payload is not valid UTF-8.
-pub(crate) fn read_utf8_payload<R>(reader: &mut R, len: usize, max_len: usize) -> Result<String>
+pub(crate) fn read_utf8_payload<R>(
+    reader: &mut R,
+    len: usize,
+    max_len: usize,
+) -> Result<String>
 where
     R: Read + ?Sized,
 {
@@ -309,7 +329,9 @@ pub(crate) fn checked_u64_len(len: usize) -> Result<u64> {
         target_pointer_width = "64",
     )))]
     {
-        u64::try_from(len).map_err(|_| Error::new(ErrorKind::InvalidInput, U64_LENGTH_OVERFLOW))
+        u64::try_from(len).map_err(|_| {
+            Error::new(ErrorKind::InvalidInput, U64_LENGTH_OVERFLOW)
+        })
     }
 }
 
@@ -319,7 +341,9 @@ pub(crate) fn usize_from_u32_len(len: u32) -> Result<usize> {
     usize::try_from(len).map_err(|_| {
         Error::new(
             ErrorKind::InvalidData,
-            format!("string length {len} exceeds maximum supported usize length"),
+            format!(
+                "string length {len} exceeds maximum supported usize length"
+            ),
         )
     })
 }
@@ -330,7 +354,9 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
     usize::try_from(len).map_err(|_| {
         Error::new(
             ErrorKind::InvalidData,
-            format!("string length {len} exceeds maximum supported usize length"),
+            format!(
+                "string length {len} exceeds maximum supported usize length"
+            ),
         )
     })
 }
@@ -339,7 +365,9 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
 fn length_exceeded_error(len: usize, max_len: usize) -> Error {
     Error::new(
         ErrorKind::InvalidData,
-        format!("string length {len} exceeds maximum length of {max_len} bytes"),
+        format!(
+            "string length {len} exceeds maximum length of {max_len} bytes"
+        ),
     )
 }
 

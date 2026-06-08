@@ -6,11 +6,23 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Result, Seek, SeekFrom, Write};
+use std::io::{
+    Result,
+    Seek,
+    SeekFrom,
+    Write,
+};
 
-use crate::stream::{BufferedOutput, BufferedOutputCodecExt};
-use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len};
-use qubit_codec_binary::{Leb128Codec, NonStrict};
+use crate::stream::BufferedEncodeOutputExt;
+use crate::util::{
+    MIN_CODEC_BUFFER_CAPACITY,
+    checked_u64_len,
+};
+use qubit_codec::BufferedEncodeOutput;
+use qubit_codec_binary::{
+    Leb128Codec,
+    NonStrict,
+};
 
 /// Buffered writer for canonical LEB128 integers.
 ///
@@ -33,7 +45,7 @@ pub struct BufferedLeb128Writer<W>
 where
     W: Write,
 {
-    output: BufferedOutput<W>,
+    output: BufferedEncodeOutput<W>,
 }
 
 impl<W> BufferedLeb128Writer<W>
@@ -45,7 +57,7 @@ where
     #[inline]
     pub fn new(inner: W) -> Self {
         Self {
-            output: BufferedOutput::new(inner),
+            output: BufferedEncodeOutput::new(inner),
         }
     }
 
@@ -54,7 +66,10 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
+            output: BufferedEncodeOutput::with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            ),
         }
     }
 
@@ -86,7 +101,7 @@ where
     #[inline]
     pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
-        self.output.write_all_buffered(value.as_bytes())
+        self.output.write_all(value.as_bytes())
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
@@ -97,7 +112,7 @@ where
     #[inline]
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;
-        self.output.write_all_buffered(value.as_bytes())
+        self.output.write_all(value.as_bytes())
     }
 }
 
@@ -161,6 +176,6 @@ where
     /// Flushes pending bytes before seeking the wrapped writer.
     #[inline]
     fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.output.seek_raw(position)
+        self.output.seek(position)
     }
 }

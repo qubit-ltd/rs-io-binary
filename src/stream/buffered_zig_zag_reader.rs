@@ -7,11 +7,22 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{Read, Result, Seek, SeekFrom};
+use std::io::{
+    Read,
+    Result,
+    Seek,
+    SeekFrom,
+};
 
-use crate::stream::{BufferedInput, BufferedInputCodecExt};
+use crate::stream::BufferedDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec_binary::{Leb128DecodePolicy, NonStrict, Strict, ZigZagCodec};
+use qubit_codec::BufferedDecodeInput;
+use qubit_codec_binary::{
+    Leb128DecodePolicy,
+    NonStrict,
+    Strict,
+    ZigZagCodec,
+};
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.
 ///
@@ -34,7 +45,7 @@ pub struct BufferedZigZagReader<R, P = NonStrict>
 where
     R: Read,
 {
-    input: BufferedInput<R>,
+    input: BufferedDecodeInput<R>,
     marker: PhantomData<fn() -> P>,
 }
 
@@ -48,7 +59,7 @@ where
     #[inline]
     pub fn new(inner: R) -> Self {
         Self {
-            input: BufferedInput::new(inner),
+            input: BufferedDecodeInput::new(inner),
             marker: PhantomData,
         }
     }
@@ -58,7 +69,10 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: BufferedInput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
+            input: BufferedDecodeInput::with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            ),
             marker: PhantomData,
         }
     }
@@ -113,8 +127,18 @@ macro_rules! impl_for_policy {
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
             impl_read_value!($policy, read_i32, i32, "Reads a ZigZag `i32`.");
             impl_read_value!($policy, read_i64, i64, "Reads a ZigZag `i64`.");
-            impl_read_value!($policy, read_i128, i128, "Reads a ZigZag `i128`.");
-            impl_read_value!($policy, read_isize, isize, "Reads a ZigZag `isize`.");
+            impl_read_value!(
+                $policy,
+                read_i128,
+                i128,
+                "Reads a ZigZag `i128`."
+            );
+            impl_read_value!(
+                $policy,
+                read_isize,
+                isize,
+                "Reads a ZigZag `isize`."
+            );
         }
     };
 }
@@ -129,7 +153,7 @@ where
     /// Reads bytes from the buffered reader.
     #[inline]
     fn read(&mut self, buffer: &mut [u8]) -> Result<usize> {
-        self.input.read_raw(buffer)
+        self.input.read(buffer)
     }
 }
 
@@ -140,6 +164,6 @@ where
     /// Seeks the wrapped reader and discards buffered bytes after success.
     #[inline]
     fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.input.seek_raw(position)
+        self.input.seek(position)
     }
 }

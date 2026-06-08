@@ -6,11 +6,20 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Result, Seek, SeekFrom, Write};
+use std::io::{
+    Result,
+    Seek,
+    SeekFrom,
+    Write,
+};
 
-use crate::stream::{BufferedOutput, BufferedOutputCodecExt};
+use crate::stream::BufferedEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec_binary::{NonStrict, ZigZagCodec};
+use qubit_codec::BufferedEncodeOutput;
+use qubit_codec_binary::{
+    NonStrict,
+    ZigZagCodec,
+};
 
 /// Buffered writer for canonical ZigZag + unsigned LEB128 integers.
 ///
@@ -33,7 +42,7 @@ pub struct BufferedZigZagWriter<W>
 where
     W: Write,
 {
-    output: BufferedOutput<W>,
+    output: BufferedEncodeOutput<W>,
 }
 
 impl<W> BufferedZigZagWriter<W>
@@ -45,7 +54,7 @@ where
     #[inline]
     pub fn new(inner: W) -> Self {
         Self {
-            output: BufferedOutput::new(inner),
+            output: BufferedEncodeOutput::new(inner),
         }
     }
 
@@ -54,7 +63,10 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedOutput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
+            output: BufferedEncodeOutput::with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            ),
         }
     }
 
@@ -133,6 +145,6 @@ where
     /// Flushes pending bytes before seeking the wrapped writer.
     #[inline]
     fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.output.seek_raw(position)
+        self.output.seek(position)
     }
 }
