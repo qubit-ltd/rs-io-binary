@@ -12,11 +12,12 @@ use std::io::{
 };
 
 use qubit_codec::{
+    BufferedDecodeEngine,
     BufferedDecodeInput,
     Codec,
 };
 
-use super::stream_codec_buffered_decoder::StreamCodecBufferedDecoder;
+use super::stream_codec_buffered_decode_hooks::StreamCodecBufferedDecodeHooks;
 use super::stream_codec_decode_error::{
     StreamCodecDecodeError,
     consumed_from_codec_decode_error,
@@ -56,7 +57,10 @@ where
         C::Value: Copy + Default,
         C::DecodeError: StreamCodecDecodeError,
     {
-        let mut decoder = StreamCodecBufferedDecoder::new(C::default());
+        let mut decoder = BufferedDecodeEngine::new(
+            C::default(),
+            StreamCodecBufferedDecodeHooks,
+        );
         let mut consumed_on_error = None;
         let mut map_error = |error| {
             consumed_on_error =
