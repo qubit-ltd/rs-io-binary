@@ -12,17 +12,11 @@ use std::io::{
 };
 
 use qubit_codec::{
-    BufferedDecodeEngine,
     BufferedDecodeInput,
     Codec,
 };
 
-use super::stream_codec_buffered_decode_hooks::StreamCodecBufferedDecodeHooks;
-use super::stream_codec_decode_error::{
-    StreamCodecDecodeError,
-    consumed_from_codec_decode_error,
-    map_codec_decode_error,
-};
+use super::stream_codec_decode_error::StreamCodecDecodeError;
 
 /// Codec-oriented helpers for [`BufferedDecodeInput`].
 pub(crate) trait BufferedDecodeInputExt<R> {
@@ -30,12 +24,11 @@ pub(crate) trait BufferedDecodeInputExt<R> {
     #[must_use]
     fn into_inner(self) -> R;
 
-    /// Decodes one value through the shared buffered decode driver.
+    /// Decodes one value through the underlying buffered input.
     fn read_decoded<C>(&mut self) -> Result<C::Value>
     where
         R: Read,
         C: Codec<Unit = u8> + Default,
-        C::Value: Copy + Default,
         C::DecodeError: StreamCodecDecodeError;
 }
 
@@ -54,47 +47,69 @@ where
     where
         R: Read,
         C: Codec<Unit = u8> + Default,
-        C::Value: Copy + Default,
         C::DecodeError: StreamCodecDecodeError,
     {
-        let mut decoder = BufferedDecodeEngine::new(
-            C::default(),
-            StreamCodecBufferedDecodeHooks,
-        );
-        let mut consumed_on_error = None;
-        let mut map_error = |error| {
-            consumed_on_error =
-                consumed_from_codec_decode_error::<C::DecodeError>(&error);
-            map_codec_decode_error(error)
-        };
-        let mut output = [C::Value::default(); 1];
-        let result = unsafe {
-            // SAFETY: The one-value output range is valid.
-            self.decode_into_unchecked(
-                &mut decoder,
-                &mut map_error,
-                &mut output,
-                0,
-                1,
-            )
-        };
-        let read = match result {
-            Ok(read) => read,
-            Err(error) => {
-                if let Some(consumed) = consumed_on_error {
-                    self.consume_units(consumed.get());
-                }
-                return Err(error);
+        let codec = C::default();
+        let min_units_per_value = codec.min_units_per_value().get();
+
+        loop {
+            let (_, _, available) = self.unread_raw_parts();
+            if available < min_units_per_value
+                && !self.fill_until(min_units_per_value)?
+            {
+                self.consume_available();
+                return Err(Error::new(
+                    ErrorKind::UnexpectedEof,
+                    "failed to decode complete value",
+                ));
             }
-        };
-        if read == 1 {
-            Ok(output[0])
-        } else {
-            self.consume_available();
-            Err(Error::new(
-                ErrorKind::UnexpectedEof,
-                "failed to decode complete value",
-            ))
+
+            let (units, unit_index, available) = self.unread_raw_parts();
+            debug_assert!(available >= min_units_per_value);
+            let decode_result = unsafe {
+                // SAFETY: `min_units_per_value <= available` guarantees
+                // `decode_unchecked` preconditions for `unit_index`.
+                codec.decode_unchecked(units, unit_index)
+            };
+            match decode_result {
+                Ok((value, consumed)) => {
+                    self.consume_units(consumed.get());
+                    return Ok(value);
+                }
+                Err(error) => {
+                    if let Some(required_total) = error.required_total() {
+                        if available >= required_total {
+                            if let Some(consumed) = error.consumed() {
+                                debug_assert!(
+                                    consumed.get() <= available,
+                                    "decode error consumed bytes exceed unread window"
+                                );
+                                self.consume_units(consumed.get());
+                            }
+                            return Err(Error::new(
+                                error.io_error_kind(),
+                                error,
+                            ));
+                        }
+                        if !self.fill_until(required_total)? {
+                            self.consume_available();
+                            return Err(Error::new(
+                                error.io_error_kind(),
+                                error,
+                            ));
+                        }
+                    } else {
+                        if let Some(consumed) = error.consumed() {
+                            debug_assert!(
+                                consumed.get() <= available,
+                                "decode error consumed bytes exceed unread window"
+                            );
+                            self.consume_units(consumed.get());
+                        }
+                        return Err(Error::new(error.io_error_kind(), error));
+                    }
+                }
+            }
         }
     }
 }

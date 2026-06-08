@@ -19,7 +19,6 @@ mod buffered_zig_zag_reader;
 mod buffered_zig_zag_writer;
 mod leb128_reader;
 mod leb128_writer;
-mod stream_codec_buffered_decode_hooks;
 mod stream_codec_decode_error;
 mod zig_zag_reader;
 mod zig_zag_writer;

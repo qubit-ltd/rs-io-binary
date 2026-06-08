@@ -5,14 +5,9 @@
 // =============================================================================
 
 use core::num::NonZeroUsize;
-use std::error::Error as StdError;
-use std::io::{
-    Error,
-    ErrorKind,
-};
-
-use qubit_codec::CodecDecodeError;
 use qubit_codec_binary::Leb128DecodeError;
+use std::error::Error as StdError;
+use std::io::ErrorKind;
 
 /// Decode error behavior shared by codec stream decoders.
 pub(crate) trait StreamCodecDecodeError:
@@ -63,34 +58,5 @@ impl StreamCodecDecodeError for Leb128DecodeError {
         } else {
             ErrorKind::InvalidData
         }
-    }
-}
-
-/// Converts codec decode failures into stream I/O errors.
-pub(crate) fn map_codec_decode_error<E>(error: CodecDecodeError<E>) -> Error
-where
-    E: StreamCodecDecodeError,
-{
-    match error {
-        CodecDecodeError::Decode { source, .. } => {
-            Error::new(source.io_error_kind(), source)
-        }
-        CodecDecodeError::Incomplete { .. } => {
-            Error::new(ErrorKind::UnexpectedEof, error)
-        }
-        _ => Error::new(ErrorKind::InvalidData, error),
-    }
-}
-
-/// Returns invalid units that must be consumed before reporting an error.
-pub(crate) fn consumed_from_codec_decode_error<E>(
-    error: &CodecDecodeError<E>,
-) -> Option<NonZeroUsize>
-where
-    E: StreamCodecDecodeError,
-{
-    match error {
-        CodecDecodeError::Decode { source, .. } => source.consumed(),
-        _ => None,
     }
 }

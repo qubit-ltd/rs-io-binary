@@ -13,10 +13,7 @@ use std::io::{
 };
 
 use qubit_codec::BufferedEncodeOutput;
-use qubit_codec::{
-    Codec,
-    CodecBufferedEncoder,
-};
+use qubit_codec::Codec;
 
 /// Codec-oriented helpers for [`BufferedEncodeOutput`].
 pub(crate) trait BufferedEncodeOutputExt<W> {
@@ -25,12 +22,11 @@ pub(crate) trait BufferedEncodeOutputExt<W> {
     where
         W: Write;
 
-    /// Encodes one value through the shared buffered encode driver.
+    /// Encodes one value through the underlying buffered output.
     fn write_encoded<C>(&mut self, value: C::Value) -> Result<()>
     where
         W: Write,
         C: Codec<Unit = u8> + Default,
-        C::Value: Copy,
         C::EncodeError: StdError + Send + Sync + 'static;
 }
 
@@ -55,29 +51,19 @@ where
     where
         W: Write,
         C: Codec<Unit = u8> + Default,
-        C::Value: Copy,
         C::EncodeError: StdError + Send + Sync + 'static,
     {
-        let mut encoder = CodecBufferedEncoder::new(C::default());
-        let mut map_error = |error| Error::new(ErrorKind::InvalidData, error);
-        let input = [value];
+        let codec = C::default();
+        let max_units_per_value = codec.max_units_per_value().get();
+        self.ensure_spare_capacity(max_units_per_value)?;
+
+        let (units, unit_index, _) = self.spare_raw_parts_mut();
         let written = unsafe {
-            // SAFETY: The one-value input range is valid.
-            self.encode_from_unchecked(
-                &mut encoder,
-                &mut map_error,
-                &input,
-                0,
-                1,
-            )?
-        };
-        if written == 1 {
-            Ok(())
-        } else {
-            Err(Error::new(
-                ErrorKind::WriteZero,
-                "failed to encode complete value",
-            ))
+            // SAFETY: `ensure_spare_capacity` guarantees enough spare units.
+            codec.encode_unchecked(&value, units, unit_index)
         }
+        .map_err(|error| Error::new(ErrorKind::InvalidData, error))?;
+        self.advance_unchecked(written);
+        Ok(())
     }
 }
