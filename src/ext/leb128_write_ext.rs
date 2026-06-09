@@ -6,30 +6,23 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Write,
-};
+use std::io::{Result, Write};
 
 use crate::util::encode_infallible_unchecked;
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
+use qubit_codec_binary::{Leb128Codec, NonStrict};
 
 macro_rules! write_leb128_value {
     ($writer:expr, $value:expr, $ty:ty) => {
-        write_leb128::<
-            { Leb128Codec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE },
-            _,
-            _,
-            _,
-        >($writer, $value, |bytes, value| {
-            type Codec = Leb128Codec<$ty, NonStrict>;
-            // SAFETY: The local buffer is exactly the codec's maximum buffer
-            // length.
-            unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) }
-        })
+        write_leb128::<{ Leb128Codec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE }, _, _, _>(
+            $writer,
+            $value,
+            |bytes, value| {
+                type Codec = Leb128Codec<$ty, NonStrict>;
+                // SAFETY: The local buffer is exactly the codec's maximum buffer
+                // length.
+                unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) }
+            },
+        )
     };
 }
 
@@ -117,11 +110,7 @@ pub trait Leb128WriteExt: Write {
 impl<W> Leb128WriteExt for W where W: Write + ?Sized {}
 
 #[inline]
-fn write_leb128<const N: usize, T, W, F>(
-    writer: &mut W,
-    value: T,
-    encode: F,
-) -> Result<()>
+fn write_leb128<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
 where
     W: Write + ?Sized,
     F: FnOnce(&mut [u8], T) -> usize,

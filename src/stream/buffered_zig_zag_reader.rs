@@ -7,22 +7,12 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Read,
-    Result,
-    Seek,
-    SeekFrom,
-};
+use std::io::{Read, Result, Seek, SeekFrom};
 
 use crate::stream::BufferedDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::BufferedDecodeInput;
-use qubit_codec_binary::{
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
+use qubit_codec_binary::{Leb128DecodePolicy, NonStrict, Strict, ZigZagCodec};
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.
 ///
@@ -33,8 +23,7 @@ use qubit_codec_binary::{
 ///
 /// This reader may prefetch bytes from the wrapped reader. As a result,
 /// [`Self::inner`] can observe an underlying stream position ahead of the
-/// logical position exposed by this wrapper, and [`Self::into_inner`] discards
-/// any prefetched bytes that have not been consumed.
+/// logical position exposed by this wrapper.
 ///
 /// # Target-width integers
 ///
@@ -94,15 +83,6 @@ where
         self.input.inner()
     }
 
-    /// Consumes this wrapper and returns the underlying reader.
-    ///
-    /// Any bytes already prefetched into the internal buffer but not consumed
-    /// by codec methods are discarded.
-    #[must_use]
-    #[inline]
-    pub fn into_inner(self) -> R {
-        self.input.into_inner()
-    }
 }
 
 macro_rules! impl_read_value {
@@ -127,18 +107,8 @@ macro_rules! impl_for_policy {
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
             impl_read_value!($policy, read_i32, i32, "Reads a ZigZag `i32`.");
             impl_read_value!($policy, read_i64, i64, "Reads a ZigZag `i64`.");
-            impl_read_value!(
-                $policy,
-                read_i128,
-                i128,
-                "Reads a ZigZag `i128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_isize,
-                isize,
-                "Reads a ZigZag `isize`."
-            );
+            impl_read_value!($policy, read_i128, i128, "Reads a ZigZag `i128`.");
+            impl_read_value!($policy, read_isize, isize, "Reads a ZigZag `isize`.");
         }
     };
 }

@@ -1,15 +1,6 @@
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Seek,
-    Write,
-};
+use std::io::{Cursor, Error, ErrorKind, Seek, Write};
 
-use qubit_io_binary::{
-    BufferedLeb128Writer,
-    Leb128WriteExt,
-};
+use qubit_io_binary::{BufferedLeb128Writer, Leb128WriteExt};
 
 struct FailingWriter;
 
@@ -87,12 +78,12 @@ fn test_buffered_leb128_writer_writes_values_across_buffer_boundaries() {
         .write_isize(isize::MIN)
         .expect("isize should be written");
 
-    assert_eq!(expected, writer.into_inner().expect("writer should flush"));
+    writer.flush().expect("writer should flush");
+    assert_eq!(expected, writer.inner().clone());
 }
 
 #[test]
-fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner()
-{
+fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner() {
     let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
 
     assert_eq!(0, writer.inner().position());
@@ -110,9 +101,12 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner()
             .expect("seek should flush pending bytes")
     );
 
-    let inner = writer.into_inner().expect("into_inner should flush");
+    writer.flush().expect("flush should write all bytes");
 
-    assert_eq!(vec![3, b'a', b'b', b'c', 9, 10], inner.into_inner());
+    assert_eq!(
+        vec![3, b'a', b'b', b'c', 9, 10],
+        writer.inner().clone().into_inner()
+    );
 }
 
 #[test]
@@ -138,7 +132,8 @@ fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
 
     let mut expected = vec![1; 18];
     expected.push(1);
-    assert_eq!(expected, writer.into_inner().expect("writer should flush"));
+    writer.flush().expect("writer should flush");
+    assert_eq!(expected, writer.inner().clone());
 }
 
 #[test]
@@ -156,16 +151,13 @@ fn test_buffered_leb128_writer_write_utf8_string_reports_length_flush_error() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix()
- {
+fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
     let mut writer = BufferedLeb128Writer::new(Vec::new());
 
     writer
         .write_utf8_string_u64("hé")
         .expect("u64 length-prefixed string should be written");
 
-    assert_eq!(
-        vec![3, b'h', 0xC3, 0xA9],
-        writer.into_inner().expect("writer should flush")
-    );
+    writer.flush().expect("writer should flush");
+    assert_eq!(vec![3, b'h', 0xC3, 0xA9], writer.inner().clone());
 }

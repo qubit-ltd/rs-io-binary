@@ -1,18 +1,8 @@
-use std::io::{
-    Cursor,
-    ErrorKind,
-    Read,
-    Seek,
-    SeekFrom,
-};
+use std::io::{Cursor, ErrorKind, Read, Seek, SeekFrom, Write};
 
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
-    BufferedBinaryReader,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-    ByteOrder,
-    LittleEndian,
+    BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
 };
 
 #[test]
@@ -44,8 +34,7 @@ fn test_buffered_decode_input_ext_delegates_read() {
 #[test]
 fn test_buffered_decode_input_ext_maps_incomplete_decode_error() {
     let cursor = Cursor::new(vec![0b1000_0000]);
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
 
     assert_eq!(
         ErrorKind::UnexpectedEof,
@@ -61,11 +50,11 @@ fn test_buffered_decode_input_ext_handles_utf8_length() {
     let value = "hello";
     let mut writer = BufferedLeb128Writer::new(Vec::new());
     writer.write_utf8_string(value).expect("encode payload");
-    let bytes = writer.into_inner().expect("extract encoded bytes");
+    writer.flush().expect("flush should write encoded bytes");
+    let bytes = writer.inner().clone();
     let cursor = Cursor::new(bytes);
 
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
     let got = reader.read_utf8_string(10).expect("read payload");
     assert_eq!(value, got);
 }

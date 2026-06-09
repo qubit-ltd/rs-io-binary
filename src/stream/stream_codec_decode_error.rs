@@ -10,9 +10,7 @@ use std::error::Error as StdError;
 use std::io::ErrorKind;
 
 /// Decode error behavior shared by codec stream decoders.
-pub(crate) trait StreamCodecDecodeError:
-    StdError + Send + Sync + 'static
-{
+pub(crate) trait StreamCodecDecodeError: StdError + Send + Sync + 'static {
     /// Returns the total required input units when the decode is incomplete.
     fn required_total(&self) -> Option<usize>;
 

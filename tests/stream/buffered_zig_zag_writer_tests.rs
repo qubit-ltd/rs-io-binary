@@ -1,15 +1,6 @@
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Seek,
-    Write,
-};
+use std::io::{Cursor, Error, ErrorKind, Seek, Write};
 
-use qubit_io_binary::{
-    BufferedZigZagWriter,
-    ZigZagWriteExt,
-};
+use qubit_io_binary::{BufferedZigZagWriter, ZigZagWriteExt};
 
 struct FailingWriter;
 
@@ -59,7 +50,8 @@ fn test_buffered_zig_zag_writer_writes_values_across_buffer_boundaries() {
         .write_isize(isize::MIN)
         .expect("isize should be written");
 
-    assert_eq!(expected, writer.into_inner().expect("writer should flush"));
+    writer.flush().expect("writer should flush");
+    assert_eq!(expected, writer.inner().clone());
 }
 
 #[test]
@@ -81,9 +73,9 @@ fn test_buffered_zig_zag_writer_accessors_write_all_seek_and_into_inner() {
             .expect("seek should flush pending bytes")
     );
 
-    let inner = writer.into_inner().expect("into_inner should flush");
+    writer.flush().expect("flush should write all bytes");
 
-    assert_eq!(vec![1, 9, 10], inner.into_inner());
+    assert_eq!(vec![1, 9, 10], writer.inner().clone().into_inner());
 }
 
 #[test]
@@ -109,5 +101,6 @@ fn test_buffered_zig_zag_writer_flushes_before_encoded_value_when_full() {
 
     let mut expected = vec![1; 18];
     expected.push(1);
-    assert_eq!(expected, writer.into_inner().expect("writer should flush"));
+    writer.flush().expect("writer should flush");
+    assert_eq!(expected, writer.inner().clone());
 }

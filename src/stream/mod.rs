@@ -28,7 +28,7 @@ pub use binary_writer::BinaryWriter;
 pub use buffered_binary_reader::BufferedBinaryReader;
 pub use buffered_binary_writer::BufferedBinaryWriter;
 pub(crate) use buffered_decode_input_ext::BufferedDecodeInputExt;
-pub(crate) use buffered_encode_output_ext::BufferedEncodeOutputExt;
+pub use buffered_encode_output_ext::BufferedEncodeOutputExt;
 pub use buffered_leb128_reader::BufferedLeb128Reader;
 pub use buffered_leb128_writer::BufferedLeb128Writer;
 pub use buffered_zig_zag_reader::BufferedZigZagReader;

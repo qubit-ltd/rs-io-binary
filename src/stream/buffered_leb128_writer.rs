@@ -6,23 +6,12 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Result, Seek, SeekFrom, Write};
 
 use crate::stream::BufferedEncodeOutputExt;
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u64_len,
-};
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len};
 use qubit_codec::BufferedEncodeOutput;
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
+use qubit_codec_binary::{Leb128Codec, NonStrict};
 
 /// Buffered writer for canonical LEB128 integers.
 ///
@@ -32,9 +21,8 @@ use qubit_codec_binary::{
 /// # Flush contract
 ///
 /// Pending buffered bytes are not flushed from [`Drop`]. Call [`Write::flush`]
-/// or [`Self::into_inner`] to guarantee that all bytes reach the wrapped
-/// writer. [`Self::inner`] can observe the wrapped writer before pending bytes
-/// have been flushed.
+/// to guarantee that all bytes reach the wrapped writer. [`Self::inner`] can
+/// observe the wrapped writer before pending bytes have been flushed.
 ///
 /// # Target-width integers
 ///
@@ -80,17 +68,6 @@ where
     #[inline]
     pub const fn inner(&self) -> &W {
         self.output.inner()
-    }
-}
-
-impl<W> BufferedLeb128Writer<W>
-where
-    W: Write,
-{
-    /// Flushes pending bytes and returns the underlying writer.
-    #[inline]
-    pub fn into_inner(self) -> Result<W> {
-        self.output.into_inner()
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 byte length.

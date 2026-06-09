@@ -6,22 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Result, Seek, SeekFrom, Write};
 
 use crate::WriteExt;
-use crate::util::{
-    checked_u64_len,
-    encode_infallible_unchecked,
-};
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
+use crate::util::{checked_u64_len, encode_infallible_unchecked};
+use qubit_codec_binary::{Leb128Codec, NonStrict};
 
 /// Writer wrapper for canonical LEB128 integers.
 ///
@@ -77,9 +66,7 @@ macro_rules! impl_write_value {
 
             self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
                 value,
-                |bytes, value| unsafe {
-                    encode_infallible_unchecked::<Codec>(value, bytes, 0)
-                },
+                |bytes, value| unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) },
             )
         }
     };
@@ -90,11 +77,7 @@ where
     W: Write,
 {
     #[inline]
-    fn write_leb128<T, const N: usize, F>(
-        &mut self,
-        value: T,
-        encode: F,
-    ) -> Result<()>
+    fn write_leb128<T, const N: usize, F>(&mut self, value: T, encode: F) -> Result<()>
     where
         F: FnOnce(&mut [u8; 19], T) -> usize,
     {
