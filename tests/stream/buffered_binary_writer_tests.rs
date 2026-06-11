@@ -555,9 +555,7 @@ fn test_buffered_binary_writer_retries_interrupted_flush() {
     writer
         .write_u32(0x0102_0304)
         .expect("value should be buffered");
-    writer
-        .flush()
-        .expect("flush should retry interruption");
+    writer.flush().expect("flush should retry interruption");
     let inner = writer.inner();
 
     assert_eq!(vec![4, 3, 2, 1], inner.output);

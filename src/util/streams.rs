@@ -36,9 +36,9 @@ pub(crate) unsafe fn decode_infallible_unchecked<C>(input: &[u8], index: usize) 
 where
     C: Codec<Unit = u8, DecodeError = Infallible> + Default,
 {
-    let codec = C::default();
+    let mut codec = C::default();
     // SAFETY: The caller upholds the unchecked decode contract for `C`.
-    match unsafe { Codec::decode_unchecked(&codec, input, index) } {
+    match unsafe { Codec::decode(&mut codec, input, index) } {
         Ok((value, _)) => value,
         Err(error) => match error {},
     }
@@ -59,9 +59,9 @@ pub(crate) unsafe fn encode_infallible_unchecked<C>(
 where
     C: Codec<Unit = u8, EncodeError = Infallible> + Default,
 {
-    let codec = C::default();
+    let mut codec = C::default();
     // SAFETY: The caller upholds the unchecked encode contract for `C`.
-    match unsafe { Codec::encode_unchecked(&codec, &value, output, index) } {
+    match unsafe { Codec::encode(&mut codec, &value, output, index) } {
         Ok(written) => written,
         Err(error) => match error {},
     }
@@ -81,9 +81,9 @@ pub(crate) unsafe fn decode_leb128_unchecked<C>(
 where
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
 {
-    let codec = C::default();
+    let mut codec = C::default();
     // SAFETY: The caller upholds the unchecked decode contract for `C`.
-    unsafe { Codec::decode_unchecked(&codec, input, index) }
+    unsafe { Codec::decode(&mut codec, input, index) }
 }
 
 /// Reads one LEB128-family payload and decodes it.

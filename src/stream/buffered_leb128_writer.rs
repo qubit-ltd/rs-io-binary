@@ -8,9 +8,9 @@
 
 use std::io::{Result, Seek, SeekFrom, Write};
 
-use crate::stream::BufferedEncodeOutputExt;
+use crate::stream::TranscodeEncodeOutputExt;
 use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len};
-use qubit_codec::BufferedEncodeOutput;
+use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::{Leb128Codec, NonStrict};
 
 /// Buffered writer for canonical LEB128 integers.
@@ -33,7 +33,7 @@ pub struct BufferedLeb128Writer<W>
 where
     W: Write,
 {
-    output: BufferedEncodeOutput<W>,
+    output: TranscodeEncodeOutput<W>,
 }
 
 impl<W> BufferedLeb128Writer<W>
@@ -45,7 +45,7 @@ where
     #[inline]
     pub fn new(inner: W) -> Self {
         Self {
-            output: BufferedEncodeOutput::new(inner),
+            output: TranscodeEncodeOutput::new(inner),
         }
     }
 
@@ -54,7 +54,7 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedEncodeOutput::with_capacity(
+            output: TranscodeEncodeOutput::with_capacity(
                 inner,
                 capacity.max(MIN_CODEC_BUFFER_CAPACITY),
             ),

@@ -9,9 +9,9 @@
 use core::marker::PhantomData;
 use std::io::{Result, Seek, SeekFrom, Write};
 
-use crate::stream::BufferedEncodeOutputExt;
+use crate::stream::TranscodeEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec::BufferedEncodeOutput;
+use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::{BigEndian, BinaryCodec, ByteOrder, ByteOrderSpec, LittleEndian};
 
 /// Buffered writer for fixed-width binary values.
@@ -29,7 +29,7 @@ pub struct BufferedBinaryWriter<W, O = BigEndian>
 where
     W: Write,
 {
-    output: BufferedEncodeOutput<W>,
+    output: TranscodeEncodeOutput<W>,
     marker: PhantomData<fn() -> O>,
 }
 
@@ -43,7 +43,7 @@ where
     #[inline]
     pub fn new(inner: W) -> Self {
         Self {
-            output: BufferedEncodeOutput::new(inner),
+            output: TranscodeEncodeOutput::new(inner),
             marker: PhantomData,
         }
     }
@@ -53,7 +53,7 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: BufferedEncodeOutput::with_capacity(
+            output: TranscodeEncodeOutput::with_capacity(
                 inner,
                 capacity.max(MIN_CODEC_BUFFER_CAPACITY),
             ),

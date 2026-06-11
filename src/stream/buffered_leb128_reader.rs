@@ -9,11 +9,11 @@
 use core::marker::PhantomData;
 use std::io::{Read, Result, Seek, SeekFrom};
 
-use crate::stream::BufferedDecodeInputExt;
+use crate::stream::TranscodeDecodeInputExt;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
 use crate::util::{MIN_CODEC_BUFFER_CAPACITY, read_utf8_payload};
-use qubit_codec::BufferedDecodeInput;
+use qubit_codec::TranscodeDecodeInput;
 use qubit_codec_binary::{Leb128Codec, Leb128DecodePolicy, NonStrict, Strict};
 
 /// Buffered reader for LEB128 integers.
@@ -36,7 +36,7 @@ pub struct BufferedLeb128Reader<R, P = NonStrict>
 where
     R: Read,
 {
-    input: BufferedDecodeInput<R>,
+    input: TranscodeDecodeInput<R>,
     marker: PhantomData<fn() -> P>,
 }
 
@@ -50,7 +50,7 @@ where
     #[inline]
     pub fn new(inner: R) -> Self {
         Self {
-            input: BufferedDecodeInput::new(inner),
+            input: TranscodeDecodeInput::new(inner),
             marker: PhantomData,
         }
     }
@@ -60,7 +60,7 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: BufferedDecodeInput::with_capacity(
+            input: TranscodeDecodeInput::with_capacity(
                 inner,
                 capacity.max(MIN_CODEC_BUFFER_CAPACITY),
             ),
@@ -84,7 +84,6 @@ where
     pub const fn inner(&self) -> &R {
         self.input.inner()
     }
-
 }
 
 macro_rules! impl_read_value {

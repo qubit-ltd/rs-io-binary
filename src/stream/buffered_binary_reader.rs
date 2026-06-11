@@ -9,9 +9,9 @@
 use core::marker::PhantomData;
 use std::io::{Read, Result, Seek, SeekFrom};
 
-use crate::stream::BufferedDecodeInputExt;
+use crate::stream::TranscodeDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec::BufferedDecodeInput;
+use qubit_codec::TranscodeDecodeInput;
 use qubit_codec_binary::{BigEndian, BinaryCodec, ByteOrder, ByteOrderSpec, LittleEndian};
 
 /// Buffered reader for fixed-width binary values.
@@ -29,7 +29,7 @@ pub struct BufferedBinaryReader<R, O = BigEndian>
 where
     R: Read,
 {
-    input: BufferedDecodeInput<R>,
+    input: TranscodeDecodeInput<R>,
     marker: PhantomData<fn() -> O>,
 }
 
@@ -43,7 +43,7 @@ where
     #[inline]
     pub fn new(inner: R) -> Self {
         Self {
-            input: BufferedDecodeInput::new(inner),
+            input: TranscodeDecodeInput::new(inner),
             marker: PhantomData,
         }
     }
@@ -53,7 +53,7 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: BufferedDecodeInput::with_capacity(
+            input: TranscodeDecodeInput::with_capacity(
                 inner,
                 capacity.max(MIN_CODEC_BUFFER_CAPACITY),
             ),
@@ -77,7 +77,6 @@ where
     pub const fn inner(&self) -> &R {
         self.input.inner()
     }
-
 }
 
 macro_rules! impl_value_read {

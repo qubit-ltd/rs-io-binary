@@ -1,0 +1,158 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+// =============================================================================
+
+use std::io::{Error, ErrorKind, Result};
+
+use qubit_codec::{TranscodeDecodeInput, Codec};
+use qubit_io::Input;
+
+use super::stream_codec_decode_error::StreamCodecDecodeError;
+
+/// Codec-oriented helpers for [`TranscodeDecodeInput`].
+pub(crate) trait TranscodeDecodeInputExt<I> {
+    /// Decodes one value through the underlying buffered input.
+    fn read_decoded<C>(&mut self) -> Result<C::Value>
+    where
+        I: Input,
+        C: Codec<Unit = I::Item> + Default,
+        C::DecodeError: StreamCodecDecodeError;
+}
+
+impl<I> TranscodeDecodeInputExt<I> for TranscodeDecodeInput<I>
+where
+    I: Input,
+    I::Item: Copy + Default,
+{
+    fn read_decoded<C>(&mut self) -> Result<C::Value>
+    where
+        C: Codec<Unit = I::Item> + Default,
+        C::DecodeError: StreamCodecDecodeError,
+    {
+        let mut codec = C::default();
+        let min_units_per_value = codec.min_units_per_value().get();
+        if min_units_per_value > self.capacity() {
+            return read_decoded_via_scratch(self, &mut codec, min_units_per_value);
+        }
+        let mut units = Vec::new();
+
+        loop {
+            let available = self.available();
+            if available < min_units_per_value && !self.fill_until(min_units_per_value)? {
+                let available = self.available();
+                self.consume(available);
+                return Err(Error::new(
+                    ErrorKind::UnexpectedEof,
+                    "failed to decode complete value",
+                ));
+            }
+
+            let available = self.available();
+            if units.len() < available {
+                units.resize(available, I::Item::default());
+            }
+            // SAFETY: The first `available` elements in `units` are a valid
+            // destination range, and the copied range does not overlap with
+            // the buffered input storage.
+            unsafe {
+                self.copy_unread_to_unchecked(&mut units, 0, available);
+            }
+            let units = &units[..available];
+            debug_assert!(units.len() >= min_units_per_value);
+            let snapshot = codec.decode_state();
+            let decode_result = unsafe {
+                // SAFETY: `min_units_per_value <= units.len()` guarantees
+                // `decode` preconditions for this slice.
+                codec.decode(units, 0)
+            };
+            match decode_result {
+                Ok((value, consumed)) => {
+                    self.consume(consumed.get());
+                    return Ok(value);
+                }
+                Err(error) => {
+                    codec.set_decode_state(snapshot);
+                    if let Some(required_total) = error.required_total() {
+                        if units.len() >= required_total {
+                            if let Some(consumed) = error.consumed() {
+                                debug_assert!(
+                                    consumed.get() <= units.len(),
+                                    "decode error consumed bytes exceed unread window"
+                                );
+                                self.consume(consumed.get());
+                            }
+                            return Err(Error::new(error.io_error_kind(), error));
+                        }
+                        if !self.fill_until(required_total)? {
+                            let available = self.available();
+                            self.consume(available);
+                            return Err(Error::new(error.io_error_kind(), error));
+                        }
+                    } else {
+                        if let Some(consumed) = error.consumed() {
+                            debug_assert!(
+                                consumed.get() <= units.len(),
+                                "decode error consumed bytes exceed unread window"
+                            );
+                            self.consume(consumed.get());
+                        }
+                        return Err(Error::new(error.io_error_kind(), error));
+                    }
+                }
+            }
+        }
+    }
+}
+
+fn read_decoded_via_scratch<I, C>(
+    input: &mut TranscodeDecodeInput<I>,
+    codec: &mut C,
+    mut required_total: usize,
+) -> Result<C::Value>
+where
+    I: Input,
+    I::Item: Copy + Default,
+    C: Codec<Unit = I::Item>,
+    C::DecodeError: StreamCodecDecodeError,
+{
+    let mut units = vec![I::Item::default(); required_total];
+    let mut loaded = 0;
+    loop {
+        while loaded < required_total {
+            let remaining = required_total - loaded;
+            // SAFETY: `units[loaded..required_total]` is a valid destination
+            // range inside the scratch buffer.
+            let read = unsafe { input.read_into_unchecked(&mut units, loaded, remaining) }?;
+            if read == 0 {
+                return Err(Error::new(
+                    ErrorKind::UnexpectedEof,
+                    "failed to decode complete value",
+                ));
+            }
+            loaded += read;
+        }
+        let snapshot = codec.decode_state();
+        let decode_result = unsafe {
+            // SAFETY: `loaded >= required_total >= min_units_per_value`, so
+            // the scratch buffer contains the required prefix for decoding.
+            codec.decode(&units, 0)
+        };
+        match decode_result {
+            Ok((value, _)) => return Ok(value),
+            Err(error) => {
+                codec.set_decode_state(snapshot);
+                if let Some(next_required_total) = error.required_total() {
+                    if next_required_total <= loaded {
+                        return Err(Error::new(error.io_error_kind(), error));
+                    }
+                    units.resize(next_required_total, I::Item::default());
+                    required_total = next_required_total;
+                } else {
+                    return Err(Error::new(error.io_error_kind(), error));
+                }
+            }
+        }
+    }
+}
