@@ -145,7 +145,10 @@ target-width 的 `usize` 字符串长度 helper。
 cargo test
 
 # 运行 stream benchmark
-cargo bench --bench stream
+benches/run_stream_bench_groups.sh
+
+# 运行单个 benchmark group
+QUBIT_IO_STREAM_BENCH_GROUP=prod_varints cargo bench --bench stream
 
 # 运行覆盖率报告
 ./coverage.sh

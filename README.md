@@ -153,7 +153,10 @@ This project keeps binary stream behavior covered by integration tests under
 cargo test
 
 # Run stream benchmarks
-cargo bench --bench stream
+benches/run_stream_bench_groups.sh
+
+# Run one benchmark group
+QUBIT_IO_STREAM_BENCH_GROUP=prod_varints cargo bench --bench stream
 
 # Run with coverage report
 ./coverage.sh

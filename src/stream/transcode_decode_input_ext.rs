@@ -6,7 +6,7 @@
 
 use std::io::{Error, ErrorKind, Result};
 
-use qubit_codec::{TranscodeDecodeInput, Codec};
+use qubit_codec::{Codec, TranscodeDecodeInput};
 use qubit_io::Input;
 
 use super::stream_codec_decode_error::StreamCodecDecodeError;
@@ -61,7 +61,6 @@ where
             }
             let units = &units[..available];
             debug_assert!(units.len() >= min_units_per_value);
-            let snapshot = codec.decode_state();
             let decode_result = unsafe {
                 // SAFETY: `min_units_per_value <= units.len()` guarantees
                 // `decode` preconditions for this slice.
@@ -73,7 +72,6 @@ where
                     return Ok(value);
                 }
                 Err(error) => {
-                    codec.set_decode_state(snapshot);
                     if let Some(required_total) = error.required_total() {
                         if units.len() >= required_total {
                             if let Some(consumed) = error.consumed() {
@@ -133,7 +131,6 @@ where
             }
             loaded += read;
         }
-        let snapshot = codec.decode_state();
         let decode_result = unsafe {
             // SAFETY: `loaded >= required_total >= min_units_per_value`, so
             // the scratch buffer contains the required prefix for decoding.
@@ -142,7 +139,6 @@ where
         match decode_result {
             Ok((value, _)) => return Ok(value),
             Err(error) => {
-                codec.set_decode_state(snapshot);
                 if let Some(next_required_total) = error.required_total() {
                     if next_required_total <= loaded {
                         return Err(Error::new(error.io_error_kind(), error));

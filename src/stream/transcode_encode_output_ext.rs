@@ -7,7 +7,7 @@
 use std::error::Error as StdError;
 use std::io::{self, Error, ErrorKind};
 
-use qubit_codec::{TranscodeEncodeOutput, Codec};
+use qubit_codec::{Codec, TranscodeEncodeOutput};
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
@@ -99,6 +99,6 @@ where
     let reset_written = unsafe { codec.encode_reset(output, index) }?;
     debug_assert!(reset_written <= codec.max_encode_reset_units());
     let value_written = unsafe { codec.encode(value, output, index + reset_written) }?;
-    debug_assert!(value_written <= codec.max_units_per_value().get());
-    Ok(reset_written + value_written)
+    debug_assert!(value_written.get() <= codec.max_units_per_value().get());
+    Ok(reset_written + value_written.get())
 }

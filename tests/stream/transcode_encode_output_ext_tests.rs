@@ -4,8 +4,8 @@ use std::num::NonZeroUsize;
 
 use qubit_codec::Codec;
 use qubit_io_binary::{
-    BufferedBinaryWriter, TranscodeEncodeOutput, TranscodeEncodeOutputExt, BufferedLeb128Reader,
-    BufferedLeb128Writer, LittleEndian,
+    BufferedBinaryWriter, BufferedLeb128Reader, BufferedLeb128Writer, LittleEndian,
+    TranscodeEncodeOutput, TranscodeEncodeOutputExt,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -19,8 +19,6 @@ unsafe impl Codec for NonCopyValueCodec {
     type Unit = u8;
     type DecodeError = Infallible;
     type EncodeError = Infallible;
-    type DecodeState = ();
-    type EncodeState = ();
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
@@ -53,11 +51,11 @@ unsafe impl Codec for NonCopyValueCodec {
         value: &NonCopyValue,
         output: &mut [u8],
         index: usize,
-    ) -> Result<usize, Self::EncodeError> {
+    ) -> Result<NonZeroUsize, Self::EncodeError> {
         debug_assert!(index + 2 <= output.len());
         output[index] = value.0[0];
         output[index + 1] = value.0[1];
-        Ok(2)
+        Ok(qubit_codec::nz!(2))
     }
 }
 
@@ -151,8 +149,6 @@ unsafe impl Codec for U16PairCodec {
     type Unit = u16;
     type DecodeError = Infallible;
     type EncodeError = Infallible;
-    type DecodeState = ();
-    type EncodeState = ();
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
@@ -183,10 +179,10 @@ unsafe impl Codec for U16PairCodec {
         value: &(u16, u16),
         output: &mut [u16],
         index: usize,
-    ) -> Result<usize, Self::EncodeError> {
+    ) -> Result<NonZeroUsize, Self::EncodeError> {
         output[index] = value.0;
         output[index + 1] = value.1;
-        Ok(2)
+        Ok(qubit_codec::nz!(2))
     }
 }
 
@@ -195,8 +191,6 @@ unsafe impl Codec for LargeFixedCodec {
     type Unit = u8;
     type DecodeError = Infallible;
     type EncodeError = Infallible;
-    type DecodeState = ();
-    type EncodeState = ();
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
@@ -228,9 +222,9 @@ unsafe impl Codec for LargeFixedCodec {
         value: &[u8; 4],
         output: &mut [u8],
         index: usize,
-    ) -> Result<usize, Self::EncodeError> {
+    ) -> Result<NonZeroUsize, Self::EncodeError> {
         output[index..index + 4].copy_from_slice(value);
-        Ok(4)
+        Ok(qubit_codec::nz!(4))
     }
 }
 
@@ -239,8 +233,6 @@ unsafe impl Codec for ResetThenValueCodec {
     type Unit = u8;
     type DecodeError = Infallible;
     type EncodeError = Infallible;
-    type DecodeState = ();
-    type EncodeState = ();
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
@@ -272,10 +264,10 @@ unsafe impl Codec for ResetThenValueCodec {
         value: &u8,
         output: &mut [u8],
         index: usize,
-    ) -> Result<usize, Self::EncodeError> {
+    ) -> Result<NonZeroUsize, Self::EncodeError> {
         debug_assert!(self.reset_emitted);
         output[index] = *value;
-        Ok(1)
+        Ok(NonZeroUsize::MIN)
     }
 
     #[inline(always)]

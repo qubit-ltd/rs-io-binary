@@ -62,7 +62,7 @@ where
     let mut codec = C::default();
     // SAFETY: The caller upholds the unchecked encode contract for `C`.
     match unsafe { Codec::encode(&mut codec, &value, output, index) } {
-        Ok(written) => written,
+        Ok(written) => written.get(),
         Err(error) => match error {},
     }
 }

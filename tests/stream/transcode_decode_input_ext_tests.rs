@@ -1,17 +1,17 @@
 use std::io::{Cursor, ErrorKind, Read, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 
-#[path = "../../src/stream/transcode_decode_input_ext.rs"]
-mod transcode_decode_input_ext;
 #[path = "../../src/stream/stream_codec_decode_error.rs"]
 mod stream_codec_decode_error;
+#[path = "../../src/stream/transcode_decode_input_ext.rs"]
+mod transcode_decode_input_ext;
 
-use transcode_decode_input_ext::TranscodeDecodeInputExt;
-use qubit_codec::{TranscodeDecodeInput, Codec};
+use qubit_codec::{Codec, TranscodeDecodeInput};
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
     BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
 };
+use transcode_decode_input_ext::TranscodeDecodeInputExt;
 
 #[derive(Default)]
 struct FixedU16LeCodec;
@@ -90,8 +90,6 @@ unsafe impl Codec for U16PairValueCodec {
     type Unit = u16;
     type DecodeError = core::convert::Infallible;
     type EncodeError = core::convert::Infallible;
-    type DecodeState = ();
-    type EncodeState = ();
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
@@ -121,11 +119,11 @@ unsafe impl Codec for U16PairValueCodec {
         value: &Self::Value,
         output: &mut [u16],
         index: usize,
-    ) -> Result<usize, Self::EncodeError> {
+    ) -> Result<NonZeroUsize, Self::EncodeError> {
         let bytes = value.to_be_bytes();
         output[index] = (bytes[0] as u16) << 8 | bytes[1] as u16;
         output[index + 1] = (bytes[2] as u16) << 8 | bytes[3] as u16;
-        Ok(2)
+        Ok(qubit_codec::nz!(2))
     }
 }
 
@@ -134,8 +132,6 @@ unsafe impl Codec for FixedU16LeCodec {
     type Unit = u8;
     type DecodeError = core::convert::Infallible;
     type EncodeError = core::convert::Infallible;
-    type DecodeState = ();
-    type EncodeState = ();
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
@@ -166,10 +162,10 @@ unsafe impl Codec for FixedU16LeCodec {
         value: &Self::Value,
         output: &mut [u8],
         index: usize,
-    ) -> Result<usize, Self::EncodeError> {
+    ) -> Result<NonZeroUsize, Self::EncodeError> {
         let bytes = value.to_le_bytes();
         output[index..index + 2].copy_from_slice(&bytes);
-        Ok(2)
+        Ok(qubit_codec::nz!(2))
     }
 }
 
