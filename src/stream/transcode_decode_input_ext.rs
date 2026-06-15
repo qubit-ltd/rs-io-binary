@@ -6,7 +6,7 @@
 
 use std::io::{Error, ErrorKind, Result};
 
-use qubit_codec::{Codec, TranscodeDecodeInput};
+use qubit_codec::{Codec, CodecDecodeSignal, TranscodeDecodeInput};
 use qubit_io::Input;
 
 use super::stream_codec_decode_error::StreamCodecDecodeError;
@@ -74,7 +74,7 @@ where
                 Err(error) => {
                     if let Some(required_total) = error.required_total() {
                         if units.len() >= required_total {
-                            if let Some(consumed) = error.consumed() {
+                            if let Some(consumed) = error.consumed_units() {
                                 debug_assert!(
                                     consumed.get() <= units.len(),
                                     "decode error consumed bytes exceed unread window"
@@ -89,7 +89,7 @@ where
                             return Err(Error::new(error.io_error_kind(), error));
                         }
                     } else {
-                        if let Some(consumed) = error.consumed() {
+                        if let Some(consumed) = error.consumed_units() {
                             debug_assert!(
                                 consumed.get() <= units.len(),
                                 "decode error consumed bytes exceed unread window"
