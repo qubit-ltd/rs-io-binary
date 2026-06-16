@@ -6,7 +6,7 @@ mod stream_codec_decode_error;
 #[path = "../../src/stream/transcode_decode_input_ext.rs"]
 mod transcode_decode_input_ext;
 
-use qubit_codec::{Codec, TranscodeDecodeInput};
+use qubit_codec::{Codec, nz, TranscodeDecodeInput};
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
     BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
@@ -123,7 +123,7 @@ unsafe impl Codec for U16PairValueCodec {
         let bytes = value.to_be_bytes();
         output[index] = (bytes[0] as u16) << 8 | bytes[1] as u16;
         output[index + 1] = (bytes[2] as u16) << 8 | bytes[3] as u16;
-        Ok(qubit_codec::nz!(2))
+        Ok(nz!(2))
     }
 }
 
@@ -165,7 +165,7 @@ unsafe impl Codec for FixedU16LeCodec {
     ) -> Result<NonZeroUsize, Self::EncodeError> {
         let bytes = value.to_le_bytes();
         output[index..index + 2].copy_from_slice(&bytes);
-        Ok(qubit_codec::nz!(2))
+        Ok(nz!(2))
     }
 }
 

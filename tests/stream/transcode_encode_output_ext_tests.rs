@@ -2,7 +2,7 @@ use std::convert::Infallible;
 use std::io::{Cursor, Error, ErrorKind, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 
-use qubit_codec::Codec;
+use qubit_codec::{Codec, nz};
 use qubit_io_binary::{
     BufferedBinaryWriter, BufferedLeb128Reader, BufferedLeb128Writer, LittleEndian,
     TranscodeEncodeOutput, TranscodeEncodeOutputExt,
@@ -55,7 +55,7 @@ unsafe impl Codec for NonCopyValueCodec {
         debug_assert!(index + 2 <= output.len());
         output[index] = value.0[0];
         output[index + 1] = value.0[1];
-        Ok(qubit_codec::nz!(2))
+        Ok(nz!(2))
     }
 }
 
@@ -182,7 +182,7 @@ unsafe impl Codec for U16PairCodec {
     ) -> Result<NonZeroUsize, Self::EncodeError> {
         output[index] = value.0;
         output[index + 1] = value.1;
-        Ok(qubit_codec::nz!(2))
+        Ok(nz!(2))
     }
 }
 
@@ -224,7 +224,7 @@ unsafe impl Codec for LargeFixedCodec {
         index: usize,
     ) -> Result<NonZeroUsize, Self::EncodeError> {
         output[index..index + 4].copy_from_slice(value);
-        Ok(qubit_codec::nz!(4))
+        Ok(nz!(4))
     }
 }
 
