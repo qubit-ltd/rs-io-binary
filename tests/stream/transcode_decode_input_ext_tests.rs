@@ -6,7 +6,7 @@ mod stream_codec_decode_error;
 #[path = "../../src/stream/transcode_decode_input_ext.rs"]
 mod transcode_decode_input_ext;
 
-use qubit_codec::{Codec, nz, TranscodeDecodeInput};
+use qubit_codec::{Codec, TranscodeDecodeInput, nz};
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
     BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,

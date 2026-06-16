@@ -11,6 +11,7 @@ use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
+use qubit_codec::{mut_unchecked, read_unchecked};
 use qubit_codec_binary::{Codec, Leb128DecodeError};
 
 use super::allocation::try_reserve_vec;
@@ -160,7 +161,7 @@ where
         }
         // SAFETY: `index` is produced by `0..N`, and the debug assertion
         // above guarantees `N` fits the fixed internal buffer.
-        let byte = unsafe { *buffer.as_ptr().add(index) };
+        let byte = unsafe { read_unchecked(buffer, index) };
         if byte & 0x80 == 0 {
             // SAFETY: At least one byte has been read into `buffer`.
             return unsafe { decode_leb128_unchecked::<C>(buffer, 0) }
@@ -193,7 +194,7 @@ pub(crate) fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
 #[inline]
 fn one_byte_slice(bytes: &mut [u8], index: usize) -> &mut [u8] {
     // SAFETY: Callers pass an index inside the fixed-size local buffer.
-    unsafe { core::slice::from_raw_parts_mut(bytes.as_mut_ptr().add(index), 1) }
+    unsafe { core::slice::from_mut(mut_unchecked(bytes, index)) }
 }
 
 /// Reads a UTF-8 payload after its length has already been decoded.
