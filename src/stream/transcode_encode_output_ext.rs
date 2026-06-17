@@ -5,9 +5,16 @@
 // =============================================================================
 
 use std::error::Error as StdError;
-use std::io::{self, Error, ErrorKind};
+use std::io::{
+    self,
+    Error,
+    ErrorKind,
+};
 
-use qubit_codec::{Codec, TranscodeEncodeOutput};
+use qubit_codec::{
+    Codec,
+    TranscodeEncodeOutput,
+};
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
@@ -34,9 +41,9 @@ where
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();
-        let max_units = codec
-            .max_encode_value_units()
-            .map_err(|_| Error::new(ErrorKind::InvalidInput, "codec output bound overflow"))?;
+        let max_units = codec.max_encode_value_units().map_err(|_| {
+            Error::new(ErrorKind::InvalidInput, "codec output bound overflow")
+        })?;
         if let Err(error) = self.ensure_spare_capacity(max_units) {
             if error.kind() != ErrorKind::InvalidInput {
                 return Err(error);
@@ -50,25 +57,8 @@ where
                 .map_err(|error| Error::new(ErrorKind::InvalidData, error))?;
             // After flushing pending units, delegate the oversized encoded
             // payload through the wrapped output's unit write path.
-            let mut total_written = 0;
-            while total_written < written {
-                let remaining = written - total_written;
-                match unsafe {
-                    self.inner_mut()
-                        .write_unchecked(&scratch, total_written, remaining)
-                } {
-                    Ok(0) => {
-                        return Err(Error::new(
-                            ErrorKind::WriteZero,
-                            "failed to write all encoded units",
-                        ));
-                    }
-                    Ok(progress) => {
-                        total_written += progress;
-                    }
-                    Err(error) if error.kind() == ErrorKind::Interrupted => {}
-                    Err(error) => return Err(error),
-                }
+            unsafe {
+                self.inner_mut().write_all_unchecked(&scratch, 0, written)?;
             }
             return Ok(());
         }

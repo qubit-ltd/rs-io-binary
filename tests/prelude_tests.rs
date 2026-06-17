@@ -9,8 +9,15 @@
 use std::io::Cursor;
 
 use qubit_io_binary::prelude::{
-    BigEndian, ByteOrder, ByteOrderSpec, Leb128DecodePolicy, Leb128ReadExt, Leb128WriteExt,
-    NonStrict, ZigZagReadExt, ZigZagWriteExt,
+    BigEndian,
+    ByteOrder,
+    ByteOrderSpec,
+    Leb128DecodePolicy,
+    Leb128ReadExt,
+    Leb128WriteExt,
+    NonStrict,
+    ZigZagReadExt,
+    ZigZagWriteExt,
 };
 
 fn leb128_policy_is_strict<P: Leb128DecodePolicy>() -> bool {
