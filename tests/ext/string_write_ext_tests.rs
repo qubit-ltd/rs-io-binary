@@ -1,18 +1,8 @@
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Error, ErrorKind, Write};
 #[cfg(all(unix, target_pointer_width = "64"))]
-use std::{
-    ffi::c_void,
-    ptr::null_mut,
-};
+use std::{ffi::c_void, ptr::null_mut};
 
-use qubit_io_binary::{
-    ByteOrder,
-    StringWriteExt,
-};
+use qubit_io_binary::{ByteOrder, StringWriteExt};
 
 #[cfg(all(unix, target_pointer_width = "64", target_os = "macos"))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x1000;
@@ -77,9 +67,7 @@ impl MappedBytes {
     fn as_str(&self) -> &str {
         // SAFETY: Anonymous mappings are zero-filled, and NUL bytes are valid
         // UTF-8.
-        let bytes = unsafe {
-            std::slice::from_raw_parts(self.ptr.cast::<u8>(), self.len)
-        };
+        let bytes = unsafe { std::slice::from_raw_parts(self.ptr.cast::<u8>(), self.len) };
         // SAFETY: The byte slice consists entirely of valid UTF-8 NUL bytes.
         unsafe { std::str::from_utf8_unchecked(bytes) }
     }
@@ -147,11 +135,10 @@ fn test_string_write_ext_writes_all_length_prefix_kinds() {
 
     assert_eq!(
         vec![
-            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02,
-            b'r', b't', 0x00, 0x02, b'b', b'e', 0x02, 0x00, b'l', b'r', 0x02,
-            0x00, b'l', b'e', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x00, 0x00,
-            0x00, 0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd', b'n', 0x02,
-            0x00, 0x00, 0x00, b'd', b'n'
+            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02, b'r', b't', 0x00,
+            0x02, b'b', b'e', 0x02, 0x00, b'l', b'r', 0x02, 0x00, b'l', b'e', 0x00, 0x00, 0x00,
+            0x02, b'u', b'p', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd',
+            b'n', 0x02, 0x00, 0x00, 0x00, b'd', b'n'
         ],
         output
     );

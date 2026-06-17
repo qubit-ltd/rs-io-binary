@@ -10,9 +10,7 @@ use std::error::Error as StdError;
 use std::io::ErrorKind;
 
 /// Decode error behavior shared by codec stream decoders.
-pub trait StreamCodecDecodeError:
-    CodecDecodeSignal + StdError + Send + Sync + 'static
-{
+pub trait StreamCodecDecodeError: CodecDecodeSignal + StdError + Send + Sync + 'static {
     /// Returns the mapped I/O error kind for this codec decode error.
     fn io_error_kind(&self) -> ErrorKind;
 }

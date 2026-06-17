@@ -1,8 +1,4 @@
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Error, ErrorKind, Write};
 
 use qubit_io_binary::ZigZagWriteExt;
 

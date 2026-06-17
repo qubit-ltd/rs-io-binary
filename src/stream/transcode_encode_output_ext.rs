@@ -5,16 +5,9 @@
 // =============================================================================
 
 use std::error::Error as StdError;
-use std::io::{
-    self,
-    Error,
-    ErrorKind,
-};
+use std::io::{self, Error, ErrorKind};
 
-use qubit_codec::{
-    Codec,
-    TranscodeEncodeOutput,
-};
+use qubit_codec::{Codec, TranscodeEncodeOutput};
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
@@ -41,9 +34,9 @@ where
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();
-        let max_units = codec.max_encode_value_units().map_err(|_| {
-            Error::new(ErrorKind::InvalidInput, "codec output bound overflow")
-        })?;
+        let max_units = codec
+            .max_encode_value_units()
+            .map_err(|_| Error::new(ErrorKind::InvalidInput, "codec output bound overflow"))?;
         if let Err(error) = self.ensure_spare_capacity(max_units) {
             if error.kind() != ErrorKind::InvalidInput {
                 return Err(error);
@@ -58,7 +51,7 @@ where
             // After flushing pending units, delegate the oversized encoded
             // payload through the wrapped output's unit write path.
             unsafe {
-                self.inner_mut().write_all_unchecked(&scratch, 0, written)?;
+                self.inner_mut().write_all(&scratch, 0, written)?;
             }
             return Ok(());
         }
@@ -72,7 +65,7 @@ where
             .encode_value_with_reset(&value, units, output_index)
             .map_err(|error| Error::new(ErrorKind::InvalidData, error))?;
         // advance the buffer by the number of written units
-        unsafe { self.advance_unchecked(written) };
+        unsafe { self.advance(written) };
         Ok(())
     }
 }
