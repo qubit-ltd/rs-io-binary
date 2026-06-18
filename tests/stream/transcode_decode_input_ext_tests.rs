@@ -1,8 +1,7 @@
 use std::io::{Cursor, ErrorKind, Read, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 
-use qubit_codec::Codec;
-use qubit_io::nz;
+use qubit_codec::{Codec, TranscodeDecodeInput};
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
     BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
@@ -30,7 +29,7 @@ impl SliceInput {
 impl qubit_io::Input for SliceInput {
     type Item = u8;
 
-    unsafe fn read(
+    unsafe fn read_into(
         &mut self,
         output: &mut [Self::Item],
         index: usize,
@@ -63,7 +62,7 @@ impl U16Input {
 impl qubit_io::Input for U16Input {
     type Item = u16;
 
-    unsafe fn read(
+    unsafe fn read_into(
         &mut self,
         output: &mut [Self::Item],
         index: usize,

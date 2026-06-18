@@ -3,7 +3,6 @@ use std::io::{Cursor, Error, ErrorKind, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 
 use qubit_codec::Codec;
-use qubit_io::nz;
 use qubit_io_binary::{
     BufferedBinaryWriter, BufferedLeb128Reader, BufferedLeb128Writer, LittleEndian,
     TranscodeEncodeOutput, TranscodeEncodeOutputExt,
@@ -107,7 +106,7 @@ impl Write for FlushThenWriteLargeAfterFlushWriter {
 impl qubit_io::Output for VecOutput {
     type Item = u8;
 
-    unsafe fn write(
+    unsafe fn write_from(
         &mut self,
         input: &[Self::Item],
         index: usize,
@@ -126,7 +125,7 @@ impl qubit_io::Output for VecOutput {
 impl qubit_io::Output for U16Output {
     type Item = u16;
 
-    unsafe fn write(
+    unsafe fn write_from(
         &mut self,
         input: &[Self::Item],
         index: usize,
