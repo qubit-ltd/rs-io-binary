@@ -5,8 +5,8 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-mod allocation;
 mod streams;
+pub(crate) use qubit_io::try_reserve_vec;
 
 pub(crate) use streams::{
     MIN_CODEC_BUFFER_CAPACITY, checked_u16_len, checked_u32_len, checked_u64_len,

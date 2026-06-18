@@ -1,7 +1,8 @@
 use std::io::{Cursor, ErrorKind, Read, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 
-use qubit_codec::{Codec, TranscodeDecodeInput, nz};
+use qubit_codec::Codec;
+use qubit_io::nz;
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
     BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
@@ -110,12 +111,12 @@ unsafe impl Codec for MaxTwoWindowCodec {
 
     #[inline(always)]
     fn min_units_per_value(&self) -> NonZeroUsize {
-        nz!(1)
+        qubit_io::nz!(1)
     }
 
     #[inline(always)]
     fn max_units_per_value(&self) -> NonZeroUsize {
-        nz!(2)
+        qubit_io::nz!(2)
     }
 
     #[inline(always)]
@@ -127,7 +128,7 @@ unsafe impl Codec for MaxTwoWindowCodec {
         if input.len() > self.max_units_per_value().get() {
             return Err(WindowTooLarge);
         }
-        Ok((input[index], nz!(1)))
+        Ok((input[index], qubit_io::nz!(1)))
     }
 
     #[inline(always)]
@@ -138,7 +139,7 @@ unsafe impl Codec for MaxTwoWindowCodec {
         index: usize,
     ) -> Result<NonZeroUsize, Self::EncodeError> {
         output[index] = *value;
-        Ok(nz!(1))
+        Ok(qubit_io::nz!(1))
     }
 }
 
@@ -180,7 +181,7 @@ unsafe impl Codec for U16PairValueCodec {
         let bytes = value.to_be_bytes();
         output[index] = (bytes[0] as u16) << 8 | bytes[1] as u16;
         output[index + 1] = (bytes[2] as u16) << 8 | bytes[3] as u16;
-        Ok(nz!(2))
+        Ok(qubit_io::nz!(2))
     }
 }
 
@@ -222,7 +223,7 @@ unsafe impl Codec for FixedU16LeCodec {
     ) -> Result<NonZeroUsize, Self::EncodeError> {
         let bytes = value.to_le_bytes();
         output[index..index + 2].copy_from_slice(&bytes);
-        Ok(nz!(2))
+        Ok(qubit_io::nz!(2))
     }
 }
 

@@ -11,10 +11,10 @@ use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
-use qubit_codec::{mut_unchecked, read_unchecked};
+use qubit_io::UncheckedSlice;
 use qubit_codec_binary::{Codec, Leb128DecodeError};
 
-use super::allocation::try_reserve_vec;
+use super::try_reserve_vec;
 
 const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 length";
 #[cfg(not(any(
@@ -161,7 +161,7 @@ where
         }
         // SAFETY: `index` is produced by `0..N`, and the debug assertion
         // above guarantees `N` fits the fixed internal buffer.
-        let byte = unsafe { read_unchecked(buffer, index) };
+        let byte = unsafe { UncheckedSlice::read(buffer, index) };
         if byte & 0x80 == 0 {
             // SAFETY: At least one byte has been read into `buffer`.
             return unsafe { decode_leb128_unchecked::<C>(buffer, 0) }
@@ -194,7 +194,7 @@ pub(crate) fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
 #[inline]
 fn one_byte_slice(bytes: &mut [u8], index: usize) -> &mut [u8] {
     // SAFETY: Callers pass an index inside the fixed-size local buffer.
-    unsafe { core::slice::from_mut(mut_unchecked(bytes, index)) }
+    unsafe { core::slice::from_mut(qubit_io::UncheckedSlice::get_mut(bytes, index)) }
 }
 
 /// Reads a UTF-8 payload after its length has already been decoded.
