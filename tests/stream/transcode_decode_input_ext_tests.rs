@@ -1,11 +1,26 @@
-use std::io::{Cursor, ErrorKind, Read, Seek, SeekFrom, Write};
+use std::io::{
+    Cursor,
+    ErrorKind,
+    Read,
+    Seek,
+    SeekFrom,
+    Write,
+};
 use std::num::NonZeroUsize;
 
-use qubit_codec::{Codec, TranscodeDecodeInput};
+use qubit_codec::{
+    Codec,
+    TranscodeDecodeInput,
+};
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
-    BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
-    StreamCodecDecodeError, TranscodeDecodeInputExt,
+    BufferedBinaryReader,
+    BufferedLeb128Reader,
+    BufferedLeb128Writer,
+    ByteOrder,
+    LittleEndian,
+    StreamCodecDecodeError,
+    TranscodeDecodeInputExt,
 };
 
 #[derive(Default)]
@@ -38,7 +53,8 @@ impl qubit_io::Input for SliceInput {
         let available = self.data.len().saturating_sub(self.position);
         let read = available.min(count);
         let end = self.position + read;
-        output[index..index + read].copy_from_slice(&self.data[self.position..end]);
+        output[index..index + read]
+            .copy_from_slice(&self.data[self.position..end]);
         self.position = end;
         Ok(read)
     }
@@ -71,7 +87,8 @@ impl qubit_io::Input for U16Input {
         let available = self.data.len().saturating_sub(self.position);
         let read = available.min(count);
         let end = self.position + read;
-        output[index..index + read].copy_from_slice(&self.data[self.position..end]);
+        output[index..index + read]
+            .copy_from_slice(&self.data[self.position..end]);
         self.position = end;
         Ok(read)
     }
@@ -255,7 +272,8 @@ fn test_transcode_decode_input_ext_delegates_read() {
 #[test]
 fn test_transcode_decode_input_ext_maps_incomplete_decode_error() {
     let cursor = Cursor::new(vec![0b1000_0000]);
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
 
     assert_eq!(
         ErrorKind::UnexpectedEof,
@@ -275,14 +293,16 @@ fn test_transcode_decode_input_ext_handles_utf8_length() {
     let bytes = writer.inner().clone();
     let cursor = Cursor::new(bytes);
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
     let got = reader.read_utf8_string(10).expect("read payload");
     assert_eq!(value, got);
 }
 
 #[test]
 fn test_transcode_decode_input_ext_accepts_input_without_read() {
-    let mut input = TranscodeDecodeInput::with_capacity(SliceInput::new([0x34, 0x12]), 2);
+    let mut input =
+        TranscodeDecodeInput::with_capacity(SliceInput::new([0x34, 0x12]), 2);
 
     let value = input
         .read_decoded::<FixedU16LeCodec>()
@@ -293,7 +313,8 @@ fn test_transcode_decode_input_ext_accepts_input_without_read() {
 
 #[test]
 fn test_transcode_decode_input_ext_limits_decode_window_to_codec_max() {
-    let mut input = TranscodeDecodeInput::with_capacity(SliceInput::new([1, 2, 3, 4]), 4);
+    let mut input =
+        TranscodeDecodeInput::with_capacity(SliceInput::new([1, 2, 3, 4]), 4);
 
     let value = input
         .read_decoded::<MaxTwoWindowCodec>()
@@ -305,7 +326,8 @@ fn test_transcode_decode_input_ext_limits_decode_window_to_codec_max() {
 
 #[test]
 fn test_transcode_decode_input_ext_accepts_non_u8_unit_input() {
-    let mut input = TranscodeDecodeInput::with_capacity(U16Input::new(vec![0x11, 0x22]), 1);
+    let mut input =
+        TranscodeDecodeInput::with_capacity(U16Input::new(vec![0x11, 0x22]), 1);
 
     let value = input
         .read_decoded::<U16PairValueCodec>()

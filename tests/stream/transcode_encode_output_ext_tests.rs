@@ -1,11 +1,22 @@
 use std::convert::Infallible;
-use std::io::{Cursor, Error, ErrorKind, Seek, SeekFrom, Write};
+use std::io::{
+    Cursor,
+    Error,
+    ErrorKind,
+    Seek,
+    SeekFrom,
+    Write,
+};
 use std::num::NonZeroUsize;
 
 use qubit_codec::Codec;
 use qubit_io_binary::{
-    BufferedBinaryWriter, BufferedLeb128Reader, BufferedLeb128Writer, LittleEndian,
-    TranscodeEncodeOutput, TranscodeEncodeOutputExt,
+    BufferedBinaryWriter,
+    BufferedLeb128Reader,
+    BufferedLeb128Writer,
+    LittleEndian,
+    TranscodeEncodeOutput,
+    TranscodeEncodeOutputExt,
 };
 
 #[derive(Clone, Copy, Debug, Default, Eq, PartialEq)]
@@ -116,7 +127,7 @@ impl qubit_io::Output for VecOutput {
         Ok(count)
     }
 
-    fn flush_pending(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> std::io::Result<()> {
         self.flushed = true;
         Ok(())
     }
@@ -135,7 +146,7 @@ impl qubit_io::Output for U16Output {
         Ok(count)
     }
 
-    fn flush_pending(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> std::io::Result<()> {
         self.flushed = true;
         Ok(())
     }
@@ -337,8 +348,10 @@ fn test_transcode_encode_output_ext_fallback_preserves_pending_bytes() {
 
 #[test]
 fn test_transcode_encode_output_ext_fallback_calls_flush_before_write() {
-    let mut output =
-        TranscodeEncodeOutput::with_capacity(FlushThenWriteLargeAfterFlushWriter::default(), 1);
+    let mut output = TranscodeEncodeOutput::with_capacity(
+        FlushThenWriteLargeAfterFlushWriter::default(),
+        1,
+    );
 
     output
         .write_all(&[0xAA])
@@ -354,7 +367,8 @@ fn test_transcode_encode_output_ext_fallback_calls_flush_before_write() {
 
 #[test]
 fn test_transcode_encode_output_ext_accepts_output_without_write() {
-    let mut output = TranscodeEncodeOutput::with_capacity(VecOutput::default(), 1);
+    let mut output =
+        TranscodeEncodeOutput::with_capacity(VecOutput::default(), 1);
 
     output
         .write_encoded::<LargeFixedCodec>([0x11, 0x22, 0x33, 0x44])
@@ -369,7 +383,8 @@ fn test_transcode_encode_output_ext_accepts_output_without_write() {
 
 #[test]
 fn test_transcode_encode_output_ext_accepts_non_u8_unit_output() {
-    let mut output = TranscodeEncodeOutput::with_capacity(U16Output::default(), 1);
+    let mut output =
+        TranscodeEncodeOutput::with_capacity(U16Output::default(), 1);
 
     output
         .write_encoded::<U16PairCodec>((0x1111, 0x2222))
@@ -384,7 +399,8 @@ fn test_transcode_encode_output_ext_accepts_non_u8_unit_output() {
 
 #[test]
 fn test_transcode_encode_output_ext_writes_scalar_and_raw_bytes() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
     writer.write_u16(0x1234).expect("encoded u16");
     assert_eq!(vec![0x34, 0x12], {
         writer.flush().expect("flush should write bytes");
@@ -394,7 +410,8 @@ fn test_transcode_encode_output_ext_writes_scalar_and_raw_bytes() {
 
 #[test]
 fn test_transcode_encode_output_ext_writes_raw_bytes_via_io_trait() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
     writer
         .write_all(b"ab")
         .expect("write_all should be delegated");
@@ -404,8 +421,10 @@ fn test_transcode_encode_output_ext_writes_raw_bytes_via_io_trait() {
 }
 
 #[test]
-fn test_transcode_encode_output_ext_writes_multiple_values_with_tiny_capacity() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 1);
+fn test_transcode_encode_output_ext_writes_multiple_values_with_tiny_capacity()
+{
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 1);
     writer.write_u16(0x1234).expect("write first u16");
     writer.write_u32(0x89ABCDEF).expect("write u32");
     writer.write_u16(0x0102).expect("write second u16");
@@ -443,6 +462,8 @@ fn test_transcode_encode_output_ext_writes_utf8_string() {
     let bytes = writer.inner().clone();
 
     let mut reader =
-        BufferedLeb128Reader::<_, qubit_codec_binary::NonStrict>::new(Cursor::new(bytes));
+        BufferedLeb128Reader::<_, qubit_codec_binary::NonStrict>::new(
+            Cursor::new(bytes),
+        );
     assert_eq!("hello", reader.read_utf8_string(10).expect("read payload"));
 }
