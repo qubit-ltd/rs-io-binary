@@ -106,7 +106,7 @@ impl Write for FlushThenWriteLargeAfterFlushWriter {
 impl qubit_io::Output for VecOutput {
     type Item = u8;
 
-    unsafe fn write_from(
+    unsafe fn write_unchecked(
         &mut self,
         input: &[Self::Item],
         index: usize,
@@ -116,7 +116,7 @@ impl qubit_io::Output for VecOutput {
         Ok(count)
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush_pending(&mut self) -> std::io::Result<()> {
         self.flushed = true;
         Ok(())
     }
@@ -125,7 +125,7 @@ impl qubit_io::Output for VecOutput {
 impl qubit_io::Output for U16Output {
     type Item = u16;
 
-    unsafe fn write_from(
+    unsafe fn write_unchecked(
         &mut self,
         input: &[Self::Item],
         index: usize,
@@ -135,7 +135,7 @@ impl qubit_io::Output for U16Output {
         Ok(count)
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush_pending(&mut self) -> std::io::Result<()> {
         self.flushed = true;
         Ok(())
     }

@@ -11,8 +11,8 @@ use std::io::{Error, ErrorKind, Read, Result, Write};
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
-use qubit_io::UncheckedSlice;
 use qubit_codec_binary::{Codec, Leb128DecodeError};
+use qubit_io::UncheckedSlice;
 
 use super::try_reserve_vec;
 

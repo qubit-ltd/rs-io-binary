@@ -8,7 +8,7 @@ use std::error::Error as StdError;
 use std::io::{self, Error, ErrorKind};
 
 use qubit_codec::{Codec, TranscodeEncodeOutput};
-use qubit_io::Output;
+use qubit_io::{Output, OutputExt};
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
 pub trait TranscodeEncodeOutputExt<O> {
@@ -51,7 +51,7 @@ where
             // After flushing pending units, delegate the oversized encoded
             // payload through the wrapped output's unit write path.
             unsafe {
-                self.inner_mut().write_all(&scratch, 0, written)?;
+                self.inner_mut().write_all_unchecked(&scratch, 0, written)?;
             }
             return Ok(());
         }

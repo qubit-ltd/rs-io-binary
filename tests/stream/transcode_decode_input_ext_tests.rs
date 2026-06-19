@@ -29,7 +29,7 @@ impl SliceInput {
 impl qubit_io::Input for SliceInput {
     type Item = u8;
 
-    unsafe fn read_into(
+    unsafe fn read_unchecked(
         &mut self,
         output: &mut [Self::Item],
         index: usize,
@@ -62,7 +62,7 @@ impl U16Input {
 impl qubit_io::Input for U16Input {
     type Item = u16;
 
-    unsafe fn read_into(
+    unsafe fn read_unchecked(
         &mut self,
         output: &mut [Self::Item],
         index: usize,

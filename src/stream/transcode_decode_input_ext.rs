@@ -118,7 +118,7 @@ where
             let remaining = required_total - loaded;
             // SAFETY: `units[loaded..required_total]` is a valid destination
             // range inside the scratch buffer.
-            let read = unsafe { input.read_into(&mut units, loaded, remaining) }?;
+            let read = unsafe { input.read_unchecked(&mut units, loaded, remaining) }?;
             if read == 0 {
                 return Err(Error::new(
                     ErrorKind::UnexpectedEof,
