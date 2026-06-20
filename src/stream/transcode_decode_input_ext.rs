@@ -11,7 +11,7 @@ use std::io::{
 
 use qubit_codec::{
     Codec,
-    CodecDecodeSignal,
+    CodecDecodeErrorSignal,
     TranscodeDecodeInput,
 };
 use qubit_io::Input;

@@ -108,7 +108,7 @@ impl std::fmt::Display for WindowTooLarge {
 
 impl std::error::Error for WindowTooLarge {}
 
-impl qubit_codec::CodecDecodeSignal for WindowTooLarge {}
+impl qubit_codec::CodecDecodeErrorSignal for WindowTooLarge {}
 
 impl StreamCodecDecodeError for WindowTooLarge {
     fn io_error_kind(&self) -> ErrorKind {

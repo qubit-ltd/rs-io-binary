@@ -4,14 +4,14 @@
 //    SPDX-License-Identifier: Apache-2.0
 // =============================================================================
 
-use qubit_codec::CodecDecodeSignal;
+use qubit_codec::CodecDecodeErrorSignal;
 use qubit_codec_binary::Leb128DecodeError;
 use std::error::Error as StdError;
 use std::io::ErrorKind;
 
 /// Decode error behavior shared by codec stream decoders.
 pub trait StreamCodecDecodeError:
-    CodecDecodeSignal + StdError + Send + Sync + 'static
+    CodecDecodeErrorSignal + StdError + Send + Sync + 'static
 {
     /// Returns the mapped I/O error kind for this codec decode error.
     fn io_error_kind(&self) -> ErrorKind;

@@ -33,7 +33,7 @@ doctest = true
 [dependencies]
 qubit-codec = { path = "../rs-codec", version = "0.8.0" }
 qubit-codec-binary = { path = "../rs-codec-binary", version = "0.1.0" }
-qubit-io = { path = "../rs-io", version = "0.9.0" }
+qubit-io = "0.10.0"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
