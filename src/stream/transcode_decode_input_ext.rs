@@ -3,17 +3,9 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 // =============================================================================
-use std::io::{
-    Error,
-    ErrorKind,
-    Result,
-};
+use std::io::{Error, ErrorKind, Result};
 
-use qubit_codec::{
-    Codec,
-    CodecDecodeErrorSignal,
-    TranscodeDecodeInput,
-};
+use qubit_codec::{Codec, CodecDecodeFailure, TranscodeDecodeInput};
 use qubit_io::Input;
 
 use super::stream_codec_decode_error::StreamCodecDecodeError;
@@ -39,22 +31,15 @@ where
         C::DecodeError: StreamCodecDecodeError,
     {
         let mut codec = C::default();
-        let min_units_per_value = codec.min_units_per_value().get();
-        let max_units_per_value =
-            codec.max_units_per_value().get().max(min_units_per_value);
+        let min_units_per_value = C::MIN_UNITS_PER_VALUE.get();
+        let max_units_per_value = C::MAX_UNITS_PER_VALUE.get().max(min_units_per_value);
         if min_units_per_value > self.capacity() {
-            return read_decoded_via_scratch(
-                self,
-                &mut codec,
-                min_units_per_value,
-            );
+            return read_decoded_via_scratch(self, &mut codec, min_units_per_value);
         }
 
         loop {
             let available = self.available();
-            if available < min_units_per_value
-                && !self.fill_until(min_units_per_value)?
-            {
+            if available < min_units_per_value && !self.fill_until(min_units_per_value)? {
                 let available = self.available();
                 self.consume(available);
                 return Err(Error::new(
@@ -63,9 +48,7 @@ where
                 ));
             }
 
-            if self.available() < max_units_per_value
-                && max_units_per_value <= self.capacity()
-            {
+            if self.available() < max_units_per_value && max_units_per_value <= self.capacity() {
                 let _ = self.fill_until(max_units_per_value)?;
             }
 
@@ -83,39 +66,31 @@ where
                     self.consume(consumed.get());
                     return Ok(value);
                 }
-                Err(error) => {
-                    if let Some(required_total) = error.required_total() {
-                        if units.len() >= required_total {
-                            if let Some(consumed) = error.consumed_units() {
-                                debug_assert!(
-                                    consumed.get() <= units.len(),
-                                    "decode error consumed bytes exceed unread window"
-                                );
-                                self.consume(consumed.get());
-                            }
-                            return Err(Error::new(
-                                error.io_error_kind(),
-                                error,
-                            ));
-                        }
-                        if !self.fill_until(required_total)? {
-                            let available = self.available();
-                            self.consume(available);
-                            return Err(Error::new(
-                                error.io_error_kind(),
-                                error,
-                            ));
-                        }
-                    } else {
-                        if let Some(consumed) = error.consumed_units() {
-                            debug_assert!(
-                                consumed.get() <= units.len(),
-                                "decode error consumed bytes exceed unread window"
-                            );
-                            self.consume(consumed.get());
-                        }
-                        return Err(Error::new(error.io_error_kind(), error));
+                Err(CodecDecodeFailure::Incomplete { required_total }) => {
+                    if units.len() >= required_total {
+                        return Err(Error::new(
+                            ErrorKind::InvalidData,
+                            "codec reported incomplete input within available window",
+                        ));
                     }
+                    if !self.fill_until(required_total)? {
+                        let available = self.available();
+                        self.consume(available);
+                        return Err(Error::new(
+                            ErrorKind::UnexpectedEof,
+                            "failed to decode complete value",
+                        ));
+                    }
+                }
+                Err(CodecDecodeFailure::Invalid { source, consumed }) => {
+                    if let Some(consumed) = consumed {
+                        debug_assert!(
+                            consumed.get() <= units.len(),
+                            "decode error consumed bytes exceed unread window"
+                        );
+                        self.consume(consumed.get());
+                    }
+                    return Err(Error::new(source.io_error_kind(), source));
                 }
             }
         }
@@ -140,8 +115,7 @@ where
             let remaining = required_total - loaded;
             // SAFETY: `units[loaded..required_total]` is a valid destination
             // range inside the scratch buffer.
-            let read =
-                unsafe { input.read_unchecked(&mut units, loaded, remaining) }?;
+            let read = unsafe { input.read_unchecked(&mut units, loaded, remaining) }?;
             if read == 0 {
                 return Err(Error::new(
                     ErrorKind::UnexpectedEof,
@@ -157,16 +131,20 @@ where
         };
         match decode_result {
             Ok((value, _)) => return Ok(value),
-            Err(error) => {
-                if let Some(next_required_total) = error.required_total() {
-                    if next_required_total <= loaded {
-                        return Err(Error::new(error.io_error_kind(), error));
-                    }
-                    units.resize(next_required_total, I::Item::default());
-                    required_total = next_required_total;
-                } else {
-                    return Err(Error::new(error.io_error_kind(), error));
+            Err(CodecDecodeFailure::Incomplete {
+                required_total: next_required_total,
+            }) => {
+                if next_required_total <= loaded {
+                    return Err(Error::new(
+                        ErrorKind::InvalidData,
+                        "codec reported incomplete input within loaded scratch window",
+                    ));
                 }
+                units.resize(next_required_total, I::Item::default());
+                required_total = next_required_total;
+            }
+            Err(CodecDecodeFailure::Invalid { source, .. }) => {
+                return Err(Error::new(source.io_error_kind(), source));
             }
         }
     }

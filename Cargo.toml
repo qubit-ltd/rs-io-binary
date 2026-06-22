@@ -1,6 +1,6 @@
 [package]
 name = "qubit-io-binary"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 rust-version = "1.94"
 authors = ["Haixing Hu <starfish.hu@gmail.com>"]
@@ -31,8 +31,8 @@ name = "qubit_io_binary"
 doctest = true
 
 [dependencies]
-qubit-codec = { path = "../rs-codec", version = "0.8.0" }
-qubit-codec-binary = { path = "../rs-codec-binary", version = "0.1.0" }
+qubit-codec = { path = "../rs-codec", version = "0.9.0" }
+qubit-codec-binary = { path = "../rs-codec-binary", version = "0.2.0" }
 qubit-io = "0.10.0"
 
 [lints.rust]
@@ -40,7 +40,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [dev-dependencies]
 criterion = { version = "0.8", default-features = false }
-qubit-codec = { path = "../rs-codec", version = "0.8.0" }
+qubit-codec = { path = "../rs-codec", version = "0.9.0" }
 
 [[bench]]
 name = "stream"

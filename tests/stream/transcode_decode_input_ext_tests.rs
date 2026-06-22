@@ -1,26 +1,11 @@
-use std::io::{
-    Cursor,
-    ErrorKind,
-    Read,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Cursor, ErrorKind, Read, Seek, SeekFrom, Write};
 use std::num::NonZeroUsize;
 
-use qubit_codec::{
-    Codec,
-    TranscodeDecodeInput,
-};
+use qubit_codec::{Codec, CodecDecodeFailure, TranscodeDecodeInput};
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
-    BufferedBinaryReader,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-    ByteOrder,
-    LittleEndian,
-    StreamCodecDecodeError,
-    TranscodeDecodeInputExt,
+    BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer, ByteOrder, LittleEndian,
+    StreamCodecDecodeError, TranscodeDecodeInputExt,
 };
 
 #[derive(Default)]
@@ -53,8 +38,7 @@ impl qubit_io::Input for SliceInput {
         let available = self.data.len().saturating_sub(self.position);
         let read = available.min(count);
         let end = self.position + read;
-        output[index..index + read]
-            .copy_from_slice(&self.data[self.position..end]);
+        output[index..index + read].copy_from_slice(&self.data[self.position..end]);
         self.position = end;
         Ok(read)
     }
@@ -87,8 +71,7 @@ impl qubit_io::Input for U16Input {
         let available = self.data.len().saturating_sub(self.position);
         let read = available.min(count);
         let end = self.position + read;
-        output[index..index + read]
-            .copy_from_slice(&self.data[self.position..end]);
+        output[index..index + read].copy_from_slice(&self.data[self.position..end]);
         self.position = end;
         Ok(read)
     }
@@ -108,8 +91,6 @@ impl std::fmt::Display for WindowTooLarge {
 
 impl std::error::Error for WindowTooLarge {}
 
-impl qubit_codec::CodecDecodeErrorSignal for WindowTooLarge {}
-
 impl StreamCodecDecodeError for WindowTooLarge {
     fn io_error_kind(&self) -> ErrorKind {
         ErrorKind::InvalidData
@@ -119,30 +100,22 @@ impl StreamCodecDecodeError for WindowTooLarge {
 #[derive(Default)]
 struct MaxTwoWindowCodec;
 
-unsafe impl Codec for MaxTwoWindowCodec {
+impl Codec for MaxTwoWindowCodec {
     type Value = u8;
     type Unit = u8;
     type DecodeError = WindowTooLarge;
     type EncodeError = core::convert::Infallible;
-
-    #[inline(always)]
-    fn min_units_per_value(&self) -> NonZeroUsize {
-        qubit_io::nz!(1)
-    }
-
-    #[inline(always)]
-    fn max_units_per_value(&self) -> NonZeroUsize {
-        qubit_io::nz!(2)
-    }
+    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(1);
+    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
 
     #[inline(always)]
     unsafe fn decode(
         &mut self,
         input: &[u8],
         index: usize,
-    ) -> Result<(Self::Value, NonZeroUsize), Self::DecodeError> {
-        if input.len() > self.max_units_per_value().get() {
-            return Err(WindowTooLarge);
+    ) -> Result<(Self::Value, NonZeroUsize), CodecDecodeFailure<Self::DecodeError>> {
+        if input.len() > Self::MAX_UNITS_PER_VALUE.get() {
+            return Err(CodecDecodeFailure::invalid_without_consumed(WindowTooLarge));
         }
         Ok((input[index], qubit_io::nz!(1)))
     }
@@ -159,32 +132,23 @@ unsafe impl Codec for MaxTwoWindowCodec {
     }
 }
 
-unsafe impl Codec for U16PairValueCodec {
+impl Codec for U16PairValueCodec {
     type Value = u32;
     type Unit = u16;
     type DecodeError = core::convert::Infallible;
     type EncodeError = core::convert::Infallible;
 
-    #[inline(always)]
-    fn min_units_per_value(&self) -> NonZeroUsize {
-        // SAFETY: 2 is non-zero.
-        unsafe { NonZeroUsize::new_unchecked(2) }
-    }
-
-    #[inline(always)]
-    fn max_units_per_value(&self) -> NonZeroUsize {
-        // SAFETY: 2 is non-zero.
-        unsafe { NonZeroUsize::new_unchecked(2) }
-    }
+    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
 
     #[inline(always)]
     unsafe fn decode(
         &mut self,
         input: &[u16],
         index: usize,
-    ) -> Result<(Self::Value, NonZeroUsize), Self::DecodeError> {
+    ) -> Result<(Self::Value, NonZeroUsize), CodecDecodeFailure<Self::DecodeError>> {
         let value = ((input[index] as u32) << 16) | (input[index + 1] as u32);
-        Ok((value, unsafe { NonZeroUsize::new_unchecked(2) }))
+        Ok((value, qubit_io::nz!(2)))
     }
 
     #[inline(always)]
@@ -201,33 +165,24 @@ unsafe impl Codec for U16PairValueCodec {
     }
 }
 
-unsafe impl Codec for FixedU16LeCodec {
+impl Codec for FixedU16LeCodec {
     type Value = u16;
     type Unit = u8;
     type DecodeError = core::convert::Infallible;
     type EncodeError = core::convert::Infallible;
 
-    #[inline(always)]
-    fn min_units_per_value(&self) -> NonZeroUsize {
-        // SAFETY: 2 is non-zero.
-        unsafe { NonZeroUsize::new_unchecked(2) }
-    }
-
-    #[inline(always)]
-    fn max_units_per_value(&self) -> NonZeroUsize {
-        // SAFETY: 2 is non-zero.
-        unsafe { NonZeroUsize::new_unchecked(2) }
-    }
+    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
 
     #[inline(always)]
     unsafe fn decode(
         &mut self,
         input: &[u8],
         index: usize,
-    ) -> Result<(Self::Value, NonZeroUsize), Self::DecodeError> {
+    ) -> Result<(Self::Value, NonZeroUsize), CodecDecodeFailure<Self::DecodeError>> {
         let value = u16::from_le_bytes([input[index], input[index + 1]]);
         // SAFETY: fixed-width decode always consumes two bytes.
-        Ok((value, unsafe { NonZeroUsize::new_unchecked(2) }))
+        Ok((value, qubit_io::nz!(2)))
     }
 
     #[inline(always)]
@@ -272,8 +227,7 @@ fn test_transcode_decode_input_ext_delegates_read() {
 #[test]
 fn test_transcode_decode_input_ext_maps_incomplete_decode_error() {
     let cursor = Cursor::new(vec![0b1000_0000]);
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
 
     assert_eq!(
         ErrorKind::UnexpectedEof,
@@ -293,16 +247,14 @@ fn test_transcode_decode_input_ext_handles_utf8_length() {
     let bytes = writer.inner().clone();
     let cursor = Cursor::new(bytes);
 
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(cursor, 1);
     let got = reader.read_utf8_string(10).expect("read payload");
     assert_eq!(value, got);
 }
 
 #[test]
 fn test_transcode_decode_input_ext_accepts_input_without_read() {
-    let mut input =
-        TranscodeDecodeInput::with_capacity(SliceInput::new([0x34, 0x12]), 2);
+    let mut input = TranscodeDecodeInput::with_capacity(SliceInput::new([0x34, 0x12]), 2);
 
     let value = input
         .read_decoded::<FixedU16LeCodec>()
@@ -313,8 +265,7 @@ fn test_transcode_decode_input_ext_accepts_input_without_read() {
 
 #[test]
 fn test_transcode_decode_input_ext_limits_decode_window_to_codec_max() {
-    let mut input =
-        TranscodeDecodeInput::with_capacity(SliceInput::new([1, 2, 3, 4]), 4);
+    let mut input = TranscodeDecodeInput::with_capacity(SliceInput::new([1, 2, 3, 4]), 4);
 
     let value = input
         .read_decoded::<MaxTwoWindowCodec>()
@@ -326,8 +277,7 @@ fn test_transcode_decode_input_ext_limits_decode_window_to_codec_max() {
 
 #[test]
 fn test_transcode_decode_input_ext_accepts_non_u8_unit_input() {
-    let mut input =
-        TranscodeDecodeInput::with_capacity(U16Input::new(vec![0x11, 0x22]), 1);
+    let mut input = TranscodeDecodeInput::with_capacity(U16Input::new(vec![0x11, 0x22]), 1);
 
     let value = input
         .read_decoded::<U16PairValueCodec>()

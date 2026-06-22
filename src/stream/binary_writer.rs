@@ -7,26 +7,11 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Result,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::{Result, Seek, SeekFrom, Write};
 
 use crate::WriteExt;
-use crate::util::{
-    checked_u16_len,
-    checked_u32_len,
-    encode_infallible_unchecked,
-};
-use qubit_codec_binary::{
-    BigEndian,
-    BinaryCodec,
-    ByteOrder,
-    ByteOrderSpec,
-    LittleEndian,
-};
+use crate::util::{checked_u16_len, checked_u32_len, encode_infallible_unchecked};
+use qubit_codec_binary::{BigEndian, BinaryCodec, ByteOrder, ByteOrderSpec, LittleEndian};
 
 /// Writer wrapper for fixed-width binary values.
 ///
@@ -103,11 +88,7 @@ macro_rules! impl_value_write {
             // SAFETY: `LEN` is declared by the codec and fits the fixed
             // internal buffer.
             unsafe {
-                let _ = encode_infallible_unchecked::<Codec>(
-                    value,
-                    &mut self.buffer,
-                    0,
-                );
+                let _ = encode_infallible_unchecked::<Codec>(value, &mut self.buffer, 0);
                 self.inner.write_all_unchecked(&self.buffer, 0, LEN)
             }
         }
@@ -120,66 +101,21 @@ macro_rules! impl_for_order {
         where
             W: Write,
         {
-            impl_value_write!(
-                $order,
-                write_u8,
-                u8,
-                "Writes an unsigned 8-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i8,
-                i8,
-                "Writes a signed 8-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u16,
-                u16,
-                "Writes an unsigned 16-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u32,
-                u32,
-                "Writes an unsigned 32-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u64,
-                u64,
-                "Writes an unsigned 64-bit integer."
-            );
+            impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
+            impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
+            impl_value_write!($order, write_u16, u16, "Writes an unsigned 16-bit integer.");
+            impl_value_write!($order, write_u32, u32, "Writes an unsigned 32-bit integer.");
+            impl_value_write!($order, write_u64, u64, "Writes an unsigned 64-bit integer.");
             impl_value_write!(
                 $order,
                 write_u128,
                 u128,
                 "Writes an unsigned 128-bit integer."
             );
-            impl_value_write!(
-                $order,
-                write_i16,
-                i16,
-                "Writes a signed 16-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i32,
-                i32,
-                "Writes a signed 32-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i64,
-                i64,
-                "Writes a signed 64-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i128,
-                i128,
-                "Writes a signed 128-bit integer."
-            );
+            impl_value_write!($order, write_i16, i16, "Writes a signed 16-bit integer.");
+            impl_value_write!($order, write_i32, i32, "Writes a signed 32-bit integer.");
+            impl_value_write!($order, write_i64, i64, "Writes a signed 64-bit integer.");
+            impl_value_write!($order, write_i128, i128, "Writes a signed 128-bit integer.");
             impl_value_write!($order, write_f32, f32, "Writes a 32-bit float.");
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
 

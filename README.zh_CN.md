@@ -69,7 +69,7 @@
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.1"
+qubit-io-binary = "0.2"
 ```
 
 ## 快速开始
