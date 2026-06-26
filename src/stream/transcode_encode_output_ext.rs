@@ -4,10 +4,21 @@
 //    SPDX-License-Identifier: Apache-2.0
 // =============================================================================
 use std::error::Error as StdError;
-use std::io::{self, Error, ErrorKind};
+use std::io::{
+    self,
+    Error,
+    ErrorKind,
+};
 
-use qubit_codec::{Codec, CodecValueExt, TranscodeEncodeOutput};
-use qubit_io::{Output, OutputExt};
+use qubit_codec::{
+    Codec,
+    CodecValueExt,
+    TranscodeEncodeOutput,
+};
+use qubit_io::{
+    Output,
+    OutputExt,
+};
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
 pub trait TranscodeEncodeOutputExt<O> {
@@ -33,9 +44,9 @@ where
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();
-        let max_units = codec
-            .max_encode_value_units()
-            .map_err(|_| Error::new(ErrorKind::InvalidInput, "codec output bound overflow"))?;
+        let max_units = codec.max_encode_value_units().map_err(|_| {
+            Error::new(ErrorKind::InvalidInput, "codec output bound overflow")
+        })?;
         if let Err(error) = self.ensure_spare_capacity(max_units) {
             if error.kind() != ErrorKind::InvalidInput {
                 return Err(error);

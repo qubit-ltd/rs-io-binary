@@ -8,22 +8,33 @@
 // qubit-style: allow inline-tests
 use core::convert::Infallible;
 use core::num::NonZeroUsize;
-use std::io::{Error, ErrorKind, Read, Result, Write};
+use std::io::{
+    Error,
+    ErrorKind,
+    Read,
+    Result,
+    Write,
+};
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
-use qubit_codec_binary::{Codec, Leb128DecodeError};
+use qubit_codec_binary::{
+    Codec,
+    Leb128DecodeError,
+};
 use qubit_io::UncheckedSlice;
 
 use super::try_reserve_vec;
 
-const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 length";
+const U32_LENGTH_OVERFLOW: &str =
+    "string length exceeds maximum encodable u32 length";
 #[cfg(not(any(
     target_pointer_width = "16",
     target_pointer_width = "32",
     target_pointer_width = "64",
 )))]
-const U64_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u64 length";
+const U64_LENGTH_OVERFLOW: &str =
+    "string length exceeds maximum encodable u64 length";
 /// Minimum capacity required by the largest scalar codec payload.
 pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
 
@@ -34,7 +45,10 @@ pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
 /// The caller must guarantee that `index` is a valid start position in `input`
 /// and that at least `C::MIN_UNITS_PER_VALUE` bytes are readable from it.
 #[inline(always)]
-pub(crate) unsafe fn decode_infallible_unchecked<C>(input: &[u8], index: usize) -> C::Value
+pub(crate) unsafe fn decode_infallible_unchecked<C>(
+    input: &[u8],
+    index: usize,
+) -> C::Value
 where
     C: Codec<Unit = u8, DecodeError = Infallible> + Default,
 {
@@ -42,8 +56,10 @@ where
     // SAFETY: The caller upholds the unchecked decode contract for `C`.
     match unsafe { Codec::decode(&mut codec, input, index) } {
         Ok((value, _)) => value,
-        Err(qubit_codec::CodecDecodeFailure::Invalid { source, .. }) => match source {},
-        Err(qubit_codec::CodecDecodeFailure::Incomplete { .. }) => {
+        Err(qubit_codec::DecodeFailure::Invalid { source, .. }) => {
+            match source {}
+        }
+        Err(qubit_codec::DecodeFailure::Incomplete { .. }) => {
             unreachable!("infallible codec reported incomplete input")
         }
     }
@@ -88,14 +104,16 @@ where
 {
     let mut codec = C::default();
     // SAFETY: The caller upholds the unchecked decode contract for `C`.
-    unsafe { Codec::decode(&mut codec, input, index) }.map_err(|failure| match failure {
-        qubit_codec::CodecDecodeFailure::Invalid { source, .. } => source,
-        qubit_codec::CodecDecodeFailure::Incomplete { required_total } => {
-            Leb128DecodeError::incomplete(
-                index,
-                NonZeroUsize::new(required_total).expect("required total is non-zero"),
-                input.len().saturating_sub(index),
-            )
+    unsafe { Codec::decode(&mut codec, input, index) }.map_err(|failure| {
+        match failure {
+            qubit_codec::DecodeFailure::Invalid { source, .. } => source,
+            qubit_codec::DecodeFailure::Incomplete { required_total } => {
+                Leb128DecodeError::incomplete(
+                    index,
+                    required_total,
+                    input.len().saturating_sub(index),
+                )
+            }
         }
     })
 }
@@ -114,7 +132,9 @@ where
 /// Returns an I/O error reported by `reader`, or [`ErrorKind::InvalidData`]
 /// when the codec rejects the payload.
 #[inline]
-pub(crate) fn read_leb128_payload<const N: usize, C, R>(reader: &mut R) -> Result<C::Value>
+pub(crate) fn read_leb128_payload<const N: usize, C, R>(
+    reader: &mut R,
+) -> Result<C::Value>
 where
     R: Read + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
@@ -207,7 +227,9 @@ pub(crate) fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
 #[inline]
 fn one_byte_slice(bytes: &mut [u8], index: usize) -> &mut [u8] {
     // SAFETY: Callers pass an index inside the fixed-size local buffer.
-    unsafe { core::slice::from_mut(qubit_io::UncheckedSlice::get_mut(bytes, index)) }
+    unsafe {
+        core::slice::from_mut(qubit_io::UncheckedSlice::get_mut(bytes, index))
+    }
 }
 
 /// Reads a UTF-8 payload after its length has already been decoded.
@@ -227,7 +249,11 @@ fn one_byte_slice(bytes: &mut [u8], index: usize) -> &mut [u8] {
 /// Returns [`ErrorKind::InvalidData`] when `len` exceeds `max_len`, an
 /// allocation error when reserving the output buffer fails, an I/O error from
 /// `reader`, or [`ErrorKind::InvalidData`] when the payload is not valid UTF-8.
-pub(crate) fn read_utf8_payload<R>(reader: &mut R, len: usize, max_len: usize) -> Result<String>
+pub(crate) fn read_utf8_payload<R>(
+    reader: &mut R,
+    len: usize,
+    max_len: usize,
+) -> Result<String>
 where
     R: Read + ?Sized,
 {
@@ -323,7 +349,9 @@ pub(crate) fn checked_u64_len(len: usize) -> Result<u64> {
         target_pointer_width = "64",
     )))]
     {
-        u64::try_from(len).map_err(|_| Error::new(ErrorKind::InvalidInput, U64_LENGTH_OVERFLOW))
+        u64::try_from(len).map_err(|_| {
+            Error::new(ErrorKind::InvalidInput, U64_LENGTH_OVERFLOW)
+        })
     }
 }
 
@@ -333,7 +361,9 @@ pub(crate) fn usize_from_u32_len(len: u32) -> Result<usize> {
     usize::try_from(len).map_err(|_| {
         Error::new(
             ErrorKind::InvalidData,
-            format!("string length {len} exceeds maximum supported usize length"),
+            format!(
+                "string length {len} exceeds maximum supported usize length"
+            ),
         )
     })
 }
@@ -344,7 +374,9 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
     usize::try_from(len).map_err(|_| {
         Error::new(
             ErrorKind::InvalidData,
-            format!("string length {len} exceeds maximum supported usize length"),
+            format!(
+                "string length {len} exceeds maximum supported usize length"
+            ),
         )
     })
 }
@@ -353,7 +385,9 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
 fn length_exceeded_error(len: usize, max_len: usize) -> Error {
     Error::new(
         ErrorKind::InvalidData,
-        format!("string length {len} exceeds maximum length of {max_len} bytes"),
+        format!(
+            "string length {len} exceeds maximum length of {max_len} bytes"
+        ),
     )
 }
 
@@ -370,10 +404,20 @@ mod tests {
     use core::convert::Infallible;
     use core::num::NonZeroUsize;
 
-    use qubit_codec::{Codec, CodecDecodeFailure};
-    use qubit_codec_binary::{Leb128Codec, Leb128DecodeErrorKind, NonStrict};
+    use qubit_codec::{
+        Codec,
+        DecodeFailure,
+    };
+    use qubit_codec_binary::{
+        Leb128Codec,
+        Leb128DecodeErrorKind,
+        NonStrict,
+    };
 
-    use super::{decode_infallible_unchecked, decode_leb128_unchecked};
+    use super::{
+        decode_infallible_unchecked,
+        decode_leb128_unchecked,
+    };
 
     #[derive(Default)]
     struct IncompleteInfallibleCodec;
@@ -391,9 +435,13 @@ mod tests {
             &mut self,
             _input: &[u8],
             _index: usize,
-        ) -> std::result::Result<(u8, NonZeroUsize), CodecDecodeFailure<Self::DecodeError>>
-        {
-            Err(CodecDecodeFailure::incomplete(2))
+        ) -> std::result::Result<
+            (u8, NonZeroUsize),
+            DecodeFailure<Self::DecodeError>,
+        > {
+            Err(DecodeFailure::incomplete(
+                NonZeroUsize::new(2).expect("test bound is non-zero"),
+            ))
         }
 
         unsafe fn encode(
@@ -421,8 +469,8 @@ mod tests {
         );
 
         // SAFETY: The single output slot is writable from index 0.
-        let written =
-            unsafe { codec.encode(&0, &mut output, 0) }.expect("test codec encode is infallible");
+        let written = unsafe { codec.encode(&0, &mut output, 0) }
+            .expect("test codec encode is infallible");
         assert_eq!(1, written.get());
     }
 
@@ -444,8 +492,10 @@ mod tests {
         let input = [0x80_u8];
 
         // SAFETY: One byte is readable from index 0.
-        let error = unsafe { decode_leb128_unchecked::<Leb128Codec<u16, NonStrict>>(&input, 0) }
-            .expect_err("partial LEB128 payload should be incomplete");
+        let error = unsafe {
+            decode_leb128_unchecked::<Leb128Codec<u16, NonStrict>>(&input, 0)
+        }
+        .expect_err("partial LEB128 payload should be incomplete");
 
         assert_eq!(Leb128DecodeErrorKind::Incomplete, error.kind());
         assert_eq!(Some(qubit_io::nz!(2)), error.required());
