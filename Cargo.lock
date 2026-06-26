@@ -237,9 +237,9 @@ dependencies = [
 
 [[package]]
 name = "qubit-codec"
-version = "0.9.0"
+version = "0.10.0"
 dependencies = [
- "qubit-io 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "qubit-io",
  "thiserror",
 ]
 
@@ -248,13 +248,9 @@ name = "qubit-codec-binary"
 version = "0.2.0"
 dependencies = [
  "qubit-codec",
- "qubit-io 0.10.1",
+ "qubit-io",
  "thiserror",
 ]
-
-[[package]]
-name = "qubit-io"
-version = "0.10.1"
 
 [[package]]
 name = "qubit-io"
@@ -269,7 +265,7 @@ dependencies = [
  "criterion",
  "qubit-codec",
  "qubit-codec-binary",
- "qubit-io 0.10.1",
+ "qubit-io",
 ]
 
 [[package]]

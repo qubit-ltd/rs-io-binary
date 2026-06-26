@@ -31,16 +31,16 @@ name = "qubit_io_binary"
 doctest = true
 
 [dependencies]
-qubit-codec = { path = "../rs-codec", version = "0.9.0" }
+qubit-codec = { path = "../rs-codec", version = "0.10.0" }
 qubit-codec-binary = { path = "../rs-codec-binary", version = "0.2.0" }
-qubit-io = { path = "../rs-io", version = "0.10.1" }
+qubit-io = "0.10.1"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [dev-dependencies]
 criterion = { version = "0.8", default-features = false }
-qubit-codec = { path = "../rs-codec", version = "0.9.0" }
+qubit-codec = { path = "../rs-codec", version = "0.10.0" }
 
 [[bench]]
 name = "stream"
