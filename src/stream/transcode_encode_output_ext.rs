@@ -12,13 +12,9 @@ use std::io::{
 
 use qubit_codec::{
     Codec,
-    CodecValueExt,
     TranscodeEncodeOutput,
 };
-use qubit_io::{
-    Output,
-    OutputExt,
-};
+use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
 pub trait TranscodeEncodeOutputExt<O> {
@@ -44,38 +40,8 @@ where
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();
-        let max_units = codec.max_encode_value_units().map_err(|_| {
-            Error::new(ErrorKind::InvalidInput, "codec output bound overflow")
-        })?;
-        if let Err(error) = self.ensure_spare_capacity(max_units) {
-            if error.kind() != ErrorKind::InvalidInput {
-                return Err(error);
-            }
-            // flush the possible data in the buffer
-            self.flush()?;
-            // encode the value into the scratch buffer
-            let mut scratch = vec![O::Item::default(); max_units];
-            let written = codec
-                .encode_value_with_reset(&value, &mut scratch, 0)
-                .map_err(|error| Error::new(ErrorKind::InvalidData, error))?;
-            // After flushing pending units, delegate the oversized encoded
-            // payload through the wrapped output's unit write path.
-            unsafe {
-                self.inner_mut().write_all_unchecked(&scratch, 0, written)?;
-            }
-            return Ok(());
-        }
-        // encode the value into the spare buffer
-        let (units, output_index, available) = self.spare_raw_parts_mut();
-        debug_assert!(
-            available >= max_units,
-            "reserved spare buffer is smaller than codec upper bound",
-        );
-        let written = codec
-            .encode_value_with_reset(&value, units, output_index)
-            .map_err(|error| Error::new(ErrorKind::InvalidData, error))?;
-        // advance the buffer by the number of written units
-        unsafe { self.advance(written) };
-        Ok(())
+        self.write_encoded_with(&mut codec, &value, |source| {
+            Error::new(ErrorKind::InvalidData, source)
+        })
     }
 }

@@ -299,7 +299,7 @@ fn test_transcode_decode_input_ext_limits_decode_window_to_codec_max() {
         .expect("decode window should not exceed codec maximum");
 
     assert_eq!(1, value);
-    assert_eq!(3, input.available());
+    assert_eq!(3, input.unread_len());
 }
 
 #[test]
