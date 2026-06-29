@@ -28,9 +28,12 @@ use qubit_codec_binary::{
 ///
 /// # Flush contract
 ///
-/// Pending buffered bytes are not flushed from [`Drop`]. Call [`Write::flush`]
-/// to guarantee that all bytes reach the wrapped writer. [`Self::inner`] can
-/// observe the wrapped writer before pending bytes have been flushed.
+/// Dropping this writer delegates to `qubit_io::BufferedOutput`, which makes a
+/// best-effort attempt to drain pending bytes, ignores drop-time errors, and
+/// does not guarantee that the wrapped writer itself is flushed. Call
+/// [`Write::flush`] to guarantee that all bytes reach the wrapped writer.
+/// [`Self::inner`] can observe the wrapped writer before pending bytes have
+/// been flushed.
 ///
 /// # Target-width integers
 ///

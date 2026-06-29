@@ -123,8 +123,10 @@ assert_eq!(300, input.read_uleb_u32()?);
 
 Non-buffered wrappers expose `inner()` and `inner_mut()` because they hold no
 prefetched or pending bytes. Buffered wrappers expose `inner()` for inspection
-and `into_inner()` for recovery; mutate the stream through the wrapper itself so
-the internal buffer stays consistent.
+only; mutate the stream through the wrapper itself so the internal buffer stays
+consistent. Buffered writers make a best-effort attempt to drain pending bytes
+on drop, but drop-time errors are ignored and the wrapped writer is not
+guaranteed to be flushed. Call `flush()` before relying on the underlying output.
 
 ## Layering
 

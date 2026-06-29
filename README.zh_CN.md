@@ -116,9 +116,10 @@ assert_eq!(300, input.read_uleb_u32()?);
 | `Buffered*Reader` / `Buffered*Writer` | 通过内部缓冲批量处理重复 binary 操作 |
 
 非 buffered wrapper 暴露 `inner()` 和 `inner_mut()`，因为它们没有预读或待
-flush 状态。Buffered wrapper 只暴露 `inner()` 用于查看，并通过 `into_inner()`
-取回底层 stream；需要混合 raw I/O 时应通过 wrapper 自身的 `Read` / `Write` /
-`Seek` 实现操作，避免破坏内部缓冲状态。
+flush 状态。Buffered wrapper 只暴露 `inner()` 用于查看；需要混合 raw I/O 时应
+通过 wrapper 自身的 `Read` / `Write` / `Seek` 实现操作，避免破坏内部缓冲状态。
+Buffered writer 在 drop 时会尽力写出 pending byte，但 drop-time error 会被忽略，
+且不保证刷新被包装 writer 本身；依赖底层输出前应显式调用 `flush()`。
 
 ## 分层
 
