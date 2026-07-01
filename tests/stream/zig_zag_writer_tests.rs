@@ -1,4 +1,8 @@
-use std::io::{Error, ErrorKind, Write};
+use std::io::{
+    Error,
+    ErrorKind,
+    Write,
+};
 
 use qubit_io_binary::ZigZagWriter;
 
@@ -47,13 +51,15 @@ fn test_zig_zag_writer_returns_writer_error() {
 
 #[test]
 fn test_zig_zag_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer = qubit_io_binary::ZigZagWriter::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer =
+        qubit_io_binary::ZigZagWriter::new(std::io::Cursor::new(vec![0; 4]));
 
     std::io::Seek::seek(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through ZigZagWriter should succeed");
     std::io::Write::write_all(&mut writer, b"xy")
         .expect("writing through ZigZagWriter should succeed");
-    std::io::Write::flush(&mut writer).expect("flushing through ZigZagWriter should succeed");
+    std::io::Write::flush(&mut writer)
+        .expect("flushing through ZigZagWriter should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

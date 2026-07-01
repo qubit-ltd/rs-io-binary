@@ -1,8 +1,20 @@
 use std::cell::RefCell;
-use std::io::{Cursor, Error, ErrorKind, Seek, SeekFrom, Write};
+use std::io::{
+    Cursor,
+    Error,
+    ErrorKind,
+    Seek,
+    SeekFrom,
+    Write,
+};
 use std::rc::Rc;
 
-use qubit_io_binary::{BinaryWriteExt, BufferedBinaryWriter, ByteOrder, LittleEndian};
+use qubit_io_binary::{
+    BinaryWriteExt,
+    BufferedBinaryWriter,
+    ByteOrder,
+    LittleEndian,
+};
 
 struct FailingWriter;
 
@@ -238,7 +250,8 @@ fn expected_values() -> Vec<u8> {
 
 #[test]
 fn test_buffered_binary_writer_writes_scalars_across_buffer_boundaries() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 9);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 9);
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
     writer.write_u8(0xaa).expect("u8 should be written");
@@ -272,7 +285,8 @@ fn test_buffered_binary_writer_writes_scalars_across_buffer_boundaries() {
 
 #[test]
 fn test_buffered_binary_writer_accessors_write_all_seek_and_into_inner() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
     assert_eq!(0, writer.inner().position());
@@ -297,8 +311,10 @@ fn test_buffered_binary_writer_accessors_write_all_seek_and_into_inner() {
 
 #[test]
 fn test_buffered_binary_writer_cursor_cold_paths_and_fixed_flush() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Cursor::new(Vec::new()), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        Cursor::new(Vec::new()),
+        19,
+    );
 
     writer
         .write_all(&[1; 14])
@@ -332,7 +348,8 @@ fn test_buffered_binary_writer_cursor_cold_paths_and_fixed_flush() {
 
 #[test]
 fn test_buffered_binary_writer_write_all_direct_and_buffered_slow_paths() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
     let large: Vec<u8> = (0u8..32).collect();
 
     writer
@@ -354,7 +371,8 @@ fn test_buffered_binary_writer_write_all_direct_and_buffered_slow_paths() {
 
 #[test]
 fn test_buffered_binary_writer_write_all_exact_spare_uses_cold_no_flush_path() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
         .write_all(&[1; 14])
@@ -371,7 +389,8 @@ fn test_buffered_binary_writer_write_all_exact_spare_uses_cold_no_flush_path() {
 
 #[test]
 fn test_buffered_binary_writer_write_flushes_then_buffers_small_input() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
         .write_all(&[1; 18])
@@ -391,7 +410,8 @@ fn test_buffered_binary_writer_write_flushes_then_buffers_small_input() {
 
 #[test]
 fn test_buffered_binary_writer_write_exact_spare_uses_cold_no_flush_path() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
         .write_all(&[1; 14])
@@ -411,7 +431,8 @@ fn test_buffered_binary_writer_write_exact_spare_uses_cold_no_flush_path() {
 
 #[test]
 fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
         .write_all(&[1; 18])
@@ -428,7 +449,10 @@ fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
 
 #[test]
 fn test_buffered_binary_writer_reports_flush_error_before_fixed_value() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        19,
+    );
 
     writer
         .write_all(&[1; 18])
@@ -442,7 +466,10 @@ fn test_buffered_binary_writer_reports_flush_error_before_fixed_value() {
 
 #[test]
 fn test_buffered_binary_writer_write_all_reports_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        19,
+    );
 
     writer
         .write_all(&[1; 18])
@@ -456,7 +483,10 @@ fn test_buffered_binary_writer_write_all_reports_flush_error() {
 
 #[test]
 fn test_buffered_binary_writer_write_reports_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        19,
+    );
 
     writer
         .write_all(&[1; 18])
@@ -469,8 +499,12 @@ fn test_buffered_binary_writer_write_reports_flush_error() {
 }
 
 #[test]
-fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_buffer() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
+fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_buffer()
+ {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        19,
+    );
 
     let write_error = writer
         .write(&[1; 19])
@@ -485,7 +519,10 @@ fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_b
 
 #[test]
 fn test_buffered_binary_writer_seek_reports_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingSeekWriter, 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingSeekWriter,
+        19,
+    );
 
     writer
         .write_all(&[1; 18])
@@ -499,8 +536,10 @@ fn test_buffered_binary_writer_seek_reports_flush_error() {
 
 #[test]
 fn test_buffered_binary_writer_reports_inner_seek_error_after_flush() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(SeekErrorWriter::new(), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        SeekErrorWriter::new(),
+        19,
+    );
 
     writer.write_u8(1).expect("value should be buffered");
     let error = writer
@@ -511,8 +550,12 @@ fn test_buffered_binary_writer_reports_inner_seek_error_after_flush() {
 }
 
 #[test]
-fn test_buffered_binary_writer_reports_inner_flush_error_without_pending_buffer() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FlushErrorWriter, 19);
+fn test_buffered_binary_writer_reports_inner_flush_error_without_pending_buffer()
+ {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FlushErrorWriter,
+        19,
+    );
 
     let error = writer
         .flush()
@@ -523,7 +566,10 @@ fn test_buffered_binary_writer_reports_inner_flush_error_without_pending_buffer(
 
 #[test]
 fn test_buffered_binary_writer_into_inner_returns_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 8);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        8,
+    );
 
     writer
         .write_u32(0x0102_0304)
@@ -537,7 +583,8 @@ fn test_buffered_binary_writer_into_inner_returns_flush_error() {
 
 #[test]
 fn test_buffered_binary_writer_reports_write_zero_while_flushing() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(ZeroWriter, 8);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(ZeroWriter, 8);
 
     writer
         .write_u32(0x0102_0304)
@@ -549,8 +596,10 @@ fn test_buffered_binary_writer_reports_write_zero_while_flushing() {
 
 #[test]
 fn test_buffered_binary_writer_retries_interrupted_flush() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(InterruptedOnceWriter::new(), 8);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        InterruptedOnceWriter::new(),
+        8,
+    );
 
     writer
         .write_u32(0x0102_0304)
@@ -580,7 +629,10 @@ fn test_buffered_binary_writer_returns_error_after_interrupted_flush() {
 
 #[test]
 fn test_buffered_binary_writer_returns_writer_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 8);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        8,
+    );
 
     writer.write_u64(0x1234).expect("value should be buffered");
     let error = writer.flush().expect_err("flush should fail");
@@ -592,8 +644,10 @@ fn test_buffered_binary_writer_returns_writer_error() {
 fn test_buffered_binary_writer_delegates_large_raw_write_once() {
     let output = Rc::new(RefCell::new(Vec::new()));
     let request_lengths = Rc::new(RefCell::new(Vec::new()));
-    let inner = ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
+    let inner =
+        ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
     let bytes: Vec<u8> = (0u8..32).collect();
 
     let count = writer.write(&bytes).expect("raw bytes should be written");
@@ -607,8 +661,10 @@ fn test_buffered_binary_writer_delegates_large_raw_write_once() {
 fn test_buffered_binary_writer_buffers_small_write_with_chunked_writer() {
     let output = Rc::new(RefCell::new(Vec::new()));
     let request_lengths = Rc::new(RefCell::new(Vec::new()));
-    let inner = ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
+    let inner =
+        ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
 
     writer
         .write_all(&[1, 2, 3])
@@ -625,7 +681,8 @@ fn test_buffered_binary_writer_buffers_small_write_with_chunked_writer() {
 fn test_buffered_binary_writer_drops_flushed_prefix_after_error() {
     let output = Rc::new(RefCell::new(Vec::new()));
     let inner = PartialErrorWriter::new(Rc::clone(&output));
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
 
     writer.write_u32(0x0102_0304).expect("value should buffer");
     let error = writer.flush().expect_err("partial flush should fail");

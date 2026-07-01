@@ -1,6 +1,12 @@
-use std::io::{Cursor, ErrorKind};
+use std::io::{
+    Cursor,
+    ErrorKind,
+};
 
-use qubit_io_binary::{ByteOrder, StringReadExt};
+use qubit_io_binary::{
+    ByteOrder,
+    StringReadExt,
+};
 
 #[test]
 fn test_string_read_ext_reads_all_length_prefix_kinds() {
@@ -206,7 +212,9 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
         ErrorKind::InvalidData,
         input
             .read_utf8_string_u16(ByteOrder::LittleEndian, 2)
-            .expect_err("oversized runtime little-endian u16 string should fail")
+            .expect_err(
+                "oversized runtime little-endian u16 string should fail"
+            )
             .kind()
     );
 
@@ -224,7 +232,9 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
         ErrorKind::InvalidData,
         input
             .read_utf8_string_u32(ByteOrder::LittleEndian, 2)
-            .expect_err("oversized runtime little-endian u32 string should fail")
+            .expect_err(
+                "oversized runtime little-endian u32 string should fail"
+            )
             .kind()
     );
 }
@@ -263,7 +273,9 @@ fn test_string_read_ext_returns_payload_read_error() {
         ErrorKind::UnexpectedEof,
         reader
             .read_utf8_string_u16(ByteOrder::LittleEndian, 8)
-            .expect_err("runtime little-endian u16 length read error should be returned")
+            .expect_err(
+                "runtime little-endian u16 length read error should be returned"
+            )
             .kind()
     );
 
@@ -299,7 +311,9 @@ fn test_string_read_ext_returns_payload_read_error() {
         ErrorKind::UnexpectedEof,
         reader
             .read_utf8_string_u32(ByteOrder::LittleEndian, 8)
-            .expect_err("runtime little-endian u32 length read error should be returned")
+            .expect_err(
+                "runtime little-endian u32 length read error should be returned"
+            )
             .kind()
     );
 

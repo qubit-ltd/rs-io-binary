@@ -1,6 +1,13 @@
-use std::io::{Error, ErrorKind, Write};
+use std::io::{
+    Error,
+    ErrorKind,
+    Write,
+};
 
-use qubit_io_binary::{BinaryWriteExt, ByteOrder};
+use qubit_io_binary::{
+    BinaryWriteExt,
+    ByteOrder,
+};
 
 struct FailingWriter;
 
@@ -65,8 +72,20 @@ fn test_binary_write_ext_writes_all_scalar_methods() {
     output.write_i8(-2).expect("i8 should be written");
     assert_eq!(vec![0x12, 0xfe], output);
 
-    assert_write_ordered_integer!(write_u16, write_u16_be, write_u16_le, u16, 0x1234);
-    assert_write_ordered_integer!(write_u32, write_u32_be, write_u32_le, u32, 0x1234_5678);
+    assert_write_ordered_integer!(
+        write_u16,
+        write_u16_be,
+        write_u16_le,
+        u16,
+        0x1234
+    );
+    assert_write_ordered_integer!(
+        write_u32,
+        write_u32_be,
+        write_u32_le,
+        u32,
+        0x1234_5678
+    );
     assert_write_ordered_integer!(
         write_u64,
         write_u64_be,
@@ -81,8 +100,20 @@ fn test_binary_write_ext_writes_all_scalar_methods() {
         u128,
         0x0123_4567_89ab_cdef_fedc_ba98_7654_3210
     );
-    assert_write_ordered_integer!(write_i16, write_i16_be, write_i16_le, i16, -0x1234);
-    assert_write_ordered_integer!(write_i32, write_i32_be, write_i32_le, i32, -0x0123_4567);
+    assert_write_ordered_integer!(
+        write_i16,
+        write_i16_be,
+        write_i16_le,
+        i16,
+        -0x1234
+    );
+    assert_write_ordered_integer!(
+        write_i32,
+        write_i32_be,
+        write_i32_le,
+        i32,
+        -0x0123_4567
+    );
     assert_write_ordered_integer!(
         write_i64,
         write_i64_be,
@@ -97,8 +128,20 @@ fn test_binary_write_ext_writes_all_scalar_methods() {
         i128,
         -0x0123_4567_89ab_cdef_fedc_ba98_7654_3210
     );
-    assert_write_ordered_float!(write_f32, write_f32_be, write_f32_le, f32, 12.5);
-    assert_write_ordered_float!(write_f64, write_f64_be, write_f64_le, f64, -25.25);
+    assert_write_ordered_float!(
+        write_f32,
+        write_f32_be,
+        write_f32_le,
+        f32,
+        12.5
+    );
+    assert_write_ordered_float!(
+        write_f64,
+        write_f64_be,
+        write_f64_le,
+        f64,
+        -25.25
+    );
 }
 
 #[test]

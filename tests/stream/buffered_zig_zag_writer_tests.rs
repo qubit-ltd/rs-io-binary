@@ -1,6 +1,15 @@
-use std::io::{Cursor, Error, ErrorKind, Seek, Write};
+use std::io::{
+    Cursor,
+    Error,
+    ErrorKind,
+    Seek,
+    Write,
+};
 
-use qubit_io_binary::{BufferedZigZagWriter, ZigZagWriteExt};
+use qubit_io_binary::{
+    BufferedZigZagWriter,
+    ZigZagWriteExt,
+};
 
 struct FailingWriter;
 

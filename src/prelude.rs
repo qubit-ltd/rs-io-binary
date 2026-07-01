@@ -12,8 +12,24 @@
 //! associated buffer codec marker types into scope.
 
 pub use crate::{
-    BigEndian, BinaryCodec, BinaryReadExt, BinaryWriteExt, ByteOrder, ByteOrderSpec, Leb128Codec,
-    Leb128DecodeError, Leb128DecodeErrorKind, Leb128DecodePolicy, Leb128ReadExt, Leb128WriteExt,
-    LittleEndian, NonStrict, Strict, StringReadExt, StringWriteExt, ZigZagCodec, ZigZagReadExt,
+    BigEndian,
+    BinaryCodec,
+    BinaryReadExt,
+    BinaryWriteExt,
+    ByteOrder,
+    ByteOrderSpec,
+    Leb128Codec,
+    Leb128DecodeError,
+    Leb128DecodeErrorKind,
+    Leb128DecodePolicy,
+    Leb128ReadExt,
+    Leb128WriteExt,
+    LittleEndian,
+    NonStrict,
+    Strict,
+    StringReadExt,
+    StringWriteExt,
+    ZigZagCodec,
+    ZigZagReadExt,
     ZigZagWriteExt,
 };

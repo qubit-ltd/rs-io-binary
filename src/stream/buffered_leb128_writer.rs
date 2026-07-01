@@ -6,12 +6,23 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Result, Seek, SeekFrom, Write};
+use std::io::{
+    Result,
+    Seek,
+    SeekFrom,
+    Write,
+};
 
 use crate::stream::TranscodeEncodeOutputExt;
-use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len};
+use crate::util::{
+    MIN_CODEC_BUFFER_CAPACITY,
+    checked_u64_len,
+};
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{Leb128Codec, NonStrict};
+use qubit_codec_binary::{
+    Leb128Codec,
+    NonStrict,
+};
 
 /// Buffered writer for canonical LEB128 integers.
 ///

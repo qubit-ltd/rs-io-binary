@@ -6,22 +6,32 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Read, Result};
+use std::io::{
+    Read,
+    Result,
+};
 
 use crate::util::decode_infallible_unchecked;
-use qubit_codec_binary::{BigEndian, BinaryCodec, ByteOrder, LittleEndian};
+use qubit_codec_binary::{
+    BigEndian,
+    BinaryCodec,
+    ByteOrder,
+    LittleEndian,
+};
 
 macro_rules! read_binary_value {
     ($reader:expr, $ty:ty, $order:ty) => {
-        read_binary::<{ BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE }, _, _, _>(
-            $reader,
-            |bytes| {
-                type Codec = BinaryCodec<$ty, $order>;
-                // SAFETY: The local buffer is exactly the codec's minimum buffer
-                // length.
-                unsafe { decode_infallible_unchecked::<Codec>(bytes, 0) }
-            },
-        )
+        read_binary::<
+            { BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE },
+            _,
+            _,
+            _,
+        >($reader, |bytes| {
+            type Codec = BinaryCodec<$ty, $order>;
+            // SAFETY: The local buffer is exactly the codec's minimum buffer
+            // length.
+            unsafe { decode_infallible_unchecked::<Codec>(bytes, 0) }
+        })
     };
 }
 

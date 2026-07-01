@@ -1,6 +1,12 @@
-use std::io::{Cursor, ErrorKind};
+use std::io::{
+    Cursor,
+    ErrorKind,
+};
 
-use qubit_io_binary::{ZigZagReadExt, ZigZagWriteExt};
+use qubit_io_binary::{
+    ZigZagReadExt,
+    ZigZagWriteExt,
+};
 
 #[test]
 fn test_zig_zag_read_ext_reads_all_methods() {
