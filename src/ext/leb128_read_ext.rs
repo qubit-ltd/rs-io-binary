@@ -6,17 +6,10 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Read,
-    Result,
-};
+use std::io::{Read, Result};
 
 use crate::util::read_leb128_payload;
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-    Strict,
-};
+use qubit_codec_binary::{Leb128Codec, NonStrict, Strict};
 
 macro_rules! read_leb128_value {
     ($reader:expr, $ty:ty, $policy:ty) => {

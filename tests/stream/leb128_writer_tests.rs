@@ -1,8 +1,4 @@
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Error, ErrorKind, Write};
 
 use qubit_io_binary::Leb128Writer;
 
@@ -87,15 +83,13 @@ fn test_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
 
 #[test]
 fn test_leb128_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer =
-        qubit_io_binary::Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer = qubit_io_binary::Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
 
     std::io::Seek::seek(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through Leb128Writer should succeed");
     std::io::Write::write_all(&mut writer, b"xy")
         .expect("writing through Leb128Writer should succeed");
-    std::io::Write::flush(&mut writer)
-        .expect("flushing through Leb128Writer should succeed");
+    std::io::Write::flush(&mut writer).expect("flushing through Leb128Writer should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

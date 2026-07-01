@@ -4,16 +4,9 @@
 //    SPDX-License-Identifier: Apache-2.0
 // =============================================================================
 use std::error::Error as StdError;
-use std::io::{
-    self,
-    Error,
-    ErrorKind,
-};
+use std::io::{self, Error, ErrorKind};
 
-use qubit_codec::{
-    Codec,
-    TranscodeEncodeOutput,
-};
+use qubit_codec::{Codec, TranscodeEncodeOutput};
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
@@ -23,6 +16,7 @@ pub trait TranscodeEncodeOutputExt<O> {
     where
         O: Output,
         C: Codec<Unit = O::Item> + Default,
+        C::Value: Clone,
         C::EncodeError: StdError + Send + Sync + 'static;
 }
 
@@ -37,6 +31,7 @@ where
         O: Output,
         O::Item: Copy + Default,
         C: Codec<Unit = O::Item> + Default,
+        C::Value: Clone,
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();

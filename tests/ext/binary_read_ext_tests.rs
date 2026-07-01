@@ -1,12 +1,6 @@
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::{Cursor, ErrorKind};
 
-use qubit_io_binary::{
-    BinaryReadExt,
-    ByteOrder,
-};
+use qubit_io_binary::{BinaryReadExt, ByteOrder};
 
 macro_rules! assert_read_ordered_integer {
     ($method:ident, $be:ident, $le:ident, $ty:ty, $value:expr) => {{
@@ -63,20 +57,8 @@ fn test_binary_read_ext_reads_all_scalar_methods() {
     let mut input = Cursor::new([0xfe]);
     assert_eq!(-2, input.read_i8().expect("i8 should be read"));
 
-    assert_read_ordered_integer!(
-        read_u16,
-        read_u16_be,
-        read_u16_le,
-        u16,
-        0x1234
-    );
-    assert_read_ordered_integer!(
-        read_u32,
-        read_u32_be,
-        read_u32_le,
-        u32,
-        0x1234_5678
-    );
+    assert_read_ordered_integer!(read_u16, read_u16_be, read_u16_le, u16, 0x1234);
+    assert_read_ordered_integer!(read_u32, read_u32_be, read_u32_le, u32, 0x1234_5678);
     assert_read_ordered_integer!(
         read_u64,
         read_u64_be,
@@ -91,20 +73,8 @@ fn test_binary_read_ext_reads_all_scalar_methods() {
         u128,
         0x0123_4567_89ab_cdef_fedc_ba98_7654_3210
     );
-    assert_read_ordered_integer!(
-        read_i16,
-        read_i16_be,
-        read_i16_le,
-        i16,
-        -0x1234
-    );
-    assert_read_ordered_integer!(
-        read_i32,
-        read_i32_be,
-        read_i32_le,
-        i32,
-        -0x0123_4567
-    );
+    assert_read_ordered_integer!(read_i16, read_i16_be, read_i16_le, i16, -0x1234);
+    assert_read_ordered_integer!(read_i32, read_i32_be, read_i32_le, i32, -0x0123_4567);
     assert_read_ordered_integer!(
         read_i64,
         read_i64_be,
