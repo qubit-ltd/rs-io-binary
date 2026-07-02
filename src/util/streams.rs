@@ -432,8 +432,8 @@ mod tests {
         type DecodeError = Infallible;
         type EncodeError = Infallible;
 
-        const MIN_UNITS_PER_VALUE: NonZeroUsize = NonZeroUsize::MIN;
-        const MAX_UNITS_PER_VALUE: NonZeroUsize = NonZeroUsize::MIN;
+        const MIN_UNITS_PER_VALUE: usize = 1;
+        const MAX_UNITS_PER_VALUE: usize = 1;
 
         unsafe fn decode(
             &mut self,
@@ -465,11 +465,11 @@ mod tests {
 
         assert_eq!(
             1,
-            <IncompleteInfallibleCodec as Codec>::MIN_UNITS_PER_VALUE.get(),
+            <IncompleteInfallibleCodec as Codec>::MIN_UNITS_PER_VALUE,
         );
         assert_eq!(
             1,
-            <IncompleteInfallibleCodec as Codec>::MAX_UNITS_PER_VALUE.get(),
+            <IncompleteInfallibleCodec as Codec>::MAX_UNITS_PER_VALUE,
         );
 
         // SAFETY: The single output slot is writable from index 0.

@@ -123,8 +123,8 @@ impl Codec for MaxTwoWindowCodec {
     type Unit = u8;
     type DecodeError = WindowTooLarge;
     type EncodeError = core::convert::Infallible;
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(1);
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MIN_UNITS_PER_VALUE: usize = 1;
+    const MAX_UNITS_PER_VALUE: usize = 2;
 
     #[inline(always)]
     unsafe fn decode(
@@ -133,7 +133,7 @@ impl Codec for MaxTwoWindowCodec {
         index: usize,
     ) -> Result<(Self::Value, NonZeroUsize), DecodeFailure<Self::DecodeError>>
     {
-        if input.len() > Self::MAX_UNITS_PER_VALUE.get() {
+        if input.len() > Self::MAX_UNITS_PER_VALUE {
             return Err(DecodeFailure::invalid_unknown(WindowTooLarge));
         }
         Ok((input[index], qubit_io::nz!(1)))
@@ -157,8 +157,8 @@ impl Codec for U16PairValueCodec {
     type DecodeError = core::convert::Infallible;
     type EncodeError = core::convert::Infallible;
 
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MIN_UNITS_PER_VALUE: usize = 2;
+    const MAX_UNITS_PER_VALUE: usize = 2;
 
     #[inline(always)]
     unsafe fn decode(
@@ -191,8 +191,8 @@ impl Codec for FixedU16LeCodec {
     type DecodeError = core::convert::Infallible;
     type EncodeError = core::convert::Infallible;
 
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MIN_UNITS_PER_VALUE: usize = 2;
+    const MAX_UNITS_PER_VALUE: usize = 2;
 
     #[inline(always)]
     unsafe fn decode(

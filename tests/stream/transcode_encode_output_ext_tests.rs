@@ -34,8 +34,8 @@ impl Codec for NonCopyValueCodec {
     type DecodeError = Infallible;
     type EncodeError = Infallible;
 
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MIN_UNITS_PER_VALUE: usize = 2;
+    const MAX_UNITS_PER_VALUE: usize = 2;
 
     #[inline(always)]
     unsafe fn decode(
@@ -156,8 +156,8 @@ impl Codec for U16PairCodec {
     type DecodeError = Infallible;
     type EncodeError = Infallible;
 
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(2);
+    const MIN_UNITS_PER_VALUE: usize = 2;
+    const MAX_UNITS_PER_VALUE: usize = 2;
 
     #[inline(always)]
     unsafe fn decode(
@@ -190,8 +190,8 @@ impl Codec for LargeFixedCodec {
     type DecodeError = Infallible;
     type EncodeError = Infallible;
 
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(4);
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = qubit_io::nz!(4);
+    const MIN_UNITS_PER_VALUE: usize = 4;
+    const MAX_UNITS_PER_VALUE: usize = 4;
 
     #[inline(always)]
     unsafe fn decode(
@@ -222,8 +222,8 @@ impl Codec for ResetThenValueCodec {
     type Unit = u8;
     type DecodeError = Infallible;
     type EncodeError = Infallible;
-    const MIN_UNITS_PER_VALUE: NonZeroUsize = NonZeroUsize::MIN;
-    const MAX_UNITS_PER_VALUE: NonZeroUsize = NonZeroUsize::MIN;
+    const MIN_UNITS_PER_VALUE: usize = 1;
+    const MAX_UNITS_PER_VALUE: usize = 1;
     const MAX_ENCODE_RESET_UNITS: usize = 1;
 
     #[inline(always)]
