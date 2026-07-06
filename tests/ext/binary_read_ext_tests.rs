@@ -25,6 +25,13 @@ macro_rules! assert_read_ordered_integer {
                 .$method(ByteOrder::LittleEndian)
                 .expect("runtime LE read")
         );
+        let mut input = Cursor::new(value.to_ne_bytes());
+        assert_eq!(
+            value,
+            input
+                .$method(ByteOrder::NativeEndian)
+                .expect("runtime native read")
+        );
         let mut input = Cursor::new(value.to_be_bytes());
         assert_eq!(value, input.$be().expect("fixed BE read"));
         let mut input = Cursor::new(value.to_le_bytes());
@@ -48,6 +55,13 @@ macro_rules! assert_read_ordered_float {
             input
                 .$method(ByteOrder::LittleEndian)
                 .expect("runtime LE read")
+        );
+        let mut input = Cursor::new(value.to_bits().to_ne_bytes());
+        assert_eq!(
+            value,
+            input
+                .$method(ByteOrder::NativeEndian)
+                .expect("runtime native read")
         );
         let mut input = Cursor::new(value.to_bits().to_be_bytes());
         assert_eq!(value, input.$be().expect("fixed BE read"));

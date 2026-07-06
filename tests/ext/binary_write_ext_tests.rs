@@ -35,6 +35,11 @@ macro_rules! assert_write_ordered_integer {
             .expect("runtime LE write");
         assert_eq!(value.to_le_bytes().as_slice(), output.as_slice());
         let mut output = Vec::new();
+        output
+            .$method(value, ByteOrder::NativeEndian)
+            .expect("runtime native write");
+        assert_eq!(value.to_ne_bytes().as_slice(), output.as_slice());
+        let mut output = Vec::new();
         output.$be(value).expect("fixed BE write");
         assert_eq!(value.to_be_bytes().as_slice(), output.as_slice());
         let mut output = Vec::new();
@@ -56,6 +61,11 @@ macro_rules! assert_write_ordered_float {
             .$method(value, ByteOrder::LittleEndian)
             .expect("runtime LE write");
         assert_eq!(value.to_bits().to_le_bytes().as_slice(), output.as_slice());
+        let mut output = Vec::new();
+        output
+            .$method(value, ByteOrder::NativeEndian)
+            .expect("runtime native write");
+        assert_eq!(value.to_bits().to_ne_bytes().as_slice(), output.as_slice());
         let mut output = Vec::new();
         output.$be(value).expect("fixed BE write");
         assert_eq!(value.to_bits().to_be_bytes().as_slice(), output.as_slice());

@@ -35,6 +35,15 @@ macro_rules! read_binary_value {
     };
 }
 
+#[inline]
+const fn use_big_endian(byte_order: ByteOrder) -> bool {
+    match byte_order {
+        ByteOrder::BigEndian => true,
+        ByteOrder::LittleEndian => false,
+        ByteOrder::NativeEndian => cfg!(target_endian = "big"),
+    }
+}
+
 /// Extension methods for reading fixed-width binary values from byte streams.
 pub trait BinaryReadExt: Read {
     /// Reads an unsigned 8-bit integer.
@@ -52,9 +61,10 @@ pub trait BinaryReadExt: Read {
     /// Reads an unsigned 16-bit integer using a runtime byte order.
     #[inline]
     fn read_u16(&mut self, byte_order: ByteOrder) -> Result<u16> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_u16_be(),
-            ByteOrder::LittleEndian => self.read_u16_le(),
+        if use_big_endian(byte_order) {
+            self.read_u16_be()
+        } else {
+            self.read_u16_le()
         }
     }
 
@@ -73,9 +83,10 @@ pub trait BinaryReadExt: Read {
     /// Reads an unsigned 32-bit integer using a runtime byte order.
     #[inline]
     fn read_u32(&mut self, byte_order: ByteOrder) -> Result<u32> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_u32_be(),
-            ByteOrder::LittleEndian => self.read_u32_le(),
+        if use_big_endian(byte_order) {
+            self.read_u32_be()
+        } else {
+            self.read_u32_le()
         }
     }
 
@@ -94,9 +105,10 @@ pub trait BinaryReadExt: Read {
     /// Reads an unsigned 64-bit integer using a runtime byte order.
     #[inline]
     fn read_u64(&mut self, byte_order: ByteOrder) -> Result<u64> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_u64_be(),
-            ByteOrder::LittleEndian => self.read_u64_le(),
+        if use_big_endian(byte_order) {
+            self.read_u64_be()
+        } else {
+            self.read_u64_le()
         }
     }
 
@@ -115,9 +127,10 @@ pub trait BinaryReadExt: Read {
     /// Reads an unsigned 128-bit integer using a runtime byte order.
     #[inline]
     fn read_u128(&mut self, byte_order: ByteOrder) -> Result<u128> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_u128_be(),
-            ByteOrder::LittleEndian => self.read_u128_le(),
+        if use_big_endian(byte_order) {
+            self.read_u128_be()
+        } else {
+            self.read_u128_le()
         }
     }
 
@@ -136,9 +149,10 @@ pub trait BinaryReadExt: Read {
     /// Reads a signed 16-bit integer using a runtime byte order.
     #[inline]
     fn read_i16(&mut self, byte_order: ByteOrder) -> Result<i16> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_i16_be(),
-            ByteOrder::LittleEndian => self.read_i16_le(),
+        if use_big_endian(byte_order) {
+            self.read_i16_be()
+        } else {
+            self.read_i16_le()
         }
     }
 
@@ -157,9 +171,10 @@ pub trait BinaryReadExt: Read {
     /// Reads a signed 32-bit integer using a runtime byte order.
     #[inline]
     fn read_i32(&mut self, byte_order: ByteOrder) -> Result<i32> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_i32_be(),
-            ByteOrder::LittleEndian => self.read_i32_le(),
+        if use_big_endian(byte_order) {
+            self.read_i32_be()
+        } else {
+            self.read_i32_le()
         }
     }
 
@@ -178,9 +193,10 @@ pub trait BinaryReadExt: Read {
     /// Reads a signed 64-bit integer using a runtime byte order.
     #[inline]
     fn read_i64(&mut self, byte_order: ByteOrder) -> Result<i64> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_i64_be(),
-            ByteOrder::LittleEndian => self.read_i64_le(),
+        if use_big_endian(byte_order) {
+            self.read_i64_be()
+        } else {
+            self.read_i64_le()
         }
     }
 
@@ -199,9 +215,10 @@ pub trait BinaryReadExt: Read {
     /// Reads a signed 128-bit integer using a runtime byte order.
     #[inline]
     fn read_i128(&mut self, byte_order: ByteOrder) -> Result<i128> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_i128_be(),
-            ByteOrder::LittleEndian => self.read_i128_le(),
+        if use_big_endian(byte_order) {
+            self.read_i128_be()
+        } else {
+            self.read_i128_le()
         }
     }
 
@@ -220,9 +237,10 @@ pub trait BinaryReadExt: Read {
     /// Reads a 32-bit float using a runtime byte order.
     #[inline]
     fn read_f32(&mut self, byte_order: ByteOrder) -> Result<f32> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_f32_be(),
-            ByteOrder::LittleEndian => self.read_f32_le(),
+        if use_big_endian(byte_order) {
+            self.read_f32_be()
+        } else {
+            self.read_f32_le()
         }
     }
 
@@ -241,9 +259,10 @@ pub trait BinaryReadExt: Read {
     /// Reads a 64-bit float using a runtime byte order.
     #[inline]
     fn read_f64(&mut self, byte_order: ByteOrder) -> Result<f64> {
-        match byte_order {
-            ByteOrder::BigEndian => self.read_f64_be(),
-            ByteOrder::LittleEndian => self.read_f64_le(),
+        if use_big_endian(byte_order) {
+            self.read_f64_be()
+        } else {
+            self.read_f64_le()
         }
     }
 

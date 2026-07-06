@@ -37,6 +37,15 @@ macro_rules! write_binary_value {
     };
 }
 
+#[inline]
+const fn use_big_endian(byte_order: ByteOrder) -> bool {
+    match byte_order {
+        ByteOrder::BigEndian => true,
+        ByteOrder::LittleEndian => false,
+        ByteOrder::NativeEndian => cfg!(target_endian = "big"),
+    }
+}
+
 /// Extension methods for writing fixed-width binary values to byte streams.
 pub trait BinaryWriteExt: Write {
     /// Writes an unsigned 8-bit integer.
@@ -54,9 +63,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes an unsigned 16-bit integer using a runtime byte order.
     #[inline]
     fn write_u16(&mut self, value: u16, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_u16_be(value),
-            ByteOrder::LittleEndian => self.write_u16_le(value),
+        if use_big_endian(byte_order) {
+            self.write_u16_be(value)
+        } else {
+            self.write_u16_le(value)
         }
     }
 
@@ -75,9 +85,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes an unsigned 32-bit integer using a runtime byte order.
     #[inline]
     fn write_u32(&mut self, value: u32, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_u32_be(value),
-            ByteOrder::LittleEndian => self.write_u32_le(value),
+        if use_big_endian(byte_order) {
+            self.write_u32_be(value)
+        } else {
+            self.write_u32_le(value)
         }
     }
 
@@ -96,9 +107,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes an unsigned 64-bit integer using a runtime byte order.
     #[inline]
     fn write_u64(&mut self, value: u64, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_u64_be(value),
-            ByteOrder::LittleEndian => self.write_u64_le(value),
+        if use_big_endian(byte_order) {
+            self.write_u64_be(value)
+        } else {
+            self.write_u64_le(value)
         }
     }
 
@@ -117,9 +129,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes an unsigned 128-bit integer using a runtime byte order.
     #[inline]
     fn write_u128(&mut self, value: u128, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_u128_be(value),
-            ByteOrder::LittleEndian => self.write_u128_le(value),
+        if use_big_endian(byte_order) {
+            self.write_u128_be(value)
+        } else {
+            self.write_u128_le(value)
         }
     }
 
@@ -138,9 +151,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes a signed 16-bit integer using a runtime byte order.
     #[inline]
     fn write_i16(&mut self, value: i16, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_i16_be(value),
-            ByteOrder::LittleEndian => self.write_i16_le(value),
+        if use_big_endian(byte_order) {
+            self.write_i16_be(value)
+        } else {
+            self.write_i16_le(value)
         }
     }
 
@@ -159,9 +173,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes a signed 32-bit integer using a runtime byte order.
     #[inline]
     fn write_i32(&mut self, value: i32, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_i32_be(value),
-            ByteOrder::LittleEndian => self.write_i32_le(value),
+        if use_big_endian(byte_order) {
+            self.write_i32_be(value)
+        } else {
+            self.write_i32_le(value)
         }
     }
 
@@ -180,9 +195,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes a signed 64-bit integer using a runtime byte order.
     #[inline]
     fn write_i64(&mut self, value: i64, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_i64_be(value),
-            ByteOrder::LittleEndian => self.write_i64_le(value),
+        if use_big_endian(byte_order) {
+            self.write_i64_be(value)
+        } else {
+            self.write_i64_le(value)
         }
     }
 
@@ -201,9 +217,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes a signed 128-bit integer using a runtime byte order.
     #[inline]
     fn write_i128(&mut self, value: i128, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_i128_be(value),
-            ByteOrder::LittleEndian => self.write_i128_le(value),
+        if use_big_endian(byte_order) {
+            self.write_i128_be(value)
+        } else {
+            self.write_i128_le(value)
         }
     }
 
@@ -222,9 +239,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes a 32-bit float using a runtime byte order.
     #[inline]
     fn write_f32(&mut self, value: f32, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_f32_be(value),
-            ByteOrder::LittleEndian => self.write_f32_le(value),
+        if use_big_endian(byte_order) {
+            self.write_f32_be(value)
+        } else {
+            self.write_f32_le(value)
         }
     }
 
@@ -243,9 +261,10 @@ pub trait BinaryWriteExt: Write {
     /// Writes a 64-bit float using a runtime byte order.
     #[inline]
     fn write_f64(&mut self, value: f64, byte_order: ByteOrder) -> Result<()> {
-        match byte_order {
-            ByteOrder::BigEndian => self.write_f64_be(value),
-            ByteOrder::LittleEndian => self.write_f64_le(value),
+        if use_big_endian(byte_order) {
+            self.write_f64_be(value)
+        } else {
+            self.write_f64_le(value)
         }
     }
 
