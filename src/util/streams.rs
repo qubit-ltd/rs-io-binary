@@ -59,9 +59,6 @@ where
         Err(qubit_codec::DecodeFailure::Invalid { source, .. }) => {
             match source {}
         }
-        Err(qubit_codec::DecodeFailure::InvalidUnknown { source }) => {
-            match source {}
-        }
         Err(qubit_codec::DecodeFailure::Incomplete { .. }) => {
             unreachable!("infallible codec reported incomplete input")
         }
@@ -110,7 +107,6 @@ where
     unsafe { Codec::decode(&mut codec, input, index) }.map_err(|failure| {
         match failure {
             qubit_codec::DecodeFailure::Invalid { source, .. } => source,
-            qubit_codec::DecodeFailure::InvalidUnknown { source } => source,
             qubit_codec::DecodeFailure::Incomplete { required_total } => {
                 Leb128DecodeError::incomplete(
                     index,
