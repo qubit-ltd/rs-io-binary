@@ -12,12 +12,12 @@ use std::io::{
 };
 
 use crate::util::encode_infallible_unchecked;
-use qubit_codec_binary::{
+use qubit_codec::{
     BigEndian,
-    BinaryCodec,
     ByteOrder,
     LittleEndian,
 };
+use qubit_codec_binary::BinaryCodec;
 
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {

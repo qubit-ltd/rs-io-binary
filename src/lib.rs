@@ -31,16 +31,18 @@ pub use ext::{
 };
 #[doc(hidden)]
 pub use qubit_codec::TranscodeEncodeOutput;
-pub use qubit_codec_binary::{
+pub use qubit_codec::{
     BigEndian,
-    BinaryCodec,
     ByteOrder,
     ByteOrderSpec,
+    LittleEndian,
+};
+pub use qubit_codec_binary::{
+    BinaryCodec,
     Leb128Codec,
     Leb128DecodeError,
     Leb128DecodeErrorKind,
     Leb128DecodePolicy,
-    LittleEndian,
     NonStrict,
     Strict,
     ZigZagCodec,

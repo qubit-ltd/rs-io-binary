@@ -23,6 +23,7 @@ pub trait TranscodeDecodeInputExt<I> {
     where
         I: Input,
         C: Codec<Unit = I::Item> + Default,
+        C::Value: Default,
         C::DecodeError: StreamCodecDecodeError;
 }
 
@@ -34,6 +35,7 @@ where
     fn read_decoded<C>(&mut self) -> Result<C::Value>
     where
         C: Codec<Unit = I::Item> + Default,
+        C::Value: Default,
         C::DecodeError: StreamCodecDecodeError,
     {
         let mut codec = C::default();

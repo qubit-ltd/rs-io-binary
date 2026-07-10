@@ -23,7 +23,6 @@ pub trait TranscodeEncodeOutputExt<O> {
     where
         O: Output,
         C: Codec<Unit = O::Item> + Default,
-        C::Value: Clone,
         C::EncodeError: StdError + Send + Sync + 'static;
 }
 
@@ -38,7 +37,6 @@ where
         O: Output,
         O::Item: Copy + Default,
         C: Codec<Unit = O::Item> + Default,
-        C::Value: Clone,
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();

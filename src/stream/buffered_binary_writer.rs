@@ -17,13 +17,13 @@ use std::io::{
 use crate::stream::TranscodeEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{
+use qubit_codec::{
     BigEndian,
-    BinaryCodec,
     ByteOrder,
     ByteOrderSpec,
     LittleEndian,
 };
+use qubit_codec_binary::BinaryCodec;
 
 /// Buffered writer for fixed-width binary values.
 ///

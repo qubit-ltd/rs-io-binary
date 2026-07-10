@@ -20,13 +20,13 @@ use crate::util::{
     checked_u32_len,
     encode_infallible_unchecked,
 };
-use qubit_codec_binary::{
+use qubit_codec::{
     BigEndian,
-    BinaryCodec,
     ByteOrder,
     ByteOrderSpec,
     LittleEndian,
 };
+use qubit_codec_binary::BinaryCodec;
 
 /// Writer wrapper for fixed-width binary values.
 ///

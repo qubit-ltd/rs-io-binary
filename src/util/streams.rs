@@ -18,10 +18,8 @@ use std::io::{
 use std::string::FromUtf8Error;
 
 use crate::ReadExt;
-use qubit_codec_binary::{
-    Codec,
-    Leb128DecodeError,
-};
+use qubit_codec::Codec;
+use qubit_codec_binary::Leb128DecodeError;
 use qubit_io::UncheckedSlice;
 
 use super::try_reserve_vec;

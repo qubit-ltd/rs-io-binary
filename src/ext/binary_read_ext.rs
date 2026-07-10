@@ -12,12 +12,12 @@ use std::io::{
 };
 
 use crate::util::decode_infallible_unchecked;
-use qubit_codec_binary::{
+use qubit_codec::{
     BigEndian,
-    BinaryCodec,
     ByteOrder,
     LittleEndian,
 };
+use qubit_codec_binary::BinaryCodec;
 
 macro_rules! read_binary_value {
     ($reader:expr, $ty:ty, $order:ty) => {

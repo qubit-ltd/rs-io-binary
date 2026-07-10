@@ -24,13 +24,13 @@ use crate::util::{
     decode_infallible_unchecked,
     read_utf8_payload,
 };
-use qubit_codec_binary::{
+use qubit_codec::{
     BigEndian,
-    BinaryCodec,
     ByteOrder,
     ByteOrderSpec,
     LittleEndian,
 };
+use qubit_codec_binary::BinaryCodec;
 
 /// Reader wrapper for fixed-width binary values.
 ///
