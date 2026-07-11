@@ -44,3 +44,34 @@ where
         })
     }
 }
+
+/// Decodes one value with caller-provided lifecycle scratch storage.
+///
+/// # Parameters
+///
+/// - `input`: Buffered unit input used for decoding.
+/// - `lifecycle_scratch`: Storage for codec reset and finish values.
+///
+/// # Returns
+///
+/// Returns the decoded codec value.
+///
+/// # Errors
+///
+/// Returns I/O errors from `input` or codec decode errors mapped through
+/// [`StreamCodecDecodeError::io_error_kind`].
+pub(super) fn read_decoded_with_scratch<I, C>(
+    input: &mut TranscodeDecodeInput<I>,
+    lifecycle_scratch: &mut [C::Value],
+) -> Result<C::Value>
+where
+    I: Input,
+    I::Item: Copy + Default,
+    C: Codec<Unit = I::Item> + Default,
+    C::DecodeError: StreamCodecDecodeError,
+{
+    let mut codec = C::default();
+    input.read_decoded_with_scratch(&mut codec, lifecycle_scratch, |source| {
+        Error::new(source.io_error_kind(), source)
+    })
+}
