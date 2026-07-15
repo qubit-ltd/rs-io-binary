@@ -31,7 +31,7 @@ name = "qubit_io_binary"
 doctest = true
 
 [dependencies]
-qubit-codec = { path = "../rs-codec", version = "0.10.0" }
+qubit-codec = { path = "../rs-codec", version = "0.10.0", features = ["io"] }
 qubit-codec-binary = { path = "../rs-codec-binary", version = "0.2.0" }
 qubit-io = { path = "../rs-io", version = "0.13.0" }
 
@@ -43,7 +43,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [dev-dependencies]
 criterion = { version = "0.8", default-features = false }
-qubit-codec = { path = "../rs-codec", version = "0.10.0" }
+qubit-codec = { path = "../rs-codec", version = "0.10.0", features = ["io"] }
 
 [[bench]]
 name = "stream"
