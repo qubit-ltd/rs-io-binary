@@ -1,3 +1,10 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::env;
 use std::fs::{
     self,
@@ -314,8 +321,7 @@ fn write_records_buffered_file(records: &[Record], path: &Path) {
         writer.write_u64(value.ts_ms).unwrap();
     }
 
-    writer
-        .flush()
+    qubit_io::Output::flush(&mut writer)
         .expect("binary buffered output file should flush");
 }
 
@@ -767,8 +773,7 @@ fn write_uleb_buffered_file(fields: &[UlebField], path: &Path) {
         }
     }
 
-    writer
-        .flush()
+    qubit_io::Output::flush(&mut writer)
         .expect("LEB128 buffered output file should flush");
 }
 
@@ -1006,8 +1011,7 @@ fn write_zigzag_buffered_file(fields: &[ZigZagField], path: &Path) {
         }
     }
 
-    writer
-        .flush()
+    qubit_io::Output::flush(&mut writer)
         .expect("ZigZag buffered output file should flush");
 }
 

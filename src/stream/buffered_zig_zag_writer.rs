@@ -8,9 +8,7 @@
 
 use std::io::{
     Result,
-    Seek,
     SeekFrom,
-    Write,
 };
 
 use crate::stream::TranscodeEncodeOutputExt;
@@ -19,6 +17,10 @@ use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::{
     NonStrict,
     ZigZagCodec,
+};
+use qubit_io::{
+    Output,
+    Seekable,
 };
 
 /// Buffered writer for canonical ZigZag + unsigned LEB128 integers.
@@ -31,7 +33,7 @@ use qubit_codec_binary::{
 /// Dropping this writer delegates to `qubit_io::BufferedOutput`, which makes a
 /// best-effort attempt to drain pending bytes, ignores drop-time errors, and
 /// does not guarantee that the wrapped writer itself is flushed. Call
-/// [`Write::flush`] to guarantee that all bytes reach the wrapped writer.
+/// [`Output::flush`] to guarantee that all bytes reach the wrapped output.
 /// [`Self::inner`] can observe the wrapped writer before pending bytes have
 /// been flushed.
 ///
@@ -42,14 +44,14 @@ use qubit_codec_binary::{
 /// cross-platform protocols.
 pub struct BufferedZigZagWriter<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     output: TranscodeEncodeOutput<W>,
 }
 
 impl<W> BufferedZigZagWriter<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     /// Creates a buffered ZigZag writer with the default buffer capacity.
     #[must_use]
@@ -96,7 +98,7 @@ macro_rules! impl_write_value {
 
 impl<W> BufferedZigZagWriter<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     impl_write_value!(write_i8, i8, "Writes a ZigZag `i8`.");
     impl_write_value!(write_i16, i16, "Writes a ZigZag `i16`.");
@@ -106,36 +108,45 @@ where
     impl_write_value!(write_isize, isize, "Writes a ZigZag `isize`.");
 }
 
-impl<W> Write for BufferedZigZagWriter<W>
+impl<W> Output for BufferedZigZagWriter<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
-    /// Writes bytes through the internal buffer.
-    #[inline]
-    fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        Write::write(&mut self.output, buffer)
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        true
     }
 
-    /// Writes all bytes through the internal buffer.
+    /// Writes bytes through the internal buffer.
     #[inline]
-    fn write_all(&mut self, buffer: &[u8]) -> Result<()> {
-        Write::write_all(&mut self.output, buffer)
+    unsafe fn write_unchecked(
+        &mut self,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the indexed source range contract.
+        unsafe { self.output.write_unchecked(input, index, count) }
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        Write::flush(&mut self.output)
+        self.output.flush()
     }
 }
 
-impl<W> Seek for BufferedZigZagWriter<W>
+impl<W> Seekable for BufferedZigZagWriter<W>
 where
-    W: Write + Seek,
+    W: Output<Item = u8> + Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Flushes pending bytes before seeking the wrapped writer.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.output.seek(position)
     }
 }

@@ -1,9 +1,20 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Error,
     ErrorKind,
     Write,
 };
 
+use qubit_io::{
+    Output,
+    Seekable,
+};
 use qubit_io_binary::Leb128Writer;
 
 struct FailingWriter;
@@ -90,11 +101,11 @@ fn test_leb128_writer_write_and_seek_delegate_to_inner_writer() {
     let mut writer =
         qubit_io_binary::Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
 
-    std::io::Seek::seek(&mut writer, std::io::SeekFrom::Start(1))
+    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through Leb128Writer should succeed");
-    std::io::Write::write_all(&mut writer, b"xy")
+    Output::write_fully(&mut writer, b"xy")
         .expect("writing through Leb128Writer should succeed");
-    std::io::Write::flush(&mut writer)
+    Output::flush(&mut writer)
         .expect("flushing through Leb128Writer should succeed");
 
     let cursor = writer.into_inner();

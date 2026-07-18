@@ -8,7 +8,13 @@
 
 //! # Qubit Binary IO
 //!
-//! Binary stream I/O adapters for Rust.
+//! Synchronous and asynchronous binary stream I/O adapters for Rust.
+//!
+//! Synchronous APIs operate on [`qubit_io::Input`] and
+//! [`qubit_io::Output`]. Runtime-neutral asynchronous extension traits operate
+//! on [`qubit_io::AsyncInput`] and [`qubit_io::AsyncOutput`]. Both layers reuse
+//! the same codec implementations for fixed-width values, LEB128, ZigZag, and
+//! length-prefixed UTF-8 strings.
 //!
 //! This crate combines `qubit-io-binary` stream helpers with
 //! `qubit-codec-binary` buffer codecs to provide binary reader and writer
@@ -20,6 +26,14 @@ mod stream;
 mod util;
 
 pub use ext::{
+    AsyncBinaryReadExt,
+    AsyncBinaryWriteExt,
+    AsyncLeb128ReadExt,
+    AsyncLeb128WriteExt,
+    AsyncStringReadExt,
+    AsyncStringWriteExt,
+    AsyncZigZagReadExt,
+    AsyncZigZagWriteExt,
     BinaryReadExt,
     BinaryWriteExt,
     Leb128ReadExt,

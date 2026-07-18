@@ -6,10 +6,7 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Read,
-    Result,
-};
+use std::io::Result;
 
 use crate::util::read_leb128_payload;
 use qubit_codec_binary::{
@@ -17,6 +14,7 @@ use qubit_codec_binary::{
     NonStrict,
     Strict,
 };
+use qubit_io::Input;
 
 macro_rules! read_leb128_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
@@ -35,7 +33,7 @@ macro_rules! read_leb128_value {
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as [`Self::read_uleb_u64`] or
 /// [`Self::read_sleb_i64`] for persistent files and cross-platform protocols.
-pub trait Leb128ReadExt: Read {
+pub trait Leb128ReadExt: Input<Item = u8> {
     /// Reads a non-strict unsigned LEB128 `u8`.
     #[inline]
     fn read_uleb_u8(&mut self) -> Result<u8> {
@@ -181,4 +179,4 @@ pub trait Leb128ReadExt: Read {
     }
 }
 
-impl<R> Leb128ReadExt for R where R: Read + ?Sized {}
+impl<R> Leb128ReadExt for R where R: Input<Item = u8> + ?Sized {}

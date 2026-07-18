@@ -11,16 +11,17 @@ use core::num::NonZeroUsize;
 use std::io::{
     Error,
     ErrorKind,
-    Read,
     Result,
-    Write,
 };
 use std::string::FromUtf8Error;
 
-use crate::ReadExt;
 use qubit_codec::Codec;
 use qubit_codec_binary::Leb128DecodeError;
-use qubit_io::UncheckedSlice;
+use qubit_io::{
+    Input,
+    Output,
+    UncheckedSlice,
+};
 
 use super::try_reserve_vec;
 
@@ -35,6 +36,40 @@ const U64_LENGTH_OVERFLOW: &str =
     "string length exceeds maximum encodable u64 length";
 /// Minimum capacity required by the largest scalar codec payload.
 pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
+
+/// Reads exactly enough bytes to fill `output` from a Qubit input.
+///
+/// # Errors
+///
+/// Returns the input error, or [`ErrorKind::UnexpectedEof`] when the input
+/// ends before filling `output`.
+pub(crate) fn read_exact<I>(input: &mut I, output: &mut [u8]) -> Result<()>
+where
+    I: Input<Item = u8> + ?Sized,
+{
+    let read = Input::read_fully(input, output)?;
+    if read == output.len() {
+        Ok(())
+    } else {
+        Err(Error::new(
+            ErrorKind::UnexpectedEof,
+            "failed to fill whole input buffer",
+        ))
+    }
+}
+
+/// Writes every byte in `input` to a Qubit output.
+///
+/// # Errors
+///
+/// Returns the output error, including [`ErrorKind::WriteZero`] when the
+/// output stops making progress.
+pub(crate) fn write_all<O>(output: &mut O, input: &[u8]) -> Result<()>
+where
+    O: Output<Item = u8> + ?Sized,
+{
+    Output::write_fully(output, input)
+}
 
 /// Decodes a value with an infallible byte codec without extra bounds checks.
 ///
@@ -134,13 +169,13 @@ pub(crate) fn read_leb128_payload<const N: usize, C, R>(
     reader: &mut R,
 ) -> Result<C::Value>
 where
-    R: Read + ?Sized,
+    R: Input<Item = u8> + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
 {
     let mut bytes = [0u8; N];
     for index in 0..N {
         let target = one_byte_slice(&mut bytes, index);
-        reader.read_exact(target)?;
+        read_exact(reader, target)?;
         if bytes[index] & 0x80 == 0 {
             // SAFETY: At least one byte has been read, and decoding starts at
             // 0.
@@ -177,7 +212,7 @@ pub(crate) fn read_leb128_from_reader<const N: usize, C, R>(
     buffer: &mut [u8; 19],
 ) -> Result<C::Value>
 where
-    R: Read + ?Sized,
+    R: Input<Item = u8> + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
 {
     debug_assert!(
@@ -185,11 +220,8 @@ where
         "LEB128 read length exceeds internal buffer"
     );
     for index in 0..N {
-        // SAFETY: `index` is produced by `0..N`, where `N` is a codec-declared
-        // length that fits the fixed internal buffer.
-        unsafe {
-            reader.read_exact_unchecked(buffer, index, 1)?;
-        }
+        let target = one_byte_slice(buffer, index);
+        read_exact(reader, target)?;
         // SAFETY: `index` is produced by `0..N`, and the debug assertion
         // above guarantees `N` fits the fixed internal buffer.
         let byte = unsafe { UncheckedSlice::read(buffer, index) };
@@ -253,7 +285,7 @@ pub(crate) fn read_utf8_payload<R>(
     max_len: usize,
 ) -> Result<String>
 where
-    R: Read + ?Sized,
+    R: Input<Item = u8> + ?Sized,
 {
     if len > max_len {
         return Err(length_exceeded_error(len, max_len));
@@ -261,7 +293,7 @@ where
     let mut bytes = Vec::new();
     try_reserve_vec(&mut bytes, len)?;
     bytes.resize(len, 0);
-    reader.read_exact(&mut bytes)?;
+    read_exact(reader, &mut bytes)?;
     String::from_utf8(bytes).map_err(invalid_utf8_error)
 }
 
@@ -277,9 +309,9 @@ where
 /// Returns the I/O error reported by `writer`.
 pub(crate) fn write_utf8_payload<W>(writer: &mut W, value: &str) -> Result<()>
 where
-    W: Write + ?Sized,
+    W: Output<Item = u8> + ?Sized,
 {
-    writer.write_all(value.as_bytes())
+    write_all(writer, value.as_bytes())
 }
 
 /// Writes a UTF-8 string after a `u16` byte-length prefix.
@@ -289,12 +321,12 @@ pub(crate) fn write_utf8_string_with_u16_len<W, F>(
     write_len: F,
 ) -> Result<()>
 where
-    W: Write + ?Sized,
+    W: Output<Item = u8> + ?Sized,
     F: FnOnce(&mut W, u16) -> Result<()>,
 {
     let bytes = value.as_bytes();
     write_len(writer, checked_u16_len(bytes.len())?)?;
-    writer.write_all(bytes)
+    write_all(writer, bytes)
 }
 
 /// Writes a UTF-8 string after a `u32` byte-length prefix.
@@ -304,12 +336,12 @@ pub(crate) fn write_utf8_string_with_u32_len<W, F>(
     write_len: F,
 ) -> Result<()>
 where
-    W: Write + ?Sized,
+    W: Output<Item = u8> + ?Sized,
     F: FnOnce(&mut W, u32) -> Result<()>,
 {
     let bytes = value.as_bytes();
     write_len(writer, checked_u32_len(bytes.len())?)?;
-    writer.write_all(bytes)
+    write_all(writer, bytes)
 }
 
 /// Converts a UTF-8 payload length to a `u16` length prefix value.
@@ -380,7 +412,7 @@ pub(crate) fn usize_from_u64_len(len: u64) -> Result<usize> {
 }
 
 /// Builds an invalid-data error for UTF-8 payloads that exceed their limit.
-fn length_exceeded_error(len: usize, max_len: usize) -> Error {
+pub(crate) fn length_exceeded_error(len: usize, max_len: usize) -> Error {
     Error::new(
         ErrorKind::InvalidData,
         format!(
@@ -390,7 +422,7 @@ fn length_exceeded_error(len: usize, max_len: usize) -> Error {
 }
 
 /// Converts an invalid UTF-8 payload error into an I/O error.
-fn invalid_utf8_error(error: FromUtf8Error) -> Error {
+pub(crate) fn invalid_utf8_error(error: FromUtf8Error) -> Error {
     Error::new(
         ErrorKind::InvalidData,
         format!("length-prefixed string is not valid UTF-8: {error}"),

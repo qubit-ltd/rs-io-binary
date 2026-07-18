@@ -1,8 +1,19 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Cursor,
     ErrorKind,
 };
 
+use qubit_io::{
+    Input,
+    Seekable,
+};
 use qubit_io_binary::{
     NonStrict,
     Strict,
@@ -261,10 +272,10 @@ fn test_zig_zag_reader_read_and_seek_delegate_to_inner_reader() {
         qubit_io_binary::NonStrict,
     >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
 
-    std::io::Seek::seek(&mut reader, std::io::SeekFrom::Start(1))
+    Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))
         .expect("seeking through ZigZagReader should succeed");
     let mut bytes = [0_u8; 2];
-    std::io::Read::read_exact(&mut reader, &mut bytes)
+    Input::read_fully(&mut reader, &mut bytes)
         .expect("reading through ZigZagReader should succeed");
 
     assert_eq!(bytes, [2, 3]);

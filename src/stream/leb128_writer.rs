@@ -8,19 +8,21 @@
 
 use std::io::{
     Result,
-    Seek,
     SeekFrom,
-    Write,
 };
 
-use crate::WriteExt;
 use crate::util::{
     checked_u64_len,
     encode_infallible_unchecked,
+    write_all,
 };
 use qubit_codec_binary::{
     Leb128Codec,
     NonStrict,
+};
+use qubit_io::{
+    Output,
+    Seekable,
 };
 
 /// Writer wrapper for canonical LEB128 integers.
@@ -87,7 +89,7 @@ macro_rules! impl_write_value {
 
 impl<W> Leb128Writer<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     #[inline]
     fn write_leb128<T, const N: usize, F>(
@@ -99,8 +101,7 @@ where
         F: FnOnce(&mut [u8; 19], T) -> usize,
     {
         let len = encode(&mut self.buffer, value);
-        // SAFETY: The codec returns a length within the fixed internal buffer.
-        unsafe { self.inner.write_all_unchecked(&self.buffer, 0, len) }
+        write_all(&mut self.inner, &self.buffer[..len])
     }
 
     impl_write_value!(write_u8, u8, "Writes an unsigned LEB128 `u8`.");
@@ -133,9 +134,7 @@ where
     pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
         let bytes = value.as_bytes();
-        // SAFETY: The range covers the full byte slice produced by
-        // `str::as_bytes`.
-        unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
+        write_all(&mut self.inner, bytes)
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
@@ -157,32 +156,30 @@ where
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;
         let bytes = value.as_bytes();
-        // SAFETY: The range covers the full byte slice produced by
-        // `str::as_bytes`.
-        unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
+        write_all(&mut self.inner, bytes)
     }
 }
 
-impl<W> Write for Leb128Writer<W>
+impl<W> Output for Leb128Writer<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
-    /// Writes bytes to the wrapped writer.
-    ///
-    /// # Parameters
-    ///
-    /// - `buffer`: Source bytes to write.
-    ///
-    /// # Returns
-    ///
-    /// Returns the number of bytes written.
-    ///
-    /// # Errors
-    ///
-    /// Returns the I/O error reported by the wrapped writer.
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        self.inner.is_buffered()
+    }
+
     #[inline]
-    fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        self.inner.write(buffer)
+    unsafe fn write_unchecked(
+        &mut self,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the wrapped output's range contract.
+        unsafe { self.inner.write_unchecked(input, index, count) }
     }
 
     /// Flushes the wrapped writer.
@@ -192,14 +189,16 @@ where
     /// Returns the I/O error reported by the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        self.inner.flush()
+        Output::flush(&mut self.inner)
     }
 }
 
-impl<W> Seek for Leb128Writer<W>
+impl<W> Seekable for Leb128Writer<W>
 where
-    W: Seek,
+    W: Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Seeks the wrapped writer.
     ///
     /// # Parameters
@@ -214,7 +213,7 @@ where
     ///
     /// Returns the seek error reported by the wrapped writer.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.inner.seek(position)
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
+        self.inner.seek_to(position)
     }
 }

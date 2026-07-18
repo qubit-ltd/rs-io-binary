@@ -1,11 +1,21 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Cursor,
     Error,
     ErrorKind,
-    Seek,
     Write,
 };
 
+use qubit_io::{
+    Output,
+    Seekable,
+};
 use qubit_io_binary::{
     BufferedLeb128Writer,
     Leb128WriteExt,
@@ -102,12 +112,12 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner()
         .expect("string should be buffered");
     assert_eq!(1, writer.write(&[9]).expect("raw byte should be buffered"));
     writer
-        .write_all(&[10])
+        .write_fully(&[10])
         .expect("raw byte should be buffered");
     assert_eq!(
         6,
         writer
-            .stream_position()
+            .seek_to(std::io::SeekFrom::Current(0))
             .expect("seek should flush pending bytes")
     );
 
@@ -134,7 +144,7 @@ fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
     let mut writer = BufferedLeb128Writer::with_capacity(Vec::new(), 19);
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     writer
         .write_u8(1)
@@ -151,7 +161,7 @@ fn test_buffered_leb128_writer_write_utf8_string_reports_length_flush_error() {
     let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 19);
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     let error = writer
         .write_utf8_string("a")

@@ -8,20 +8,23 @@
 
 use std::io::{
     Result,
-    Seek,
     SeekFrom,
-    Write,
 };
 
 use crate::stream::TranscodeEncodeOutputExt;
 use crate::util::{
     MIN_CODEC_BUFFER_CAPACITY,
     checked_u64_len,
+    write_all,
 };
 use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::{
     Leb128Codec,
     NonStrict,
+};
+use qubit_io::{
+    Output,
+    Seekable,
 };
 
 /// Buffered writer for canonical LEB128 integers.
@@ -34,7 +37,7 @@ use qubit_codec_binary::{
 /// Dropping this writer delegates to `qubit_io::BufferedOutput`, which makes a
 /// best-effort attempt to drain pending bytes, ignores drop-time errors, and
 /// does not guarantee that the wrapped writer itself is flushed. Call
-/// [`Write::flush`] to guarantee that all bytes reach the wrapped writer.
+/// [`Output::flush`] to guarantee that all bytes reach the wrapped output.
 /// [`Self::inner`] can observe the wrapped writer before pending bytes have
 /// been flushed.
 ///
@@ -45,14 +48,14 @@ use qubit_codec_binary::{
 /// persistent files and cross-platform protocols.
 pub struct BufferedLeb128Writer<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     output: TranscodeEncodeOutput<W>,
 }
 
 impl<W> BufferedLeb128Writer<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     /// Creates a buffered LEB128 writer with the default buffer capacity.
     #[must_use]
@@ -92,7 +95,7 @@ where
     #[inline]
     pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
-        self.output.write_all(value.as_bytes())
+        write_all(&mut self.output, value.as_bytes())
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
@@ -103,7 +106,7 @@ where
     #[inline]
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;
-        self.output.write_all(value.as_bytes())
+        write_all(&mut self.output, value.as_bytes())
     }
 }
 
@@ -121,7 +124,7 @@ macro_rules! impl_write_value {
 
 impl<W> BufferedLeb128Writer<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     impl_write_value!(write_u8, u8, "Writes an unsigned LEB128 `u8`.");
     impl_write_value!(write_u16, u16, "Writes an unsigned LEB128 `u16`.");
@@ -137,36 +140,45 @@ where
     impl_write_value!(write_isize, isize, "Writes a signed LEB128 `isize`.");
 }
 
-impl<W> Write for BufferedLeb128Writer<W>
+impl<W> Output for BufferedLeb128Writer<W>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
-    /// Writes bytes through the internal buffer.
-    #[inline]
-    fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        Write::write(&mut self.output, buffer)
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        true
     }
 
-    /// Writes all bytes through the internal buffer.
+    /// Writes bytes through the internal buffer.
     #[inline]
-    fn write_all(&mut self, buffer: &[u8]) -> Result<()> {
-        Write::write_all(&mut self.output, buffer)
+    unsafe fn write_unchecked(
+        &mut self,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the indexed source range contract.
+        unsafe { self.output.write_unchecked(input, index, count) }
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        Write::flush(&mut self.output)
+        self.output.flush()
     }
 }
 
-impl<W> Seek for BufferedLeb128Writer<W>
+impl<W> Seekable for BufferedLeb128Writer<W>
 where
-    W: Write + Seek,
+    W: Output<Item = u8> + Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Flushes pending bytes before seeking the wrapped writer.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.output.seek(position)
     }
 }

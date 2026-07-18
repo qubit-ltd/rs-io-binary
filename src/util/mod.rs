@@ -5,9 +5,16 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+mod async_streams;
 mod streams;
 pub(crate) use qubit_io::try_reserve_vec;
 
+pub(crate) use async_streams::{
+    read_exact_async,
+    read_leb128_payload_async,
+    read_utf8_payload_async,
+    write_all_async,
+};
 pub(crate) use streams::{
     MIN_CODEC_BUFFER_CAPACITY,
     checked_u16_len,
@@ -15,9 +22,11 @@ pub(crate) use streams::{
     checked_u64_len,
     decode_infallible_unchecked,
     encode_infallible_unchecked,
+    read_exact,
     read_leb128_from_reader,
     read_leb128_payload,
     read_utf8_payload,
+    write_all,
     write_utf8_payload,
     write_utf8_string_with_u16_len,
     write_utf8_string_with_u32_len,

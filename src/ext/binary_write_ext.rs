@@ -6,18 +6,19 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Write,
-};
+use std::io::Result;
 
-use crate::util::encode_infallible_unchecked;
+use crate::util::{
+    encode_infallible_unchecked,
+    write_all,
+};
 use qubit_codec::{
     BigEndian,
     ByteOrder,
     LittleEndian,
 };
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::Output;
 
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
@@ -47,7 +48,7 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Extension methods for writing fixed-width binary values to byte streams.
-pub trait BinaryWriteExt: Write {
+pub trait BinaryWriteExt: Output<Item = u8> {
     /// Writes an unsigned 8-bit integer.
     #[inline]
     fn write_u8(&mut self, value: u8) -> Result<()> {
@@ -281,7 +282,7 @@ pub trait BinaryWriteExt: Write {
     }
 }
 
-impl<W> BinaryWriteExt for W where W: Write + ?Sized {}
+impl<W> BinaryWriteExt for W where W: Output<Item = u8> + ?Sized {}
 
 #[inline]
 fn write_binary<const N: usize, T, W, F>(
@@ -290,10 +291,10 @@ fn write_binary<const N: usize, T, W, F>(
     encode: F,
 ) -> Result<()>
 where
-    W: Write + ?Sized,
+    W: Output<Item = u8> + ?Sized,
     F: FnOnce(&mut [u8], T),
 {
     let mut bytes = [0u8; N];
     encode(&mut bytes, value);
-    writer.write_all(&bytes)
+    write_all(writer, &bytes)
 }

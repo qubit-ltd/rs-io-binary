@@ -9,9 +9,7 @@
 use core::marker::PhantomData;
 use std::io::{
     Result,
-    Seek,
     SeekFrom,
-    Write,
 };
 
 use crate::stream::TranscodeEncodeOutputExt;
@@ -24,6 +22,10 @@ use qubit_codec::{
     LittleEndian,
 };
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::{
+    Output,
+    Seekable,
+};
 
 /// Buffered writer for fixed-width binary values.
 ///
@@ -36,12 +38,12 @@ use qubit_codec_binary::BinaryCodec;
 /// Dropping this writer delegates to `qubit_io::BufferedOutput`, which makes a
 /// best-effort attempt to drain pending bytes, ignores drop-time errors, and
 /// does not guarantee that the wrapped writer itself is flushed. Call
-/// [`Write::flush`] to guarantee that all bytes reach the wrapped writer.
+/// [`Output::flush`] to guarantee that all bytes reach the wrapped output.
 /// [`Self::inner`] can observe the wrapped writer before pending bytes have
 /// been flushed.
 pub struct BufferedBinaryWriter<W, O = BigEndian>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
     output: TranscodeEncodeOutput<W>,
     marker: PhantomData<fn() -> O>,
@@ -49,7 +51,7 @@ where
 
 impl<W, O> BufferedBinaryWriter<W, O>
 where
-    W: Write,
+    W: Output<Item = u8>,
     O: ByteOrderSpec,
 {
     /// Creates a buffered binary writer with the default buffer capacity.
@@ -108,7 +110,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<W> BufferedBinaryWriter<W, $order>
         where
-            W: Write,
+            W: Output<Item = u8>,
         {
             impl_value_write!(
                 $order,
@@ -179,36 +181,45 @@ macro_rules! impl_for_order {
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
 
-impl<W, O> Write for BufferedBinaryWriter<W, O>
+impl<W, O> Output for BufferedBinaryWriter<W, O>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
-    /// Writes bytes through the internal buffer.
-    #[inline]
-    fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        Write::write(&mut self.output, buffer)
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        true
     }
 
-    /// Writes all bytes through the internal buffer.
+    /// Writes bytes through the internal buffer.
     #[inline]
-    fn write_all(&mut self, buffer: &[u8]) -> Result<()> {
-        Write::write_all(&mut self.output, buffer)
+    unsafe fn write_unchecked(
+        &mut self,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the indexed source range contract.
+        unsafe { self.output.write_unchecked(input, index, count) }
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        Write::flush(&mut self.output)
+        self.output.flush()
     }
 }
 
-impl<W, O> Seek for BufferedBinaryWriter<W, O>
+impl<W, O> Seekable for BufferedBinaryWriter<W, O>
 where
-    W: Write + Seek,
+    W: Output<Item = u8> + Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Flushes pending bytes before seeking the wrapped writer.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.output.seek(position)
     }
 }

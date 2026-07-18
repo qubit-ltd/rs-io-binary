@@ -1,3 +1,10 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::cell::RefCell;
 use std::io::{
     Cursor,
@@ -9,6 +16,10 @@ use std::io::{
 };
 use std::rc::Rc;
 
+use qubit_io::{
+    Input,
+    Seekable,
+};
 use qubit_io_binary::{
     BinaryWriteExt,
     BufferedBinaryReader,
@@ -274,7 +285,7 @@ fn test_buffered_binary_reader_implements_read() {
     let mut bytes = [0u8; 3];
 
     reader
-        .read_exact(&mut bytes)
+        .read_fully(&mut bytes)
         .expect("raw bytes should be read");
 
     assert_eq!([1, 2, 3], bytes);
@@ -387,7 +398,7 @@ fn test_buffered_binary_reader_accessors_raw_read_seek_and_into_inner() {
     assert_eq!(
         2,
         reader
-            .stream_position()
+            .seek_to(SeekFrom::Current(0))
             .expect("logical current seek should succeed")
     );
     assert_eq!(
@@ -399,7 +410,7 @@ fn test_buffered_binary_reader_accessors_raw_read_seek_and_into_inner() {
     assert_eq!(
         1,
         reader
-            .seek(SeekFrom::Start(1))
+            .seek_to(SeekFrom::Start(1))
             .expect("absolute seek should succeed")
     );
 
@@ -438,7 +449,7 @@ fn test_buffered_binary_reader_current_seek_without_unread_buffer() {
     assert_eq!(
         2,
         reader
-            .seek(SeekFrom::Current(2))
+            .seek_to(SeekFrom::Current(2))
             .expect("current seek without unread bytes should succeed")
     );
     assert_eq!(
@@ -457,7 +468,7 @@ fn test_buffered_binary_reader_current_seek_reports_underflow() {
     assert_eq!(1, reader.read_u8().expect("first byte should be read"));
 
     let error = reader
-        .seek(SeekFrom::Current(i64::MIN))
+        .seek_to(SeekFrom::Current(i64::MIN))
         .expect_err("seek underflow should be reported");
 
     assert_eq!(ErrorKind::InvalidInput, error.kind());
@@ -478,7 +489,7 @@ fn test_buffered_binary_reader_preserves_buffer_when_seek_fails() {
     assert_eq!(1, reader.read_u8().expect("first byte should be read"));
 
     let error = reader
-        .stream_position()
+        .seek_to(SeekFrom::Current(0))
         .expect_err("inner seek should fail");
 
     assert_eq!(ErrorKind::Other, error.kind());
@@ -501,7 +512,7 @@ fn test_buffered_binary_reader_seek_end_discards_buffer_after_success() {
     assert_eq!(
         4,
         reader
-            .seek(SeekFrom::End(0))
+            .seek_to(SeekFrom::End(0))
             .expect("seek to end should succeed")
     );
 
