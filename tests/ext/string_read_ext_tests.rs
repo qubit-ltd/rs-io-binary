@@ -337,7 +337,7 @@ fn test_string_read_ext_returns_payload_read_error() {
 
     let mut input = Cursor::new(Vec::<u8>::new());
     assert_eq!(
-        ErrorKind::Other,
+        ErrorKind::OutOfMemory,
         input
             .read_utf8_payload(usize::MAX, usize::MAX)
             .expect_err("payload allocation error should be returned")

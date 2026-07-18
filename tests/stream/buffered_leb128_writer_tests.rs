@@ -157,15 +157,18 @@ fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_write_utf8_string_reports_length_flush_error() {
+fn test_buffered_leb128_writer_defers_utf8_string_flush_error() {
     let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 19);
 
     writer
         .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
-    let error = writer
+    writer
         .write_utf8_string("a")
-        .expect_err("length prefix flush should fail");
+        .expect("length-prefixed string should grow the persistent buffer");
+    let error = writer
+        .flush()
+        .expect_err("explicit flush should report the writer error");
 
     assert_eq!(ErrorKind::Other, error.kind());
 }

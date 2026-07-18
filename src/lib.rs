@@ -61,10 +61,6 @@ pub use qubit_codec_binary::{
     Strict,
     ZigZagCodec,
 };
-pub use qubit_io::{
-    ReadExt,
-    WriteExt,
-};
 pub use stream::{
     BinaryReader,
     BinaryWriter,

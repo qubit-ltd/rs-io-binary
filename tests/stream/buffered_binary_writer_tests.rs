@@ -459,7 +459,7 @@ fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
 }
 
 #[test]
-fn test_buffered_binary_writer_reports_flush_error_before_fixed_value() {
+fn test_buffered_binary_writer_defers_flush_error_for_fixed_value() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
         FailingWriter,
         19,
@@ -468,9 +468,12 @@ fn test_buffered_binary_writer_reports_flush_error_before_fixed_value() {
     writer
         .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
-    let error = writer
+    writer
         .write_u16(0x0203)
-        .expect_err("fixed value should report flush error");
+        .expect("fixed value should grow the persistent buffer");
+    let error = writer
+        .flush()
+        .expect_err("explicit flush should report the writer error");
 
     assert_eq!(ErrorKind::Other, error.kind());
 }

@@ -25,7 +25,7 @@
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.2"
+qubit-io-binary = "0.3"
 ```
 
 ## 同步示例

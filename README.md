@@ -27,7 +27,7 @@ The core API does not depend on Tokio, `futures-io`, or another executor.
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.2"
+qubit-io-binary = "0.3"
 ```
 
 ## Synchronous Example

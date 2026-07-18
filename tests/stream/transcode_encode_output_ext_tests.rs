@@ -323,7 +323,7 @@ fn test_transcode_encode_output_ext_fallback_preserves_pending_bytes() {
 }
 
 #[test]
-fn test_transcode_encode_output_ext_fallback_calls_flush_before_write() {
+fn test_transcode_encode_output_ext_grows_without_flushing_pending_bytes() {
     let mut output = TranscodeEncodeOutput::with_capacity(
         FlushThenWriteLargeAfterFlushWriter::default(),
         1,
@@ -334,11 +334,12 @@ fn test_transcode_encode_output_ext_fallback_calls_flush_before_write() {
         .expect("stage pending byte in inner buffer");
     output
         .write_encoded::<LargeFixedCodec>([0x11, 0x22, 0x33, 0x44])
-        .expect("fallback should succeed after flush");
+        .expect("persistent buffer should grow without flushing");
 
-    let (inner, _) = output.into_parts();
-    assert!(inner.flushed);
-    assert_eq!(inner.output, vec![0xAA, 0x11, 0x22, 0x33, 0x44]);
+    let (inner, pending) = output.into_parts();
+    assert!(!inner.flushed);
+    assert_eq!(inner.output, vec![0xAA]);
+    assert_eq!(pending.readable(), &[0x11, 0x22, 0x33, 0x44]);
 }
 
 #[test]
