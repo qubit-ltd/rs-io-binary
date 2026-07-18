@@ -1,10 +1,14 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Cursor,
     ErrorKind,
-    Read,
-    Seek,
     SeekFrom,
-    Write,
 };
 use std::num::NonZeroUsize;
 
@@ -14,6 +18,11 @@ use qubit_codec::{
     TranscodeDecodeInput,
 };
 use qubit_codec_binary::NonStrict;
+use qubit_io::{
+    Input,
+    Output,
+    Seekable,
+};
 use qubit_io_binary::{
     BufferedBinaryReader,
     BufferedLeb128Reader,
@@ -237,7 +246,9 @@ fn test_transcode_decode_input_ext_delegates_read() {
     assert_eq!(0x34, buffer[0]);
     assert_eq!(
         1,
-        reader.seek(SeekFrom::Start(1)).expect("seek should work")
+        reader
+            .seek_to(SeekFrom::Start(1))
+            .expect("seek should work")
     );
     assert_eq!(
         0x5612,

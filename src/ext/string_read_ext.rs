@@ -5,10 +5,7 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Read,
-    Result,
-};
+use std::io::Result;
 
 use crate::util::read_utf8_payload as read_utf8_payload_impl;
 #[cfg(not(any(
@@ -23,9 +20,10 @@ use crate::{
     ByteOrder,
     Leb128ReadExt,
 };
+use qubit_io::Input;
 
 /// Extension methods for reading length-prefixed UTF-8 strings.
-pub trait StringReadExt: Read {
+pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 payload with an already decoded byte length.
     ///
     /// # Parameters
@@ -236,7 +234,7 @@ pub trait StringReadExt: Read {
 
 impl<T> StringReadExt for T
 where
-    T: Read + ?Sized,
+    T: Input<Item = u8> + ?Sized,
 {
     #[inline]
     fn read_utf8_payload(

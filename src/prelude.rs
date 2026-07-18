@@ -12,6 +12,14 @@
 //! associated buffer codec marker types into scope.
 
 pub use crate::{
+    AsyncBinaryReadExt,
+    AsyncBinaryWriteExt,
+    AsyncLeb128ReadExt,
+    AsyncLeb128WriteExt,
+    AsyncStringReadExt,
+    AsyncStringWriteExt,
+    AsyncZigZagReadExt,
+    AsyncZigZagWriteExt,
     BigEndian,
     BinaryCodec,
     BinaryReadExt,

@@ -1,8 +1,19 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Cursor,
     ErrorKind,
 };
 
+use qubit_io::{
+    Output,
+    Seekable,
+};
 use qubit_io_binary::{
     BigEndian,
     BinaryWriter,
@@ -15,7 +26,7 @@ fn test_binary_writer_writes_all_big_endian_methods() {
     let mut writer = BinaryWriter::<_, BigEndian>::new(Vec::new());
 
     assert_eq!(ByteOrder::BigEndian, writer.byte_order());
-    std::io::Write::write_all(&mut writer, &[0xaa, 0xbb])
+    Output::write_fully(&mut writer, &[0xaa, 0xbb])
         .expect("bytes should be written");
     writer.write_u8(0x12).expect("u8 should be written");
     writer.write_i8(-2).expect("i8 should be written");
@@ -135,11 +146,11 @@ fn test_binary_writer_write_and_seek_delegate_to_inner_writer() {
         qubit_io_binary::LittleEndian,
     >::new(std::io::Cursor::new(vec![0; 4]));
 
-    std::io::Seek::seek(&mut writer, std::io::SeekFrom::Start(1))
+    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through BinaryWriter should succeed");
-    std::io::Write::write_all(&mut writer, b"xy")
+    Output::write_fully(&mut writer, b"xy")
         .expect("writing through BinaryWriter should succeed");
-    std::io::Write::flush(&mut writer)
+    Output::flush(&mut writer)
         .expect("flushing through BinaryWriter should succeed");
 
     let cursor = writer.into_inner();

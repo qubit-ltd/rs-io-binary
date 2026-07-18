@@ -1,9 +1,15 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::convert::Infallible;
 use std::io::{
     Cursor,
     Error,
     ErrorKind,
-    Seek,
     SeekFrom,
     Write,
 };
@@ -12,6 +18,10 @@ use std::num::NonZeroUsize;
 use qubit_codec::{
     Codec,
     DecodeFailure,
+};
+use qubit_io::{
+    Output,
+    Seekable,
 };
 use qubit_io_binary::{
     BufferedBinaryWriter,
@@ -301,7 +311,7 @@ fn test_transcode_encode_output_ext_fallback_preserves_pending_bytes() {
     let mut output = TranscodeEncodeOutput::with_capacity(Vec::new(), 1);
 
     output
-        .write_all(&[0xAA])
+        .write_fully(&[0xAA])
         .expect("stage pending byte in inner buffer");
     output
         .write_encoded::<LargeFixedCodec>([0x11, 0x22, 0x33, 0x44])
@@ -320,7 +330,7 @@ fn test_transcode_encode_output_ext_fallback_calls_flush_before_write() {
     );
 
     output
-        .write_all(&[0xAA])
+        .write_fully(&[0xAA])
         .expect("stage pending byte in inner buffer");
     output
         .write_encoded::<LargeFixedCodec>([0x11, 0x22, 0x33, 0x44])
@@ -369,7 +379,7 @@ fn test_transcode_encode_output_ext_writes_scalar_and_raw_bytes() {
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
     writer.write_u16(0x1234).expect("encoded u16");
     assert_eq!(vec![0x34, 0x12], {
-        writer.flush().expect("flush should write bytes");
+        Output::flush(&mut writer).expect("flush should write bytes");
         writer.inner().clone()
     });
 }
@@ -379,9 +389,9 @@ fn test_transcode_encode_output_ext_writes_raw_bytes_via_io_trait() {
     let mut writer =
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
     writer
-        .write_all(b"ab")
+        .write_fully(b"ab")
         .expect("write_all should be delegated");
-    writer.flush().expect("flush should write raw bytes");
+    Output::flush(&mut writer).expect("flush should write raw bytes");
     let output = writer.inner().clone();
     assert_eq!(output, b"ab");
 }
@@ -396,7 +406,7 @@ fn test_transcode_encode_output_ext_writes_multiple_values_with_tiny_capacity()
     writer.write_u16(0x0102).expect("write second u16");
     writer.write_u8(0xFF).expect("write u8");
 
-    writer.flush().expect("flush should write bytes");
+    Output::flush(&mut writer).expect("flush should write bytes");
     let output = writer.inner().clone();
     let mut expected = Vec::new();
     expected.extend_from_slice(&0x1234_u16.to_le_bytes());
@@ -411,9 +421,9 @@ fn test_transcode_encode_output_ext_seek_calls_flush() {
     let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
     writer.write_u8(1).expect("write_u8");
     let _ = writer
-        .seek(SeekFrom::Start(0))
+        .seek_to(SeekFrom::Start(0))
         .expect("seek should flush and succeed");
-    writer.flush().expect("flush should write output");
+    Output::flush(&mut writer).expect("flush should write output");
     let output = writer.inner().clone().into_inner();
     assert_eq!(output, vec![1]);
 }
@@ -424,7 +434,7 @@ fn test_transcode_encode_output_ext_writes_utf8_string() {
     writer
         .write_utf8_string("hello")
         .expect("write utf8 string");
-    writer.flush().expect("flush should write encoded bytes");
+    Output::flush(&mut writer).expect("flush should write encoded bytes");
     let bytes = writer.inner().clone();
 
     let mut reader =

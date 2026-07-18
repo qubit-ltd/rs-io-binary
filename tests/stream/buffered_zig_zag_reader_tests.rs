@@ -1,10 +1,19 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Cursor,
     ErrorKind,
-    Read,
-    Seek,
 };
 
+use qubit_io::{
+    Input,
+    Seekable,
+};
 use qubit_io_binary::{
     BufferedZigZagReader,
     NonStrict,
@@ -69,12 +78,12 @@ fn test_buffered_zig_zag_reader_accessors_raw_seek_and_into_inner() {
     assert_eq!(
         1,
         reader
-            .stream_position()
+            .seek_to(std::io::SeekFrom::Current(0))
             .expect("current seek should succeed")
     );
     let mut byte = [0_u8; 1];
     reader
-        .read_exact(&mut byte)
+        .read_fully(&mut byte)
         .expect("raw byte should be read");
     assert_eq!([9], byte);
 

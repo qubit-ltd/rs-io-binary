@@ -5,6 +5,14 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+mod async_binary_read_ext;
+mod async_binary_write_ext;
+mod async_leb128_read_ext;
+mod async_leb128_write_ext;
+mod async_string_read_ext;
+mod async_string_write_ext;
+mod async_zig_zag_read_ext;
+mod async_zig_zag_write_ext;
 mod binary_read_ext;
 mod binary_write_ext;
 mod leb128_read_ext;
@@ -14,6 +22,14 @@ mod string_write_ext;
 mod zig_zag_read_ext;
 mod zig_zag_write_ext;
 
+pub use async_binary_read_ext::AsyncBinaryReadExt;
+pub use async_binary_write_ext::AsyncBinaryWriteExt;
+pub use async_leb128_read_ext::AsyncLeb128ReadExt;
+pub use async_leb128_write_ext::AsyncLeb128WriteExt;
+pub use async_string_read_ext::AsyncStringReadExt;
+pub use async_string_write_ext::AsyncStringWriteExt;
+pub use async_zig_zag_read_ext::AsyncZigZagReadExt;
+pub use async_zig_zag_write_ext::AsyncZigZagWriteExt;
 pub use binary_read_ext::BinaryReadExt;
 pub use binary_write_ext::BinaryWriteExt;
 pub use leb128_read_ext::Leb128ReadExt;

@@ -1,8 +1,19 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::io::{
     Cursor,
     ErrorKind,
 };
 
+use qubit_io::{
+    Input,
+    Seekable,
+};
 use qubit_io_binary::{
     BigEndian,
     BinaryReader,
@@ -66,8 +77,7 @@ fn test_binary_reader_reads_all_big_endian_methods() {
 
     assert_eq!(ByteOrder::BigEndian, reader.byte_order());
     let mut prefix = [0u8; 2];
-    std::io::Read::read_exact(&mut reader, &mut prefix)
-        .expect("bytes should be read");
+    Input::read_fully(&mut reader, &mut prefix).expect("bytes should be read");
     assert_eq!([0xaa, 0xbb], prefix);
     assert_eq!(0x12, reader.read_u8().expect("u8 should be read"));
     assert_eq!(-2, reader.read_i8().expect("i8 should be read"));
@@ -118,8 +128,7 @@ fn test_binary_reader_reads_little_endian_and_exposes_accessors() {
     assert_eq!(0, reader.inner().position());
     reader.inner_mut().set_position(0);
     let mut prefix = [0u8; 2];
-    std::io::Read::read_exact(&mut reader, &mut prefix)
-        .expect("bytes should be read");
+    Input::read_fully(&mut reader, &mut prefix).expect("bytes should be read");
     assert_eq!([0xaa, 0xbb], prefix);
     assert_eq!(0x12, reader.read_u8().expect("u8 should be read"));
     assert_eq!(-2, reader.read_i8().expect("i8 should be read"));
@@ -266,10 +275,10 @@ fn test_binary_reader_read_and_seek_delegate_to_inner_reader() {
         qubit_io_binary::LittleEndian,
     >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
 
-    std::io::Seek::seek(&mut reader, std::io::SeekFrom::Start(1))
+    Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))
         .expect("seeking through BinaryReader should succeed");
     let mut bytes = [0_u8; 2];
-    std::io::Read::read_exact(&mut reader, &mut bytes)
+    Input::read_fully(&mut reader, &mut bytes)
         .expect("reading through BinaryReader should succeed");
 
     assert_eq!(bytes, [2, 3]);

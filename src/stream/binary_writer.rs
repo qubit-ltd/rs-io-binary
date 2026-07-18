@@ -9,16 +9,14 @@
 use core::marker::PhantomData;
 use std::io::{
     Result,
-    Seek,
     SeekFrom,
-    Write,
 };
 
-use crate::WriteExt;
 use crate::util::{
     checked_u16_len,
     checked_u32_len,
     encode_infallible_unchecked,
+    write_all,
 };
 use qubit_codec::{
     BigEndian,
@@ -27,6 +25,10 @@ use qubit_codec::{
     LittleEndian,
 };
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::{
+    Output,
+    Seekable,
+};
 
 /// Writer wrapper for fixed-width binary values.
 ///
@@ -41,7 +43,6 @@ pub struct BinaryWriter<W, O = BigEndian> {
 
 impl<W, O> BinaryWriter<W, O>
 where
-    W: Write,
     O: ByteOrderSpec,
 {
     /// Creates a binary writer.
@@ -108,8 +109,8 @@ macro_rules! impl_value_write {
                     &mut self.buffer,
                     0,
                 );
-                self.inner.write_all_unchecked(&self.buffer, 0, LEN)
             }
+            write_all(&mut self.inner, &self.buffer[..LEN])
         }
     };
 }
@@ -118,7 +119,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<W> BinaryWriter<W, $order>
         where
-            W: Write,
+            W: Output<Item = u8>,
         {
             impl_value_write!(
                 $order,
@@ -188,9 +189,7 @@ macro_rules! impl_for_order {
             pub fn write_utf8_string_u16(&mut self, value: &str) -> Result<()> {
                 self.write_u16(checked_u16_len(value.len())?)?;
                 let bytes = value.as_bytes();
-                // SAFETY: The range covers the full byte slice produced by
-                // `str::as_bytes`.
-                unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
+                write_all(&mut self.inner, bytes)
             }
 
             /// Writes a UTF-8 string prefixed by a 32-bit byte length.
@@ -198,9 +197,7 @@ macro_rules! impl_for_order {
             pub fn write_utf8_string_u32(&mut self, value: &str) -> Result<()> {
                 self.write_u32(checked_u32_len(value.len())?)?;
                 let bytes = value.as_bytes();
-                // SAFETY: The range covers the full byte slice produced by
-                // `str::as_bytes`.
-                unsafe { self.inner.write_all_unchecked(bytes, 0, bytes.len()) }
+                write_all(&mut self.inner, bytes)
             }
         }
     };
@@ -209,26 +206,27 @@ macro_rules! impl_for_order {
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
 
-impl<W, O> Write for BinaryWriter<W, O>
+impl<W, O> Output for BinaryWriter<W, O>
 where
-    W: Write,
+    W: Output<Item = u8>,
 {
-    /// Writes bytes to the wrapped writer.
-    ///
-    /// # Parameters
-    ///
-    /// - `buffer`: Source bytes to write.
-    ///
-    /// # Returns
-    ///
-    /// Returns the number of bytes written.
-    ///
-    /// # Errors
-    ///
-    /// Returns the I/O error reported by the wrapped writer.
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        self.inner.is_buffered()
+    }
+
     #[inline]
-    fn write(&mut self, buffer: &[u8]) -> Result<usize> {
-        self.inner.write(buffer)
+    unsafe fn write_unchecked(
+        &mut self,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the same indexed range contract required
+        // by the wrapped output.
+        unsafe { self.inner.write_unchecked(input, index, count) }
     }
 
     /// Flushes the wrapped writer.
@@ -238,14 +236,16 @@ where
     /// Returns the I/O error reported by the wrapped writer.
     #[inline]
     fn flush(&mut self) -> Result<()> {
-        self.inner.flush()
+        Output::flush(&mut self.inner)
     }
 }
 
-impl<W, O> Seek for BinaryWriter<W, O>
+impl<W, O> Seekable for BinaryWriter<W, O>
 where
-    W: Seek,
+    W: Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Seeks the wrapped writer.
     ///
     /// # Parameters
@@ -260,7 +260,7 @@ where
     ///
     /// Returns the seek error reported by the wrapped writer.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.inner.seek(position)
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
+        self.inner.seek_to(position)
     }
 }

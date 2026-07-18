@@ -8,9 +8,7 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Read,
     Result,
-    Seek,
     SeekFrom,
 };
 
@@ -20,6 +18,10 @@ use qubit_codec_binary::{
     NonStrict,
     Strict,
     ZigZagCodec,
+};
+use qubit_io::{
+    Input,
+    Seekable,
 };
 
 /// Reader wrapper for ZigZag + unsigned LEB128 integers.
@@ -98,7 +100,7 @@ macro_rules! impl_for_policy {
     ($policy:ty) => {
         impl<R> ZigZagReader<R, $policy>
         where
-            R: Read,
+            R: Input<Item = u8>,
         {
             impl_read_value!($policy, read_i8, i8, "Reads a ZigZag `i8`.");
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
@@ -123,33 +125,35 @@ macro_rules! impl_for_policy {
 impl_for_policy!(NonStrict);
 impl_for_policy!(Strict);
 
-impl<R, P> Read for ZigZagReader<R, P>
+impl<R, P> Input for ZigZagReader<R, P>
 where
-    R: Read,
+    R: Input<Item = u8>,
 {
-    /// Reads bytes from the wrapped reader.
-    ///
-    /// # Parameters
-    ///
-    /// - `buffer`: Destination byte buffer.
-    ///
-    /// # Returns
-    ///
-    /// Returns the number of bytes read.
-    ///
-    /// # Errors
-    ///
-    /// Returns the I/O error reported by the wrapped reader.
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        self.inner.is_buffered()
+    }
+
     #[inline]
-    fn read(&mut self, buffer: &mut [u8]) -> Result<usize> {
-        self.inner.read(buffer)
+    unsafe fn read_unchecked(
+        &mut self,
+        output: &mut [u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the wrapped input's range contract.
+        unsafe { self.inner.read_unchecked(output, index, count) }
     }
 }
 
-impl<R, P> Seek for ZigZagReader<R, P>
+impl<R, P> Seekable for ZigZagReader<R, P>
 where
-    R: Seek,
+    R: Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Seeks the wrapped reader.
     ///
     /// # Parameters
@@ -164,7 +168,7 @@ where
     ///
     /// Returns the seek error reported by the wrapped reader.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.inner.seek(position)
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
+        self.inner.seek_to(position)
     }
 }

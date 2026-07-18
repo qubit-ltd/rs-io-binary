@@ -1,3 +1,10 @@
+// =============================================================================
+//    Copyright (c) 2026 Haixing Hu.
+//
+//    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
+// =============================================================================
 use std::cell::RefCell;
 use std::io::{
     Cursor,
@@ -9,6 +16,10 @@ use std::io::{
 };
 use std::rc::Rc;
 
+use qubit_io::{
+    Output,
+    Seekable,
+};
 use qubit_io_binary::{
     BinaryWriteExt,
     BufferedBinaryWriter,
@@ -298,7 +309,7 @@ fn test_buffered_binary_writer_accessors_write_all_seek_and_into_inner() {
     assert_eq!(
         3,
         writer
-            .seek(SeekFrom::End(0))
+            .seek_to(SeekFrom::End(0))
             .expect("seek should flush pending bytes")
     );
     writer
@@ -317,16 +328,16 @@ fn test_buffered_binary_writer_cursor_cold_paths_and_fixed_flush() {
     );
 
     writer
-        .write_all(&[1; 14])
+        .write_fully(&[1; 14])
         .expect("initial bytes should be buffered");
     writer
-        .write_all(&[2; 5])
+        .write_fully(&[2; 5])
         .expect("exact spare write_all should stay buffered");
     writer
         .write_u16(0x0403)
         .expect("fixed value should flush full buffer");
     writer
-        .write_all(&[5; 16])
+        .write_fully(&[5; 16])
         .expect("bytes should fill most of the buffer");
     assert_eq!(
         5,
@@ -353,13 +364,13 @@ fn test_buffered_binary_writer_write_all_direct_and_buffered_slow_paths() {
     let large: Vec<u8> = (0u8..32).collect();
 
     writer
-        .write_all(&large)
+        .write_fully(&large)
         .expect("large write_all should delegate");
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("small write_all should buffer");
     writer
-        .write_all(&[2; 5])
+        .write_fully(&[2; 5])
         .expect("write_all should flush then buffer");
 
     let mut expected = large;
@@ -375,10 +386,10 @@ fn test_buffered_binary_writer_write_all_exact_spare_uses_cold_no_flush_path() {
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
-        .write_all(&[1; 14])
+        .write_fully(&[1; 14])
         .expect("initial bytes should be buffered");
     writer
-        .write_all(&[2; 5])
+        .write_fully(&[2; 5])
         .expect("exact spare write_all should stay buffered");
 
     let mut expected = vec![1; 14];
@@ -393,7 +404,7 @@ fn test_buffered_binary_writer_write_flushes_then_buffers_small_input() {
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     assert_eq!(
         5,
@@ -414,7 +425,7 @@ fn test_buffered_binary_writer_write_exact_spare_uses_cold_no_flush_path() {
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
-        .write_all(&[1; 14])
+        .write_fully(&[1; 14])
         .expect("initial bytes should be buffered");
     assert_eq!(
         5,
@@ -435,7 +446,7 @@ fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     writer
         .write_u16(0x0203)
@@ -455,7 +466,7 @@ fn test_buffered_binary_writer_reports_flush_error_before_fixed_value() {
     );
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     let error = writer
         .write_u16(0x0203)
@@ -472,10 +483,10 @@ fn test_buffered_binary_writer_write_all_reports_flush_error() {
     );
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     let error = writer
-        .write_all(&[2; 5])
+        .write_fully(&[2; 5])
         .expect_err("write_all should report flush error");
 
     assert_eq!(ErrorKind::Other, error.kind());
@@ -489,7 +500,7 @@ fn test_buffered_binary_writer_write_reports_flush_error() {
     );
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     let error = writer
         .write(&[2; 5])
@@ -510,7 +521,7 @@ fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_b
         .write(&[1; 19])
         .expect_err("large write should report writer error");
     let write_all_error = writer
-        .write_all(&[1; 19])
+        .write_fully(&[1; 19])
         .expect_err("large write_all should report writer error");
 
     assert_eq!(ErrorKind::Other, write_error.kind());
@@ -525,10 +536,10 @@ fn test_buffered_binary_writer_seek_reports_flush_error() {
     );
 
     writer
-        .write_all(&[1; 18])
+        .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     let error = writer
-        .seek(SeekFrom::Start(0))
+        .seek_to(SeekFrom::Start(0))
         .expect_err("seek should report flush error");
 
     assert_eq!(ErrorKind::Other, error.kind());
@@ -543,7 +554,7 @@ fn test_buffered_binary_writer_reports_inner_seek_error_after_flush() {
 
     writer.write_u8(1).expect("value should be buffered");
     let error = writer
-        .seek(SeekFrom::Start(0))
+        .seek_to(SeekFrom::Start(0))
         .expect_err("inner seek error should be returned after flushing");
 
     assert_eq!(ErrorKind::Other, error.kind());
@@ -667,7 +678,7 @@ fn test_buffered_binary_writer_buffers_small_write_with_chunked_writer() {
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
 
     writer
-        .write_all(&[1, 2, 3])
+        .write_fully(&[1, 2, 3])
         .expect("small write should be buffered");
     assert!(output.borrow().is_empty());
     assert!(request_lengths.borrow().is_empty());

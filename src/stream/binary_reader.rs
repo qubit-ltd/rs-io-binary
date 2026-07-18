@@ -8,13 +8,10 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Read,
     Result,
-    Seek,
     SeekFrom,
 };
 
-use crate::ReadExt;
 #[cfg(not(any(
     target_pointer_width = "32",
     target_pointer_width = "64"
@@ -22,6 +19,7 @@ use crate::ReadExt;
 use crate::util::usize_from_u32_len;
 use crate::util::{
     decode_infallible_unchecked,
+    read_exact,
     read_utf8_payload,
 };
 use qubit_codec::{
@@ -31,6 +29,10 @@ use qubit_codec::{
     LittleEndian,
 };
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::{
+    Input,
+    Seekable,
+};
 
 /// Reader wrapper for fixed-width binary values.
 ///
@@ -103,17 +105,10 @@ macro_rules! impl_value_read {
             type Codec = BinaryCodec<$ty, $order>;
 
             const LEN: usize = Codec::MIN_UNITS_PER_VALUE;
-            // SAFETY: `LEN` is declared by the codec and fits the fixed
-            // internal buffer.
-            unsafe {
-                ReadExt::read_exact_unchecked(
-                    &mut self.inner,
-                    &mut self.buffer,
-                    0,
-                    LEN,
-                )?;
-                Ok(decode_infallible_unchecked::<Codec>(&self.buffer, 0))
-            }
+            read_exact(&mut self.inner, &mut self.buffer[..LEN])?;
+            // SAFETY: `LEN` is declared by the codec and the preceding exact
+            // read initialized that prefix of the fixed internal buffer.
+            unsafe { Ok(decode_infallible_unchecked::<Codec>(&self.buffer, 0)) }
         }
     };
 }
@@ -122,7 +117,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<R> BinaryReader<R, $order>
         where
-            R: Read,
+            R: Input<Item = u8>,
         {
             impl_value_read!(
                 $order,
@@ -243,34 +238,37 @@ macro_rules! impl_for_order {
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
 
-impl<R, O> Read for BinaryReader<R, O>
+impl<R, O> Input for BinaryReader<R, O>
 where
-    R: Read,
+    R: Input<Item = u8>,
 {
-    /// Reads bytes from the wrapped reader.
-    ///
-    /// # Parameters
-    ///
-    /// - `buffer`: Destination byte buffer.
-    ///
-    /// # Returns
-    ///
-    /// Returns the number of bytes read.
-    ///
-    /// # Errors
-    ///
-    /// Returns the I/O error reported by the wrapped reader.
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        self.inner.is_buffered()
+    }
+
     #[inline]
-    fn read(&mut self, buffer: &mut [u8]) -> Result<usize> {
-        self.inner.read(buffer)
+    unsafe fn read_unchecked(
+        &mut self,
+        output: &mut [u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the same indexed range contract required
+        // by the wrapped input.
+        unsafe { self.inner.read_unchecked(output, index, count) }
     }
 }
 
-impl<R, O> Seek for BinaryReader<R, O>
+impl<R, O> Seekable for BinaryReader<R, O>
 where
-    R: Seek,
+    R: Seekable<Unit = u8>,
 {
-    /// Seeks the wrapped reader.
+    type Unit = u8;
+
+    /// Seeks the wrapped input.
     ///
     /// # Parameters
     ///
@@ -284,7 +282,7 @@ where
     ///
     /// Returns the seek error reported by the wrapped reader.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
-        self.inner.seek(position)
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
+        self.inner.seek_to(position)
     }
 }

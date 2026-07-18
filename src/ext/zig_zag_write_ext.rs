@@ -6,16 +6,17 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    Write,
-};
+use std::io::Result;
 
-use crate::util::encode_infallible_unchecked;
+use crate::util::{
+    encode_infallible_unchecked,
+    write_all,
+};
 use qubit_codec_binary::{
     NonStrict,
     ZigZagCodec,
 };
+use qubit_io::Output;
 
 macro_rules! write_zig_zag_value {
     ($writer:expr, $value:expr, $ty:ty) => {
@@ -40,7 +41,7 @@ macro_rules! write_zig_zag_value {
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as [`Self::write_zig_zag_i64`] for
 /// persistent files and cross-platform protocols.
-pub trait ZigZagWriteExt: Write {
+pub trait ZigZagWriteExt: Output<Item = u8> {
     /// Writes a ZigZag `i8`.
     #[inline]
     fn write_zig_zag_i8(&mut self, value: i8) -> Result<()> {
@@ -78,7 +79,7 @@ pub trait ZigZagWriteExt: Write {
     }
 }
 
-impl<W> ZigZagWriteExt for W where W: Write + ?Sized {}
+impl<W> ZigZagWriteExt for W where W: Output<Item = u8> + ?Sized {}
 
 #[inline]
 fn write_zig_zag<const N: usize, T, W, F>(
@@ -87,10 +88,10 @@ fn write_zig_zag<const N: usize, T, W, F>(
     encode: F,
 ) -> Result<()>
 where
-    W: Write + ?Sized,
+    W: Output<Item = u8> + ?Sized,
     F: FnOnce(&mut [u8], T) -> usize,
 {
     let mut bytes = [0u8; N];
     let len = encode(&mut bytes, value);
-    writer.write_all(&bytes[..len])
+    write_all(writer, &bytes[..len])
 }

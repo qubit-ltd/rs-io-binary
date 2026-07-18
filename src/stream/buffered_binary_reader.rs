@@ -8,9 +8,7 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Read,
     Result,
-    Seek,
     SeekFrom,
 };
 
@@ -24,6 +22,10 @@ use qubit_codec::{
     TranscodeDecodeInput,
 };
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::{
+    Input,
+    Seekable,
+};
 
 use super::transcode_decode_input_ext::read_decoded_with_scratch;
 
@@ -40,7 +42,7 @@ use super::transcode_decode_input_ext::read_decoded_with_scratch;
 /// logical position exposed by this wrapper.
 pub struct BufferedBinaryReader<R, O = BigEndian>
 where
-    R: Read,
+    R: Input<Item = u8>,
 {
     input: TranscodeDecodeInput<R>,
     marker: PhantomData<fn() -> O>,
@@ -48,7 +50,7 @@ where
 
 impl<R, O> BufferedBinaryReader<R, O>
 where
-    R: Read,
+    R: Input<Item = u8>,
     O: ByteOrderSpec,
 {
     /// Creates a buffered binary reader with the default buffer capacity.
@@ -111,7 +113,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<R> BufferedBinaryReader<R, $order>
         where
-            R: Read,
+            R: Input<Item = u8>,
         {
             impl_value_read!(
                 $order,
@@ -182,24 +184,39 @@ macro_rules! impl_for_order {
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
 
-impl<R, O> Read for BufferedBinaryReader<R, O>
+impl<R, O> Input for BufferedBinaryReader<R, O>
 where
-    R: Read,
+    R: Input<Item = u8>,
 {
-    /// Reads bytes from the buffered reader.
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        true
+    }
+
+    /// Reads bytes from the buffered input.
     #[inline]
-    fn read(&mut self, buffer: &mut [u8]) -> Result<usize> {
-        self.input.read(buffer)
+    unsafe fn read_unchecked(
+        &mut self,
+        output: &mut [u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the indexed destination range contract.
+        unsafe { self.input.read_unchecked(output, index, count) }
     }
 }
 
-impl<R, O> Seek for BufferedBinaryReader<R, O>
+impl<R, O> Seekable for BufferedBinaryReader<R, O>
 where
-    R: Read + Seek,
+    R: Input<Item = u8> + Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Seeks the wrapped reader and discards buffered bytes after success.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek(position)
     }
 }

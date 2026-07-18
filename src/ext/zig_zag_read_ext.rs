@@ -6,10 +6,7 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Read,
-    Result,
-};
+use std::io::Result;
 
 use crate::util::read_leb128_payload;
 use qubit_codec_binary::{
@@ -17,6 +14,7 @@ use qubit_codec_binary::{
     Strict,
     ZigZagCodec,
 };
+use qubit_io::Input;
 
 macro_rules! read_zig_zag_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
@@ -35,7 +33,7 @@ macro_rules! read_zig_zag_value {
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as [`Self::read_zig_zag_i64`] for
 /// persistent files and cross-platform protocols.
-pub trait ZigZagReadExt: Read {
+pub trait ZigZagReadExt: Input<Item = u8> {
     /// Reads a non-strict ZigZag `i8`.
     #[inline]
     fn read_zig_zag_i8(&mut self) -> Result<i8> {
@@ -109,4 +107,4 @@ pub trait ZigZagReadExt: Read {
     }
 }
 
-impl<R> ZigZagReadExt for R where R: Read + ?Sized {}
+impl<R> ZigZagReadExt for R where R: Input<Item = u8> + ?Sized {}

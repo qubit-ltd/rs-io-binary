@@ -5,13 +5,11 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Result,
-    Write,
-};
+use std::io::Result;
 
 use crate::util::{
     checked_u64_len,
+    write_all,
     write_utf8_payload as write_utf8_payload_impl,
     write_utf8_string_with_u16_len,
     write_utf8_string_with_u32_len,
@@ -21,9 +19,10 @@ use crate::{
     ByteOrder,
     Leb128WriteExt,
 };
+use qubit_io::Output;
 
 /// Extension methods for writing length-prefixed UTF-8 strings.
-pub trait StringWriteExt: Write {
+pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 payload without a length prefix.
     ///
     /// # Parameters
@@ -134,7 +133,7 @@ pub trait StringWriteExt: Write {
 
 impl<T> StringWriteExt for T
 where
-    T: Write + ?Sized,
+    T: Output<Item = u8> + ?Sized,
 {
     #[inline]
     fn write_utf8_payload(&mut self, value: &str) -> Result<()> {
@@ -145,14 +144,14 @@ where
     fn write_utf8_string_uleb(&mut self, value: &str) -> Result<()> {
         let bytes = value.as_bytes();
         self.write_uleb_usize(bytes.len())?;
-        self.write_all(bytes)
+        write_all(self, bytes)
     }
 
     #[inline]
     fn write_utf8_string_uleb_u64(&mut self, value: &str) -> Result<()> {
         let bytes = value.as_bytes();
         self.write_uleb_u64(checked_u64_len(bytes.len())?)?;
-        self.write_all(bytes)
+        write_all(self, bytes)
     }
 
     #[inline]

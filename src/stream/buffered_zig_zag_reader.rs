@@ -8,9 +8,7 @@
 
 use core::marker::PhantomData;
 use std::io::{
-    Read,
     Result,
-    Seek,
     SeekFrom,
 };
 
@@ -22,6 +20,10 @@ use qubit_codec_binary::{
     NonStrict,
     Strict,
     ZigZagCodec,
+};
+use qubit_io::{
+    Input,
+    Seekable,
 };
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.
@@ -42,7 +44,7 @@ use qubit_codec_binary::{
 /// cross-platform protocols.
 pub struct BufferedZigZagReader<R, P = NonStrict>
 where
-    R: Read,
+    R: Input<Item = u8>,
 {
     input: TranscodeDecodeInput<R>,
     marker: PhantomData<fn() -> P>,
@@ -50,7 +52,7 @@ where
 
 impl<R, P> BufferedZigZagReader<R, P>
 where
-    R: Read,
+    R: Input<Item = u8>,
     P: Leb128DecodePolicy,
 {
     /// Creates a buffered ZigZag reader with the default buffer capacity.
@@ -110,7 +112,7 @@ macro_rules! impl_for_policy {
     ($policy:ty) => {
         impl<R> BufferedZigZagReader<R, $policy>
         where
-            R: Read,
+            R: Input<Item = u8>,
         {
             impl_read_value!($policy, read_i8, i8, "Reads a ZigZag `i8`.");
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
@@ -135,24 +137,39 @@ macro_rules! impl_for_policy {
 impl_for_policy!(NonStrict);
 impl_for_policy!(Strict);
 
-impl<R, P> Read for BufferedZigZagReader<R, P>
+impl<R, P> Input for BufferedZigZagReader<R, P>
 where
-    R: Read,
+    R: Input<Item = u8>,
 {
-    /// Reads bytes from the buffered reader.
+    type Item = u8;
+
+    #[inline(always)]
+    fn is_buffered(&self) -> bool {
+        true
+    }
+
+    /// Reads bytes from the buffered input.
     #[inline]
-    fn read(&mut self, buffer: &mut [u8]) -> Result<usize> {
-        self.input.read(buffer)
+    unsafe fn read_unchecked(
+        &mut self,
+        output: &mut [u8],
+        index: usize,
+        count: usize,
+    ) -> Result<usize> {
+        // SAFETY: The caller upholds the indexed destination range contract.
+        unsafe { self.input.read_unchecked(output, index, count) }
     }
 }
 
-impl<R, P> Seek for BufferedZigZagReader<R, P>
+impl<R, P> Seekable for BufferedZigZagReader<R, P>
 where
-    R: Read + Seek,
+    R: Input<Item = u8> + Seekable<Unit = u8>,
 {
+    type Unit = u8;
+
     /// Seeks the wrapped reader and discards buffered bytes after success.
     #[inline]
-    fn seek(&mut self, position: SeekFrom) -> Result<u64> {
+    fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek(position)
     }
 }

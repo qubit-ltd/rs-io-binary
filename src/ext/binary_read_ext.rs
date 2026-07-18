@@ -6,18 +6,19 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Read,
-    Result,
-};
+use std::io::Result;
 
-use crate::util::decode_infallible_unchecked;
+use crate::util::{
+    decode_infallible_unchecked,
+    read_exact,
+};
 use qubit_codec::{
     BigEndian,
     ByteOrder,
     LittleEndian,
 };
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::Input;
 
 macro_rules! read_binary_value {
     ($reader:expr, $ty:ty, $order:ty) => {
@@ -45,7 +46,7 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Extension methods for reading fixed-width binary values from byte streams.
-pub trait BinaryReadExt: Read {
+pub trait BinaryReadExt: Input<Item = u8> {
     /// Reads an unsigned 8-bit integer.
     #[inline]
     fn read_u8(&mut self) -> Result<u8> {
@@ -279,15 +280,15 @@ pub trait BinaryReadExt: Read {
     }
 }
 
-impl<R> BinaryReadExt for R where R: Read + ?Sized {}
+impl<R> BinaryReadExt for R where R: Input<Item = u8> + ?Sized {}
 
 #[inline]
 fn read_binary<const N: usize, T, R, F>(reader: &mut R, decode: F) -> Result<T>
 where
-    R: Read + ?Sized,
+    R: Input<Item = u8> + ?Sized,
     F: FnOnce(&[u8]) -> T,
 {
     let mut bytes = [0u8; N];
-    reader.read_exact(&mut bytes)?;
+    read_exact(reader, &mut bytes)?;
     Ok(decode(&bytes))
 }
