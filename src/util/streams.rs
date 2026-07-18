@@ -6,6 +6,7 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 // qubit-style: allow inline-tests
+// qubit-style: allow source-test-pair
 use core::convert::Infallible;
 use core::num::NonZeroUsize;
 use std::io::{

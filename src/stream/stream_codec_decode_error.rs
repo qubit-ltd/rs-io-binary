@@ -3,6 +3,7 @@
 //
 //    SPDX-License-Identifier: Apache-2.0
 // =============================================================================
+// qubit-style: allow source-test-pair
 
 use qubit_codec_binary::Leb128DecodeError;
 use std::error::Error as StdError;
