@@ -26,7 +26,6 @@ use std::task::{
 use qubit_io::{
     AsyncInput,
     AsyncOutput,
-    AsyncOutputExt,
 };
 use qubit_io_binary::{
     AsyncBinaryReadExt,
