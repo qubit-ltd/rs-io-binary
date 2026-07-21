@@ -22,11 +22,7 @@ use std::path::{
     Path,
     PathBuf,
 };
-use std::time::{
-    Duration,
-    SystemTime,
-    UNIX_EPOCH,
-};
+use std::time::Duration;
 
 use criterion::{
     BenchmarkId,
@@ -57,6 +53,7 @@ use qubit_io_binary::{
     ZigZagWriteExt,
     ZigZagWriter,
 };
+use qubit_local_files::LocalTempDir;
 
 const BINARY_BATCH: usize = 1_048_576;
 const BINARY_REPEAT: usize = 32;
@@ -99,32 +96,18 @@ fn selected_stream_bench_group() -> StreamBenchGroup {
 }
 
 struct BenchmarkFiles {
-    dir: PathBuf,
+    dir: LocalTempDir,
 }
 
 impl BenchmarkFiles {
     fn new() -> Self {
-        let now = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system clock should be after unix epoch")
-            .as_nanos();
-        let dir = std::env::temp_dir().join(format!(
-            "qubit-io-binary-stream-bench-{}-{now}",
-            std::process::id()
-        ));
-        fs::create_dir_all(&dir)
+        let dir = LocalTempDir::with_prefix("qubit-io-binary-stream-bench-")
             .expect("benchmark temp directory should be created");
         Self { dir }
     }
 
     fn path(&self, name: &str) -> PathBuf {
-        self.dir.join(name)
-    }
-}
-
-impl Drop for BenchmarkFiles {
-    fn drop(&mut self) {
-        let _ = fs::remove_dir_all(&self.dir);
+        self.dir.path().join(name)
     }
 }
 
