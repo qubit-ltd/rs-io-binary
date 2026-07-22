@@ -10,7 +10,11 @@ use std::io::{
     ErrorKind,
 };
 
-use qubit_codec_binary::Leb128DecodeError;
+use qubit_codec_binary::{
+    Leb128DecodeError,
+    NonStrict,
+    Strict,
+};
 use qubit_io::{
     Input,
     Seekable,
@@ -18,9 +22,7 @@ use qubit_io::{
 use qubit_io_binary::{
     Leb128Reader,
     Leb128Writer,
-    NonStrict,
     StreamCodecDecodeError,
-    Strict,
 };
 
 #[test]
@@ -127,7 +129,7 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
 
 #[test]
 fn test_leb128_decode_error_maps_incomplete_to_unexpected_eof() {
-    let error = Leb128DecodeError::incomplete(0, qubit_io::nz!(2), 1);
+    let error = Leb128DecodeError::incomplete(0, qubit_codec::nz!(2), 1);
     let io_error_kind: fn(&Leb128DecodeError) -> ErrorKind =
         std::hint::black_box(
             <Leb128DecodeError as StreamCodecDecodeError>::io_error_kind,
@@ -141,7 +143,7 @@ fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
     let bytes = vec![3, b'h', 0xC3, 0xA9];
     let mut reader = qubit_io_binary::Leb128Reader::<
         _,
-        qubit_io_binary::NonStrict,
+        qubit_codec_binary::NonStrict,
     >::new(std::io::Cursor::new(bytes));
 
     let text = reader
@@ -156,7 +158,7 @@ fn test_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
     let bytes = vec![3, b'h', 0xC3, 0xA9];
     let mut reader = qubit_io_binary::Leb128Reader::<
         _,
-        qubit_io_binary::NonStrict,
+        qubit_codec_binary::NonStrict,
     >::new(std::io::Cursor::new(bytes));
 
     let text = reader
@@ -210,7 +212,7 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
 fn test_leb128_reader_read_and_seek_delegate_to_inner_reader() {
     let mut reader = qubit_io_binary::Leb128Reader::<
         _,
-        qubit_io_binary::NonStrict,
+        qubit_codec_binary::NonStrict,
     >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
 
     Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))

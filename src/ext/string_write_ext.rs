@@ -16,9 +16,9 @@ use crate::util::{
 };
 use crate::{
     BinaryWriteExt,
-    ByteOrder,
     Leb128WriteExt,
 };
+use qubit_codec::ByteOrder;
 use qubit_io::Output;
 
 /// Extension methods for writing length-prefixed UTF-8 strings.

@@ -23,6 +23,7 @@ use std::task::{
     Waker,
 };
 
+use qubit_codec::ByteOrder;
 use qubit_io::{
     AsyncInput,
     AsyncOutput,
@@ -36,7 +37,6 @@ use qubit_io_binary::{
     AsyncStringWriteExt,
     AsyncZigZagReadExt,
     AsyncZigZagWriteExt,
-    ByteOrder,
 };
 
 struct ChunkedAsyncInput {

@@ -13,8 +13,10 @@ use std::io::{
 use std::num::NonZeroUsize;
 
 use qubit_codec::{
+    ByteOrder,
     Codec,
     DecodeFailure,
+    LittleEndian,
     TranscodeDecodeInput,
 };
 use qubit_codec_binary::NonStrict;
@@ -27,8 +29,6 @@ use qubit_io_binary::{
     BufferedBinaryReader,
     BufferedLeb128Reader,
     BufferedLeb128Writer,
-    ByteOrder,
-    LittleEndian,
     StreamCodecDecodeError,
     TranscodeDecodeInputExt,
 };
@@ -145,7 +145,7 @@ impl Codec for MaxTwoWindowCodec {
         if input.len() > Self::MAX_UNITS_PER_VALUE {
             return Err(DecodeFailure::invalid_unknown(WindowTooLarge));
         }
-        Ok((input[index], qubit_io::nz!(1)))
+        Ok((input[index], qubit_codec::nz!(1)))
     }
 
     #[inline(always)]
@@ -177,7 +177,7 @@ impl Codec for U16PairValueCodec {
     ) -> Result<(Self::Value, NonZeroUsize), DecodeFailure<Self::DecodeError>>
     {
         let value = ((input[index] as u32) << 16) | (input[index + 1] as u32);
-        Ok((value, qubit_io::nz!(2)))
+        Ok((value, qubit_codec::nz!(2)))
     }
 
     #[inline(always)]
@@ -212,7 +212,7 @@ impl Codec for FixedU16LeCodec {
     {
         let value = u16::from_le_bytes([input[index], input[index + 1]]);
         // SAFETY: fixed-width decode always consumes two bytes.
-        Ok((value, qubit_io::nz!(2)))
+        Ok((value, qubit_codec::nz!(2)))
     }
 
     #[inline(always)]

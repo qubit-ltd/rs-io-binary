@@ -17,9 +17,9 @@ use crate::util::usize_from_u32_len;
 use crate::util::usize_from_u64_len;
 use crate::{
     BinaryReadExt,
-    ByteOrder,
     Leb128ReadExt,
 };
+use qubit_codec::ByteOrder;
 use qubit_io::Input;
 
 /// Extension methods for reading length-prefixed UTF-8 strings.

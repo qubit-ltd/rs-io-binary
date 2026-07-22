@@ -3,10 +3,8 @@ use std::io::{
     ErrorKind,
 };
 
-use qubit_io_binary::{
-    ByteOrder,
-    StringReadExt,
-};
+use qubit_codec::ByteOrder;
+use qubit_io_binary::StringReadExt;
 
 #[test]
 fn test_string_read_ext_reads_all_length_prefix_kinds() {

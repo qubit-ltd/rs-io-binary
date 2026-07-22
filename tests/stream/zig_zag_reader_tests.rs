@@ -10,14 +10,16 @@ use std::io::{
     ErrorKind,
 };
 
+use qubit_codec_binary::{
+    NonStrict,
+    Strict,
+    ZigZagCodec,
+};
 use qubit_io::{
     Input,
     Seekable,
 };
 use qubit_io_binary::{
-    NonStrict,
-    Strict,
-    ZigZagCodec,
     ZigZagReader,
     ZigZagWriter,
 };
@@ -269,7 +271,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 fn test_zig_zag_reader_read_and_seek_delegate_to_inner_reader() {
     let mut reader = qubit_io_binary::ZigZagReader::<
         _,
-        qubit_io_binary::NonStrict,
+        qubit_codec_binary::NonStrict,
     >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
 
     Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))

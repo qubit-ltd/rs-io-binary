@@ -36,10 +36,10 @@ qubit-io-binary = "0.3"
 ```rust
 use std::io::Cursor;
 
+use qubit_codec::ByteOrder;
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryWriteExt,
-    ByteOrder,
     Leb128ReadExt,
     Leb128WriteExt,
 };
@@ -108,7 +108,12 @@ payload 长度，以限制内存分配。持久化格式应优先使用固定宽
 ## 开发
 
 ```bash
+# 使用默认 feature 集运行测试
 cargo test
+
+# 使用项目声明的全部 feature 运行测试
+cargo test --all-features
+
 ./align-ci.sh
 RS_CI_SKIP_TOOLCHAIN_UPDATE=1 ./ci-check.sh
 ```

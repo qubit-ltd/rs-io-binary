@@ -10,15 +10,17 @@ use std::io::{
     ErrorKind,
 };
 
+use qubit_codec_binary::{
+    NonStrict,
+    Strict,
+    ZigZagCodec,
+};
 use qubit_io::{
     Input,
     Seekable,
 };
 use qubit_io_binary::{
     BufferedZigZagReader,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
     ZigZagWriteExt,
 };
 

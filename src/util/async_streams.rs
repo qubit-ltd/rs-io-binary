@@ -8,11 +8,7 @@
 // qubit-style: allow source-test-pair
 //! Shared asynchronous byte-stream codec drivers.
 
-use std::io::{
-    Error,
-    ErrorKind,
-    Result,
-};
+use std::io::Result;
 use std::pin::Pin;
 
 use qubit_codec::Codec;
@@ -20,7 +16,7 @@ use qubit_codec_binary::Leb128DecodeError;
 use qubit_io::{
     AsyncInput,
     AsyncOutput,
-    ReadFullyFuture,
+    ReadExactFuture,
     WriteFullyFuture,
 };
 
@@ -40,15 +36,7 @@ pub(crate) async fn read_exact_async<I>(
 where
     I: AsyncInput<Item = u8> + Unpin + ?Sized,
 {
-    let read = ReadFullyFuture::new(Pin::new(input), output).await?;
-    if read == output.len() {
-        Ok(())
-    } else {
-        Err(Error::new(
-            ErrorKind::UnexpectedEof,
-            "failed to fill whole input buffer",
-        ))
-    }
+    ReadExactFuture::new(Pin::new(input), output).await
 }
 
 /// Writes every byte in `input`.

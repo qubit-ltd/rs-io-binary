@@ -38,10 +38,10 @@ implement the `qubit-io` abstractions through adapters.
 ```rust
 use std::io::Cursor;
 
+use qubit_codec::ByteOrder;
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryWriteExt,
-    ByteOrder,
     Leb128ReadExt,
     Leb128WriteExt,
 };
@@ -112,7 +112,12 @@ See the [user guide](doc/user_guide.md) and
 ## Development
 
 ```bash
+# Run tests with the default feature set
 cargo test
+
+# Run tests with all declared features
+cargo test --all-features
+
 ./align-ci.sh
 RS_CI_SKIP_TOOLCHAIN_UPDATE=1 ./ci-check.sh
 ```

@@ -4,10 +4,8 @@ use std::io::{
     Write,
 };
 
-use qubit_io_binary::{
-    BinaryWriteExt,
-    ByteOrder,
-};
+use qubit_codec::ByteOrder;
+use qubit_io_binary::BinaryWriteExt;
 
 struct FailingWriter;
 

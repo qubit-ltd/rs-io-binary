@@ -18,6 +18,8 @@ use std::num::NonZeroUsize;
 use qubit_codec::{
     Codec,
     DecodeFailure,
+    LittleEndian,
+    TranscodeEncodeOutput,
 };
 use qubit_io::{
     Output,
@@ -27,8 +29,6 @@ use qubit_io_binary::{
     BufferedBinaryWriter,
     BufferedLeb128Reader,
     BufferedLeb128Writer,
-    LittleEndian,
-    TranscodeEncodeOutput,
     TranscodeEncodeOutputExt,
 };
 
@@ -57,7 +57,7 @@ impl Codec for NonCopyValueCodec {
         Ok((
             NonCopyValue([input[index], input[index + 1]]),
             // SAFETY: decode always consumes exactly two bytes.
-            qubit_io::nz!(2),
+            qubit_codec::nz!(2),
         ))
     }
 
@@ -212,7 +212,7 @@ impl Codec for LargeFixedCodec {
         let mut value = [0; 4];
         value.copy_from_slice(&input[index..index + 4]);
         // SAFETY: fixed-width decode always consumes four bytes.
-        Ok((value, qubit_io::nz!(4)))
+        Ok((value, qubit_codec::nz!(4)))
     }
 
     #[inline(always)]

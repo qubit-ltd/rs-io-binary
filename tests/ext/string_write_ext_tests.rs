@@ -9,10 +9,8 @@ use std::{
     ptr::null_mut,
 };
 
-use qubit_io_binary::{
-    ByteOrder,
-    StringWriteExt,
-};
+use qubit_codec::ByteOrder;
+use qubit_io_binary::StringWriteExt;
 
 #[cfg(all(unix, target_pointer_width = "64", target_os = "macos"))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x1000;

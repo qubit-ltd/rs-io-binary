@@ -36,11 +36,8 @@ qubit-io-binary = "0.2"
 ```rust
 use std::io::Cursor;
 
-use qubit_io_binary::{
-    BinaryReadExt,
-    BinaryWriteExt,
-    ByteOrder,
-};
+use qubit_codec::ByteOrder;
+use qubit_io_binary::{BinaryReadExt, BinaryWriteExt};
 
 let mut bytes = Vec::new();
 bytes.write_u32(0x0102_0304, ByteOrder::BigEndian)?;
@@ -161,11 +158,8 @@ assert_eq!("hello", input.read_utf8_string_uleb_u64(16)?);
 ```rust
 use std::io::Cursor;
 
-use qubit_io_binary::{
-    BinaryReader,
-    BinaryWriter,
-    LittleEndian,
-};
+use qubit_codec::LittleEndian;
+use qubit_io_binary::{BinaryReader, BinaryWriter};
 
 let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
 writer.write_u16(0x1234)?;

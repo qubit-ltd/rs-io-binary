@@ -3,10 +3,8 @@ use std::io::{
     ErrorKind,
 };
 
-use qubit_io_binary::{
-    BinaryReadExt,
-    ByteOrder,
-};
+use qubit_codec::ByteOrder;
+use qubit_io_binary::BinaryReadExt;
 
 macro_rules! assert_read_ordered_integer {
     ($method:ident, $be:ident, $le:ident, $ty:ty, $value:expr) => {{

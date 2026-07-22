@@ -8,12 +8,13 @@
 
 use std::io::Result;
 
+use qubit_codec::BigEndian;
+use qubit_codec_binary::NonStrict;
 use qubit_io::{
     Input,
     Output,
 };
 use qubit_io_binary::{
-    BigEndian,
     BinaryReader,
     BinaryWriter,
     BufferedBinaryReader,
@@ -24,7 +25,6 @@ use qubit_io_binary::{
     BufferedZigZagWriter,
     Leb128Reader,
     Leb128Writer,
-    NonStrict,
     ZigZagReader,
     ZigZagWriter,
 };

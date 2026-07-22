@@ -10,6 +10,7 @@
 
 use std::io::Result;
 
+use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
 
 use crate::util::read_utf8_payload_async;
@@ -23,7 +24,6 @@ use crate::util::usize_from_u64_len;
 use crate::{
     AsyncBinaryReadExt,
     AsyncLeb128ReadExt,
-    ByteOrder,
 };
 
 /// Future-based length-prefixed UTF-8 reads.

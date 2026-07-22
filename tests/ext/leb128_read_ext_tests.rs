@@ -3,8 +3,8 @@ use std::io::{
     ErrorKind,
 };
 
+use qubit_codec_binary::Leb128DecodeError;
 use qubit_io_binary::{
-    Leb128DecodeError,
     Leb128ReadExt,
     Leb128WriteExt,
 };

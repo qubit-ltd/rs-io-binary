@@ -529,7 +529,7 @@ mod tests {
         .expect_err("partial LEB128 payload should be incomplete");
 
         assert_eq!(Leb128DecodeErrorKind::Incomplete, error.kind());
-        assert_eq!(Some(qubit_io::nz!(2)), error.required());
+        assert_eq!(Some(qubit_codec::nz!(2)), error.required());
         assert_eq!(Some(1), error.available());
     }
 }

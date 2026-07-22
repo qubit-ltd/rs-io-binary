@@ -12,17 +12,19 @@ use std::io::{
     Read,
 };
 
+use qubit_codec_binary::{
+    Leb128Codec,
+    Leb128DecodeError,
+    NonStrict,
+    Strict,
+};
 use qubit_io::{
     Input,
     Seekable,
 };
 use qubit_io_binary::{
     BufferedLeb128Reader,
-    Leb128Codec,
-    Leb128DecodeError,
     Leb128WriteExt,
-    NonStrict,
-    Strict,
 };
 
 struct ByteThenErrorReader {

@@ -6,10 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-//! Common binary I/O extension traits and codec markers.
+//! Common binary I/O extension traits.
 //!
-//! Importing this module brings binary stream extension traits and the
-//! associated buffer codec marker types into scope.
+//! Importing this module brings binary stream extension traits into scope.
+//! Codec and byte-order types must be imported directly from their owning
+//! `qubit-codec` or `qubit-codec-binary` crate.
 
 pub use crate::{
     AsyncBinaryReadExt,
@@ -20,24 +21,12 @@ pub use crate::{
     AsyncStringWriteExt,
     AsyncZigZagReadExt,
     AsyncZigZagWriteExt,
-    BigEndian,
-    BinaryCodec,
     BinaryReadExt,
     BinaryWriteExt,
-    ByteOrder,
-    ByteOrderSpec,
-    Leb128Codec,
-    Leb128DecodeError,
-    Leb128DecodeErrorKind,
-    Leb128DecodePolicy,
     Leb128ReadExt,
     Leb128WriteExt,
-    LittleEndian,
-    NonStrict,
-    Strict,
     StringReadExt,
     StringWriteExt,
-    ZigZagCodec,
     ZigZagReadExt,
     ZigZagWriteExt,
 };

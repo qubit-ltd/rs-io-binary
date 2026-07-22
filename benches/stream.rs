@@ -31,6 +31,8 @@ use criterion::{
     criterion_group,
     criterion_main,
 };
+use qubit_codec::LittleEndian;
+use qubit_codec_binary::NonStrict;
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryReader,
@@ -46,8 +48,6 @@ use qubit_io_binary::{
     Leb128Reader,
     Leb128WriteExt,
     Leb128Writer,
-    LittleEndian,
-    NonStrict,
     ZigZagReadExt,
     ZigZagReader,
     ZigZagWriteExt,

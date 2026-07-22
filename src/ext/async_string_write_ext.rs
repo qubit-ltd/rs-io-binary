@@ -10,6 +10,7 @@
 
 use std::io::Result;
 
+use qubit_codec::ByteOrder;
 use qubit_io::AsyncOutput;
 
 use crate::util::{
@@ -21,7 +22,6 @@ use crate::util::{
 use crate::{
     AsyncBinaryWriteExt,
     AsyncLeb128WriteExt,
-    ByteOrder,
 };
 
 /// Future-based length-prefixed UTF-8 writes.

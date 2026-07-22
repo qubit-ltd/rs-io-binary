@@ -10,16 +10,16 @@ use std::io::{
     ErrorKind,
 };
 
+use qubit_codec::{
+    BigEndian,
+    ByteOrder,
+    LittleEndian,
+};
 use qubit_io::{
     Output,
     Seekable,
 };
-use qubit_io_binary::{
-    BigEndian,
-    BinaryWriter,
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_io_binary::BinaryWriter;
 
 #[test]
 fn test_binary_writer_writes_all_big_endian_methods() {
@@ -143,7 +143,7 @@ fn test_binary_writer_reports_length_errors() {
 fn test_binary_writer_write_and_seek_delegate_to_inner_writer() {
     let mut writer = qubit_io_binary::BinaryWriter::<
         _,
-        qubit_io_binary::LittleEndian,
+        qubit_codec::LittleEndian,
     >::new(std::io::Cursor::new(vec![0; 4]));
 
     Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))

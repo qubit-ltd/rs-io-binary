@@ -16,6 +16,10 @@ use std::io::{
 };
 use std::rc::Rc;
 
+use qubit_codec::{
+    ByteOrder,
+    LittleEndian,
+};
 use qubit_io::{
     Input,
     Seekable,
@@ -23,8 +27,6 @@ use qubit_io::{
 use qubit_io_binary::{
     BinaryWriteExt,
     BufferedBinaryReader,
-    ByteOrder,
-    LittleEndian,
 };
 
 fn encoded_values() -> Vec<u8> {

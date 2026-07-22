@@ -10,16 +10,16 @@ use std::io::{
     ErrorKind,
 };
 
+use qubit_codec::{
+    BigEndian,
+    ByteOrder,
+    LittleEndian,
+};
 use qubit_io::{
     Input,
     Seekable,
 };
-use qubit_io_binary::{
-    BigEndian,
-    BinaryReader,
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_io_binary::BinaryReader;
 
 fn push_be_values(output: &mut Vec<u8>) {
     output.extend_from_slice(&[0xaa, 0xbb]);
@@ -272,7 +272,7 @@ fn test_binary_reader_reports_truncated_scalar_errors_for_all_methods() {
 fn test_binary_reader_read_and_seek_delegate_to_inner_reader() {
     let mut reader = qubit_io_binary::BinaryReader::<
         _,
-        qubit_io_binary::LittleEndian,
+        qubit_codec::LittleEndian,
     >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
 
     Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))
