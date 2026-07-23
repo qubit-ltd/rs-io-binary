@@ -8,10 +8,7 @@
 
 use std::io::Result;
 
-use crate::util::{
-    decode_infallible_unchecked,
-    read_exact,
-};
+use crate::util::decode_infallible_unchecked;
 use qubit_codec::{
     BigEndian,
     ByteOrder,
@@ -289,6 +286,6 @@ where
     F: FnOnce(&[u8]) -> T,
 {
     let mut bytes = [0u8; N];
-    read_exact(reader, &mut bytes)?;
+    Input::read_exactly(reader, &mut bytes)?;
     Ok(decode(&bytes))
 }

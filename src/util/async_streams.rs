@@ -16,7 +16,7 @@ use qubit_codec_binary::Leb128DecodeError;
 use qubit_io::{
     AsyncInput,
     AsyncOutput,
-    ReadExactFuture,
+    PinnedAsyncInputExt,
     WriteFullyFuture,
 };
 
@@ -29,14 +29,14 @@ use super::streams::{
 use super::try_reserve_vec;
 
 /// Reads exactly enough bytes to fill `output`.
-pub(crate) async fn read_exact_async<I>(
+pub(crate) async fn read_exactly_async<I>(
     input: &mut I,
     output: &mut [u8],
 ) -> Result<()>
 where
     I: AsyncInput<Item = u8> + Unpin + ?Sized,
 {
-    ReadExactFuture::new(Pin::new(input), output).await
+    Pin::new(input).read_exactly_async(output).await
 }
 
 /// Writes every byte in `input`.
@@ -60,7 +60,7 @@ where
 {
     let mut bytes = [0_u8; N];
     for index in 0..N {
-        read_exact_async(reader, &mut bytes[index..=index]).await?;
+        read_exactly_async(reader, &mut bytes[index..=index]).await?;
         if bytes[index] & 0x80 == 0 {
             // SAFETY: At least one byte has been read and decoding starts at
             // the beginning of the local payload buffer.
@@ -90,6 +90,6 @@ where
     let mut bytes = Vec::new();
     try_reserve_vec(&mut bytes, len)?;
     bytes.resize(len, 0);
-    read_exact_async(reader, &mut bytes).await?;
+    read_exactly_async(reader, &mut bytes).await?;
     String::from_utf8(bytes).map_err(invalid_utf8_error)
 }

@@ -20,7 +20,7 @@ use qubit_io::AsyncInput;
 
 use crate::util::{
     decode_infallible_unchecked,
-    read_exact_async,
+    read_exactly_async,
 };
 
 macro_rules! read_binary_value_async {
@@ -338,6 +338,6 @@ where
     F: FnOnce(&[u8]) -> T,
 {
     let mut bytes = [0_u8; N];
-    read_exact_async(reader, &mut bytes).await?;
+    read_exactly_async(reader, &mut bytes).await?;
     Ok(decode(&bytes))
 }

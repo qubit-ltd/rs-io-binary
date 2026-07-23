@@ -10,7 +10,7 @@ mod streams;
 pub(crate) use qubit_io::try_reserve_vec;
 
 pub(crate) use async_streams::{
-    read_exact_async,
+    read_exactly_async,
     read_leb128_payload_async,
     read_utf8_payload_async,
     write_all_async,
@@ -22,7 +22,6 @@ pub(crate) use streams::{
     checked_u64_len,
     decode_infallible_unchecked,
     encode_infallible_unchecked,
-    read_exact,
     read_leb128_from_reader,
     read_leb128_payload,
     read_utf8_payload,

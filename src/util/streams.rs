@@ -38,27 +38,6 @@ const U64_LENGTH_OVERFLOW: &str =
 /// Minimum capacity required by the largest scalar codec payload.
 pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = 19;
 
-/// Reads exactly enough bytes to fill `output` from a Qubit input.
-///
-/// # Errors
-///
-/// Returns the input error, or [`ErrorKind::UnexpectedEof`] when the input
-/// ends before filling `output`.
-pub(crate) fn read_exact<I>(input: &mut I, output: &mut [u8]) -> Result<()>
-where
-    I: Input<Item = u8> + ?Sized,
-{
-    let read = Input::read_fully(input, output)?;
-    if read == output.len() {
-        Ok(())
-    } else {
-        Err(Error::new(
-            ErrorKind::UnexpectedEof,
-            "failed to fill whole input buffer",
-        ))
-    }
-}
-
 /// Writes every byte in `input` to a Qubit output.
 ///
 /// # Errors
@@ -176,7 +155,7 @@ where
     let mut bytes = [0u8; N];
     for index in 0..N {
         let target = one_byte_slice(&mut bytes, index);
-        read_exact(reader, target)?;
+        Input::read_exactly(reader, target)?;
         if bytes[index] & 0x80 == 0 {
             // SAFETY: At least one byte has been read, and decoding starts at
             // 0.
@@ -222,7 +201,7 @@ where
     );
     for index in 0..N {
         let target = one_byte_slice(buffer, index);
-        read_exact(reader, target)?;
+        Input::read_exactly(reader, target)?;
         // SAFETY: `index` is produced by `0..N`, and the debug assertion
         // above guarantees `N` fits the fixed internal buffer.
         let byte = unsafe { UncheckedSlice::read(buffer, index) };
@@ -294,7 +273,7 @@ where
     let mut bytes = Vec::new();
     try_reserve_vec(&mut bytes, len)?;
     bytes.resize(len, 0);
-    read_exact(reader, &mut bytes)?;
+    Input::read_exactly(reader, &mut bytes)?;
     String::from_utf8(bytes).map_err(invalid_utf8_error)
 }
 

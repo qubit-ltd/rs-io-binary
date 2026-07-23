@@ -19,7 +19,6 @@ use std::io::{
 use crate::util::usize_from_u32_len;
 use crate::util::{
     decode_infallible_unchecked,
-    read_exact,
     read_utf8_payload,
 };
 use qubit_codec::{
@@ -105,7 +104,7 @@ macro_rules! impl_value_read {
             type Codec = BinaryCodec<$ty, $order>;
 
             const LEN: usize = Codec::MIN_UNITS_PER_VALUE;
-            read_exact(&mut self.inner, &mut self.buffer[..LEN])?;
+            Input::read_exactly(&mut self.inner, &mut self.buffer[..LEN])?;
             // SAFETY: `LEN` is declared by the codec and the preceding exact
             // read initialized that prefix of the fixed internal buffer.
             unsafe { Ok(decode_infallible_unchecked::<Codec>(&self.buffer, 0)) }
