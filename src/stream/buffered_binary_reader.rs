@@ -12,12 +12,12 @@ use std::io::{
     SeekFrom,
 };
 
+use crate::stream::TranscodeDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::{
     BigEndian,
     ByteOrder,
     ByteOrderSpec,
-    Codec as CodecTrait,
     LittleEndian,
     TranscodeDecodeInput,
 };
@@ -27,13 +27,10 @@ use qubit_io::{
     Seekable,
 };
 
-use super::transcode_decode_input_ext::read_decoded_with_scratch;
-
 /// Buffered reader for fixed-width binary values.
 ///
 /// Scalar reads decode directly from the internal input buffer whenever enough
-/// bytes are available, avoiding the per-value temporary buffer used by the
-/// extension trait helpers.
+/// bytes are available, avoiding a per-value temporary byte buffer.
 ///
 /// # Buffered state
 ///
@@ -100,11 +97,7 @@ macro_rules! impl_value_read {
         #[inline]
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = BinaryCodec<$ty, $order>;
-            const SCRATCH_LEN: usize =
-                <Codec as CodecTrait>::MAX_DECODE_LIFECYCLE_VALUES;
-
-            let mut scratch = [<$ty>::default(); SCRATCH_LEN];
-            read_decoded_with_scratch::<_, Codec>(&mut self.input, &mut scratch)
+            self.input.read_decoded::<Codec>()
         }
     };
 }
