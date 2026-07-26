@@ -53,7 +53,6 @@ use qubit_io_binary::{
     ZigZagWriteExt,
     ZigZagWriter,
 };
-use qubit_local_files::LocalTempDir;
 
 const BINARY_BATCH: usize = 1_048_576;
 const BINARY_REPEAT: usize = 32;
@@ -96,12 +95,14 @@ fn selected_stream_bench_group() -> StreamBenchGroup {
 }
 
 struct BenchmarkFiles {
-    dir: LocalTempDir,
+    dir: tempfile::TempDir,
 }
 
 impl BenchmarkFiles {
     fn new() -> Self {
-        let dir = LocalTempDir::with_prefix("qubit-io-binary-stream-bench-")
+        let dir = tempfile::Builder::new()
+            .prefix("qubit-io-binary-stream-bench-")
+            .tempdir()
             .expect("benchmark temp directory should be created");
         Self { dir }
     }

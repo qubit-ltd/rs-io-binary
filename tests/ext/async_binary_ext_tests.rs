@@ -312,18 +312,9 @@ fn async_fixed_width_extensions_cover_every_scalar_and_order() {
 
         assert_eq!(0x1234, input.read_u16_be_async().await?);
         assert_eq!(0x5678, input.read_u16_le_async().await?);
-        assert_eq!(
-            0x9ABC,
-            input.read_u16_async(ByteOrder::BigEndian).await?,
-        );
-        assert_eq!(
-            0xDEF0,
-            input.read_u16_async(ByteOrder::LittleEndian).await?,
-        );
-        assert_eq!(
-            0x1357,
-            input.read_u16_async(ByteOrder::NativeEndian).await?,
-        );
+        assert_eq!(0x9ABC, input.read_u16_async(ByteOrder::BigEndian).await?,);
+        assert_eq!(0xDEF0, input.read_u16_async(ByteOrder::LittleEndian).await?,);
+        assert_eq!(0x1357, input.read_u16_async(ByteOrder::NativeEndian).await?,);
 
         assert_eq!(0x1234_5678, input.read_u32_be_async().await?);
         assert_eq!(0x9ABC_DEF0, input.read_u32_le_async().await?);
@@ -336,14 +327,8 @@ fn async_fixed_width_extensions_cover_every_scalar_and_order() {
             input.read_u32_async(ByteOrder::LittleEndian).await?,
         );
 
-        assert_eq!(
-            0x0123_4567_89AB_CDEF,
-            input.read_u64_be_async().await?,
-        );
-        assert_eq!(
-            0xFEDC_BA98_7654_3210,
-            input.read_u64_le_async().await?,
-        );
+        assert_eq!(0x0123_4567_89AB_CDEF, input.read_u64_be_async().await?,);
+        assert_eq!(0xFEDC_BA98_7654_3210, input.read_u64_le_async().await?,);
         assert_eq!(
             0x1111_2222_3333_4444,
             input.read_u64_async(ByteOrder::BigEndian).await?,
@@ -372,21 +357,12 @@ fn async_fixed_width_extensions_cover_every_scalar_and_order() {
 
         assert_eq!(-1234, input.read_i16_be_async().await?);
         assert_eq!(2345, input.read_i16_le_async().await?);
-        assert_eq!(
-            -3456,
-            input.read_i16_async(ByteOrder::BigEndian).await?,
-        );
-        assert_eq!(
-            4567,
-            input.read_i16_async(ByteOrder::LittleEndian).await?,
-        );
+        assert_eq!(-3456, input.read_i16_async(ByteOrder::BigEndian).await?,);
+        assert_eq!(4567, input.read_i16_async(ByteOrder::LittleEndian).await?,);
 
         assert_eq!(-123_456, input.read_i32_be_async().await?);
         assert_eq!(234_567, input.read_i32_le_async().await?);
-        assert_eq!(
-            -345_678,
-            input.read_i32_async(ByteOrder::BigEndian).await?,
-        );
+        assert_eq!(-345_678, input.read_i32_async(ByteOrder::BigEndian).await?,);
         assert_eq!(
             456_789,
             input.read_i32_async(ByteOrder::LittleEndian).await?,
@@ -423,10 +399,7 @@ fn async_fixed_width_extensions_cover_every_scalar_and_order() {
         assert_eq!(1.25, input.read_f32_be_async().await?);
         assert_eq!(-2.5, input.read_f32_le_async().await?);
         assert_eq!(3.75, input.read_f32_async(ByteOrder::BigEndian).await?);
-        assert_eq!(
-            -4.5,
-            input.read_f32_async(ByteOrder::LittleEndian).await?,
-        );
+        assert_eq!(-4.5, input.read_f32_async(ByteOrder::LittleEndian).await?,);
 
         assert_eq!(10.25, input.read_f64_be_async().await?);
         assert_eq!(-20.5, input.read_f64_le_async().await?);
