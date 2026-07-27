@@ -1,0 +1,22 @@
+[package]
+name = "qubit-io-binary-fuzz"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+qubit-codec = { path = "../../rs-codec" }
+qubit-codec-binary = { path = "../../rs-codec-binary" }
+qubit-io-binary = { path = ".." }
+
+[[bin]]
+name = "stream_differential"
+path = "fuzz_targets/stream_differential.rs"
+test = false
+doc = false
+bench = false
