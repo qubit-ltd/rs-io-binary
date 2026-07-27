@@ -71,13 +71,17 @@ use qubit_io_binary::{
 
 async fn copy_header<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 where
-    I: AsyncInput<Item = u8> + Unpin,
-    O: AsyncOutput<Item = u8> + Unpin,
+    I: AsyncInput<Item = u8> + Send + Unpin,
+    O: AsyncOutput<Item = u8> + Send + Unpin,
 {
     let version = input.read_u32_le_async().await?;
     output.write_u32_le_async(version).await
 }
 ```
+
+所有异步扩展方法都返回 `Send` future，因此输入或输出必须同时实现 `Send`
+与 `Unpin`。这些操作不具备取消安全性：丢弃尚未完成的读取 future 会保留
+已经消费的字节，丢弃尚未完成的写入 future 会在输出中留下已经写入的前缀。
 
 ## API 族
 
@@ -92,6 +96,10 @@ where
 `Leb128Writer`、`ZigZagReader`、`ZigZagWriter` 及其 buffered 变体。它们以
 `Input` / `Output` 为泛型边界，并不是基于 `std::io::Read` / `Write` 定义。
 
+缓冲 reader 可通过 `into_parts` 同时取回底层输入与尚未消费的预取字节；
+`into_inner` 会明确丢弃这些未读字节。缓冲 writer 的 `into_inner` 会先刷新，
+若刷新失败，则通过 `IntoInnerError` 保留完整 wrapper 供调用方检查或重试。
+
 Strict LEB128 方法会拒绝非 canonical 编码。字符串读取方法要求传入最大
 payload 长度，以限制内存分配。持久化格式应优先使用固定宽度长度字段或
 `u64` LEB128 长度，而不是依赖目标平台宽度的 `usize` helper。
@@ -105,7 +113,7 @@ payload 长度，以限制内存分配。持久化格式应优先使用固定宽
 详细说明见[中文用户指南](doc/user_guide.zh_CN.md)和
 [API 文档](https://docs.rs/qubit-io-binary)。
 
-## 开发
+## 测试
 
 ```bash
 # 使用默认 feature 集运行测试
@@ -114,12 +122,27 @@ cargo test
 # 使用项目声明的全部 feature 运行测试
 cargo test --all-features
 
-./align-ci.sh
-RS_CI_SKIP_TOOLCHAIN_UPDATE=1 ./ci-check.sh
+# 运行项目 CI 检查
+./ci-check.sh
+
+# 检查代码覆盖率
+./coverage.sh
 ```
 
 ## 许可证
 
-本项目使用 Apache License 2.0，完整文本见 [LICENSE](LICENSE)。
+Copyright (c) 2025 - 2026. Haixing Hu. All rights reserved.
 
-Copyright (c) 2026 Haixing Hu.
+本项目基于 Apache License 2.0 授权。完整许可证文本请参阅
+[LICENSE](LICENSE)。
+
+## 贡献
+
+欢迎贡献。请遵循 Rust API 指南，及时更新公共 API 文档与测试，并在提交
+Pull Request 前运行 `./align-ci.sh`格式化代码，运行`./ci-check.sh`对齐CI要求。
+
+## 作者
+
+**Haixing Hu** - *Qubit Co. Ltd.*
+
+仓库地址：[https://github.com/qubit-ltd/rs-io-binary](https://github.com/qubit-ltd/rs-io-binary)
