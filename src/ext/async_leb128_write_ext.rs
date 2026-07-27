@@ -5,9 +5,9 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-// qubit-style: allow source-test-pair
 //! Asynchronous LEB128 writes.
 
+use core::future::Future;
 use std::io::Result;
 
 use qubit_codec_binary::{
@@ -24,24 +24,56 @@ use crate::util::{
 macro_rules! leb128_write_method {
     ($doc:literal, $name:ident, $ty:ty) => {
         #[doc = $doc]
-        async fn $name(&mut self, value: $ty) -> Result<()>
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Integer to encode and write."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns a future that completes after the canonical payload \
+                 has been written."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error, including a write-zero error when \
+                 the output stops making progress."]
+        #[doc = ""]
+        #[doc = "# Cancellation safety"]
+        #[doc = ""]
+        #[doc = "This operation is not cancellation safe. Dropping the future \
+                 retains any bytes already written to the output."]
+        #[inline(always)]
+        fn $name(
+            &mut self,
+            value: $ty,
+        ) -> impl Future<Output = Result<()>> + Send + '_
         where
-            Self: Unpin,
+            Self: Send + Unpin,
         {
-            let mut bytes =
-                [0_u8; Leb128Codec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
-            type Codec = Leb128Codec<$ty, NonStrict>;
-            // SAFETY: The local buffer has the codec's maximum payload size.
-            let len = unsafe {
-                encode_infallible_unchecked::<Codec>(value, &mut bytes, 0)
-            };
-            write_all_async(self, &bytes[..len]).await
+            async move {
+                let mut bytes =
+                    [0_u8; Leb128Codec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
+                type Codec = Leb128Codec<$ty, NonStrict>;
+                // SAFETY: The local buffer has the codec's maximum payload
+                // size.
+                let len = unsafe {
+                    encode_infallible_unchecked::<Codec>(value, &mut bytes, 0)
+                };
+                write_all_async(self, &bytes[..len]).await
+            }
         }
     };
 }
 
 /// Future-based canonical LEB128 writes to runtime-neutral async outputs.
-#[allow(async_fn_in_trait)]
+///
+/// Every method returns a [`Send`] future when the output itself is [`Send`].
+///
+/// # Cancellation safety
+///
+/// These writes are not cancellation safe. Dropping a pending future leaves
+/// an already-written prefix in the output.
 pub trait AsyncLeb128WriteExt: AsyncOutput<Item = u8> {
     leb128_write_method!(
         "Asynchronously writes LEB128 `u8`.",

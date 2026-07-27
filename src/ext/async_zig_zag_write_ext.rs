@@ -5,9 +5,9 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-// qubit-style: allow source-test-pair
 //! Asynchronous ZigZag writes.
 
+use core::future::Future;
 use std::io::Result;
 
 use qubit_codec_binary::{
@@ -24,24 +24,56 @@ use crate::util::{
 macro_rules! zig_zag_write_method {
     ($doc:literal, $name:ident, $ty:ty) => {
         #[doc = $doc]
-        async fn $name(&mut self, value: $ty) -> Result<()>
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Signed integer to encode and write."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns a future that completes after the encoded payload \
+                 has been written."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error, including a write-zero error when \
+                 the output stops making progress."]
+        #[doc = ""]
+        #[doc = "# Cancellation safety"]
+        #[doc = ""]
+        #[doc = "This operation is not cancellation safe. Dropping the future \
+                 retains any bytes already written to the output."]
+        #[inline(always)]
+        fn $name(
+            &mut self,
+            value: $ty,
+        ) -> impl Future<Output = Result<()>> + Send + '_
         where
-            Self: Unpin,
+            Self: Send + Unpin,
         {
-            let mut bytes =
-                [0_u8; ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
-            type Codec = ZigZagCodec<$ty, NonStrict>;
-            // SAFETY: The local buffer has the codec's maximum payload size.
-            let len = unsafe {
-                encode_infallible_unchecked::<Codec>(value, &mut bytes, 0)
-            };
-            write_all_async(self, &bytes[..len]).await
+            async move {
+                let mut bytes =
+                    [0_u8; ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
+                type Codec = ZigZagCodec<$ty, NonStrict>;
+                // SAFETY: The local buffer has the codec's maximum payload
+                // size.
+                let len = unsafe {
+                    encode_infallible_unchecked::<Codec>(value, &mut bytes, 0)
+                };
+                write_all_async(self, &bytes[..len]).await
+            }
         }
     };
 }
 
 /// Future-based ZigZag plus unsigned-LEB128 writes.
-#[allow(async_fn_in_trait)]
+///
+/// Every method returns a [`Send`] future when the output itself is [`Send`].
+///
+/// # Cancellation safety
+///
+/// These writes are not cancellation safe. Dropping a pending future leaves
+/// an already-written prefix in the output.
 pub trait AsyncZigZagWriteExt: AsyncOutput<Item = u8> {
     zig_zag_write_method!(
         "Asynchronously writes ZigZag `i8`.",

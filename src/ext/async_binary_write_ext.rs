@@ -5,9 +5,9 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-// qubit-style: allow source-test-pair
 //! Asynchronous fixed-width binary writes.
 
+use core::future::Future;
 use std::io::Result;
 
 use qubit_codec::{
@@ -44,15 +44,92 @@ macro_rules! write_binary_value_async {
 macro_rules! fixed_write_method {
     ($doc:literal, $name:ident, $ty:ty, $order:ty) => {
         #[doc = $doc]
-        async fn $name(&mut self, value: $ty) -> Result<()>
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Value to encode and write."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns a future that completes after all encoded bytes have \
+                 been written."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error, including a write-zero error when \
+                 the output stops making progress."]
+        #[doc = ""]
+        #[doc = "# Cancellation safety"]
+        #[doc = ""]
+        #[doc = "This operation is not cancellation safe. Dropping the future \
+                 retains any bytes already written to the output."]
+        #[inline(always)]
+        fn $name(
+            &mut self,
+            value: $ty,
+        ) -> impl Future<Output = Result<()>> + Send + '_
         where
-            Self: Unpin,
+            Self: Send + Unpin,
         {
-            write_binary_value_async!(self, value, $ty, $order)
+            async move { write_binary_value_async!(self, value, $ty, $order) }
         }
     };
 }
 
+macro_rules! runtime_order_write_method {
+    ($doc:literal, $name:ident, $ty:ty, $big:ident, $little:ident) => {
+        #[doc = $doc]
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Value to encode and write."]
+        #[doc = "- `byte_order`: Byte order used to encode the value."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns a future that completes after all encoded bytes have \
+                 been written."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error, including a write-zero error when \
+                 the output stops making progress."]
+        #[doc = ""]
+        #[doc = "# Cancellation safety"]
+        #[doc = ""]
+        #[doc = "This operation is not cancellation safe. Dropping the future \
+                 retains any bytes already written to the output."]
+        #[inline]
+        fn $name(
+            &mut self,
+            value: $ty,
+            byte_order: ByteOrder,
+        ) -> impl Future<Output = Result<()>> + Send + '_
+        where
+            Self: Send + Unpin,
+        {
+            async move {
+                if use_big_endian(byte_order) {
+                    self.$big(value).await
+                } else {
+                    self.$little(value).await
+                }
+            }
+        }
+    };
+}
+
+/// Resolves a runtime byte-order choice to a big-endian branch.
+///
+/// # Parameters
+///
+/// - `byte_order`: Runtime byte-order selection.
+///
+/// # Returns
+///
+/// Returns `true` for big endian, `false` for little endian, and the target's
+/// native ordering for [`ByteOrder::NativeEndian`].
+#[must_use]
 #[inline]
 const fn use_big_endian(byte_order: ByteOrder) -> bool {
     match byte_order {
@@ -63,7 +140,14 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Future-based fixed-width binary writes to runtime-neutral async outputs.
-#[allow(async_fn_in_trait)]
+///
+/// Every method returns a [`Send`] future when the output itself is [`Send`].
+///
+/// # Cancellation safety
+///
+/// These writes are not cancellation safe. Dropping a pending future leaves
+/// any already-written prefix in the output; retrying can duplicate that
+/// prefix.
 pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
     fixed_write_method!(
         "Asynchronously writes an unsigned 8-bit integer.",
@@ -78,21 +162,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         BigEndian
     );
 
-    /// Asynchronously writes a `u16` using `byte_order`.
-    async fn write_u16_async(
-        &mut self,
-        value: u16,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_u16_be_async(value).await
-        } else {
-            self.write_u16_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes a `u16` using a runtime byte order.",
+        write_u16_async,
+        u16,
+        write_u16_be_async,
+        write_u16_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `u16`.",
@@ -107,21 +183,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes a `u32` using `byte_order`.
-    async fn write_u32_async(
-        &mut self,
-        value: u32,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_u32_be_async(value).await
-        } else {
-            self.write_u32_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes a `u32` using a runtime byte order.",
+        write_u32_async,
+        u32,
+        write_u32_be_async,
+        write_u32_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `u32`.",
@@ -136,21 +204,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes a `u64` using `byte_order`.
-    async fn write_u64_async(
-        &mut self,
-        value: u64,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_u64_be_async(value).await
-        } else {
-            self.write_u64_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes a `u64` using a runtime byte order.",
+        write_u64_async,
+        u64,
+        write_u64_be_async,
+        write_u64_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `u64`.",
@@ -165,21 +225,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes a `u128` using `byte_order`.
-    async fn write_u128_async(
-        &mut self,
-        value: u128,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_u128_be_async(value).await
-        } else {
-            self.write_u128_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes a `u128` using a runtime byte order.",
+        write_u128_async,
+        u128,
+        write_u128_be_async,
+        write_u128_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `u128`.",
@@ -194,21 +246,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes an `i16` using `byte_order`.
-    async fn write_i16_async(
-        &mut self,
-        value: i16,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_i16_be_async(value).await
-        } else {
-            self.write_i16_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes an `i16` using a runtime byte order.",
+        write_i16_async,
+        i16,
+        write_i16_be_async,
+        write_i16_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `i16`.",
@@ -223,21 +267,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes an `i32` using `byte_order`.
-    async fn write_i32_async(
-        &mut self,
-        value: i32,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_i32_be_async(value).await
-        } else {
-            self.write_i32_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes an `i32` using a runtime byte order.",
+        write_i32_async,
+        i32,
+        write_i32_be_async,
+        write_i32_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `i32`.",
@@ -252,21 +288,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes an `i64` using `byte_order`.
-    async fn write_i64_async(
-        &mut self,
-        value: i64,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_i64_be_async(value).await
-        } else {
-            self.write_i64_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes an `i64` using a runtime byte order.",
+        write_i64_async,
+        i64,
+        write_i64_be_async,
+        write_i64_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `i64`.",
@@ -281,21 +309,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes an `i128` using `byte_order`.
-    async fn write_i128_async(
-        &mut self,
-        value: i128,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_i128_be_async(value).await
-        } else {
-            self.write_i128_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes an `i128` using a runtime byte order.",
+        write_i128_async,
+        i128,
+        write_i128_be_async,
+        write_i128_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `i128`.",
@@ -310,21 +330,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes an `f32` using `byte_order`.
-    async fn write_f32_async(
-        &mut self,
-        value: f32,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_f32_be_async(value).await
-        } else {
-            self.write_f32_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes an `f32` using a runtime byte order.",
+        write_f32_async,
+        f32,
+        write_f32_be_async,
+        write_f32_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `f32`.",
@@ -339,21 +351,13 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
         LittleEndian
     );
 
-    /// Asynchronously writes an `f64` using `byte_order`.
-    async fn write_f64_async(
-        &mut self,
-        value: f64,
-        byte_order: ByteOrder,
-    ) -> Result<()>
-    where
-        Self: Unpin,
-    {
-        if use_big_endian(byte_order) {
-            self.write_f64_be_async(value).await
-        } else {
-            self.write_f64_le_async(value).await
-        }
-    }
+    runtime_order_write_method!(
+        "Asynchronously writes an `f64` using a runtime byte order.",
+        write_f64_async,
+        f64,
+        write_f64_be_async,
+        write_f64_le_async
+    );
 
     fixed_write_method!(
         "Asynchronously writes a big-endian `f64`.",
@@ -371,6 +375,34 @@ pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
 
 impl<W> AsyncBinaryWriteExt for W where W: AsyncOutput<Item = u8> + ?Sized {}
 
+/// Encodes and writes one fixed-width value asynchronously.
+///
+/// # Type Parameters
+///
+/// - `N`: Encoded scalar width in bytes.
+/// - `T`: Value type accepted by the encoder.
+/// - `W`: Destination asynchronous byte output.
+/// - `F`: Infallible encoding callback.
+///
+/// # Parameters
+///
+/// - `writer`: Destination for the fixed-width payload.
+/// - `value`: Value passed to `encode`.
+/// - `encode`: Callback that fills the local payload buffer.
+///
+/// # Returns
+///
+/// Returns after the complete payload has been written.
+///
+/// # Errors
+///
+/// Returns an output error, including a write-zero error when the output stops
+/// making progress.
+///
+/// # Cancellation safety
+///
+/// This operation is not cancellation safe. Dropping it leaves an
+/// already-written prefix in `writer`.
 async fn write_binary_async<const N: usize, T, W, F>(
     writer: &mut W,
     value: T,

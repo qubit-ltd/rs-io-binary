@@ -5,9 +5,17 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-mod async_binary_ext_tests;
+mod async_binary_read_ext_tests;
+mod async_binary_write_ext_tests;
+mod async_leb128_read_ext_tests;
+mod async_leb128_write_ext_tests;
+mod async_string_read_ext_tests;
+mod async_string_write_ext_tests;
+mod async_zig_zag_read_ext_tests;
+mod async_zig_zag_write_ext_tests;
 mod binary_read_ext_tests;
 mod binary_write_ext_tests;
+mod internal;
 mod leb128_read_ext_tests;
 mod leb128_write_ext_tests;
 mod qubit_io_abstraction_tests;
