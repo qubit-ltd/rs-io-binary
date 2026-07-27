@@ -11,7 +11,6 @@ use std::io::{
 };
 
 use qubit_codec_binary::{
-    Leb128DecodeError,
     NonStrict,
     Strict,
 };
@@ -22,7 +21,6 @@ use qubit_io::{
 use qubit_io_binary::{
     Leb128Reader,
     Leb128Writer,
-    StreamCodecDecodeError,
 };
 
 #[test]
@@ -125,17 +123,6 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
             .expect_err("unterminated max-width value should fail")
             .kind()
     );
-}
-
-#[test]
-fn test_leb128_decode_error_maps_incomplete_to_unexpected_eof() {
-    let error = Leb128DecodeError::incomplete(0, qubit_codec::nz!(2), 1);
-    let io_error_kind: fn(&Leb128DecodeError) -> ErrorKind =
-        std::hint::black_box(
-            <Leb128DecodeError as StreamCodecDecodeError>::io_error_kind,
-        );
-
-    assert_eq!(ErrorKind::UnexpectedEof, io_error_kind(&error));
 }
 
 #[test]

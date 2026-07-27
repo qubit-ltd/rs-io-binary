@@ -11,7 +11,6 @@ use std::io::{
     SeekFrom,
 };
 
-use crate::stream::TranscodeEncodeOutputExt;
 use crate::util::{
     MIN_CODEC_BUFFER_CAPACITY,
     checked_u64_len,
@@ -23,9 +22,12 @@ use qubit_codec_binary::{
     NonStrict,
 };
 use qubit_io::{
+    IntoInnerError,
     Output,
     Seekable,
 };
+
+use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for canonical LEB128 integers.
 ///
@@ -46,10 +48,15 @@ use qubit_io::{
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as `write_u64` or `write_i64` for
 /// persistent files and cross-platform protocols.
+///
+/// # Type Parameters
+///
+/// - `W`: Underlying byte output.
 pub struct BufferedLeb128Writer<W>
 where
     W: Output<Item = u8>,
 {
+    /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
 }
 
@@ -58,6 +65,14 @@ where
     W: Output<Item = u8>,
 {
     /// Creates a buffered LEB128 writer with the default buffer capacity.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte output.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered canonical LEB128 writer.
     #[must_use]
     #[inline]
     pub fn new(inner: W) -> Self {
@@ -67,6 +82,16 @@ where
     }
 
     /// Creates a buffered LEB128 writer with at least `capacity` bytes.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte output.
+    /// - `capacity`: Requested internal buffer capacity in bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered writer whose capacity also satisfies the largest
+    /// supported codec payload.
     #[must_use]
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
@@ -81,10 +106,55 @@ where
     /// Returns a shared reference to the underlying writer.
     ///
     /// Pending bytes may still be held in this wrapper's internal buffer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped writer.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &W {
         self.output.inner()
+    }
+
+    /// Returns mutable access to the underlying writer.
+    ///
+    /// Direct writes through the returned writer bypass pending bytes in this
+    /// wrapper and can reorder the physical byte stream. Flush this wrapper
+    /// before using the returned writer directly.
+    ///
+    /// # Returns
+    ///
+    /// Returns a mutable reference to the wrapped writer.
+    #[must_use]
+    #[inline(always)]
+    pub fn inner_mut(&mut self) -> &mut W {
+        self.output.inner_mut()
+    }
+
+    /// Flushes pending bytes and returns the underlying writer.
+    ///
+    /// If flushing fails, the returned [`IntoInnerError`] retains this entire
+    /// wrapper, including every byte that remains buffered, so callers can
+    /// inspect the error and retry.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped writer after a successful flush.
+    ///
+    /// # Errors
+    ///
+    /// Returns the I/O error reported while draining or flushing the wrapped
+    /// writer together with the retained wrapper.
+    #[inline]
+    pub fn into_inner(
+        mut self,
+    ) -> std::result::Result<W, IntoInnerError<Self>> {
+        if let Err(error) = self.output.flush() {
+            return Err(IntoInnerError::new(error, self));
+        }
+        let (inner, buffer) = self.output.into_parts();
+        debug_assert!(buffer.is_empty(), "flushed writer retained bytes");
+        Ok(inner)
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 byte length.
@@ -92,6 +162,18 @@ where
     /// The length prefix is encoded as `usize`, so this format is target-width
     /// dependent. Prefer a fixed-width length prefix for persistent files and
     /// cross-platform protocols.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: String to length-prefix and buffer.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length and payload have been accepted.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error encountered while making buffer space.
     #[inline]
     pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
@@ -103,6 +185,19 @@ where
     /// Prefer this method over [`Self::write_utf8_string`] for persistent files
     /// and cross-platform protocols because the length field is independent of
     /// the current Rust target's pointer width.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: String to length-prefix and buffer.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length and payload have been accepted.
+    ///
+    /// # Errors
+    ///
+    /// Returns an invalid-input error when the length cannot fit in `u64`, or
+    /// an output error encountered while making buffer space.
     #[inline]
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;
@@ -113,7 +208,20 @@ where
 macro_rules! impl_write_value {
     ($method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
-        #[inline]
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Integer to encode and buffer."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns after the canonical payload has been accepted."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error encountered while making buffer \
+                 space."]
+        #[inline(always)]
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = Leb128Codec<$ty, NonStrict>;
 
@@ -146,13 +254,36 @@ where
 {
     type Item = u8;
 
+    /// Reports that this adapter buffers output.
+    ///
+    /// # Returns
+    ///
+    /// Always returns `true`.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         true
     }
 
-    /// Writes bytes through the internal buffer.
-    #[inline]
+    /// Writes up to `count` bytes from an indexed input range.
+    ///
+    /// # Parameters
+    ///
+    /// - `input`: Source slice.
+    /// - `index`: First source index.
+    /// - `count`: Maximum number of bytes to write.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes accepted.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error encountered while draining pending bytes.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `input`.
+    #[inline(always)]
     unsafe fn write_unchecked(
         &mut self,
         input: &[u8],
@@ -164,7 +295,15 @@ where
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns after buffered and wrapped output have flushed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error encountered while draining or flushing.
+    #[inline(always)]
     fn flush(&mut self) -> Result<()> {
         self.output.flush()
     }
@@ -177,7 +316,19 @@ where
     type Unit = u8;
 
     /// Flushes pending bytes before seeking the wrapped writer.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `position`: Target seek position.
+    ///
+    /// # Returns
+    ///
+    /// Returns the new physical stream position.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error encountered while flushing or seeking.
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.output.seek(position)
     }

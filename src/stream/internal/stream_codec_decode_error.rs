@@ -2,16 +2,23 @@
 //    Copyright (c) 2026 Haixing Hu.
 //
 //    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-// qubit-style: allow source-test-pair
 
 use qubit_codec_binary::Leb128DecodeError;
 use std::error::Error as StdError;
 use std::io::ErrorKind;
 
 /// Decode error behavior shared by codec stream decoders.
-pub trait StreamCodecDecodeError: StdError + Send + Sync + 'static {
+pub(crate) trait StreamCodecDecodeError:
+    StdError + Send + Sync + 'static
+{
     /// Returns the mapped I/O error kind for this codec decode error.
+    ///
+    /// # Returns
+    ///
+    /// Returns the I/O category exposed by stream adapters.
     fn io_error_kind(&self) -> ErrorKind;
 }
 

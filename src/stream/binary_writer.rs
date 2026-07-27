@@ -35,9 +35,17 @@ use qubit_io::{
 /// The byte order is selected by the `O` type parameter. Use
 /// `BinaryWriter<W, BigEndian>` for big-endian data and
 /// `BinaryWriter<W, LittleEndian>` for little-endian data.
+///
+/// # Type Parameters
+///
+/// - `W`: Underlying byte output.
+/// - `O`: Compile-time byte-order specification.
 pub struct BinaryWriter<W, O = BigEndian> {
+    /// Wrapped byte output.
     inner: W,
+    /// Scratch storage for the largest fixed-width scalar.
     buffer: [u8; 16],
+    /// Associates the selected byte order without storing a value.
     marker: PhantomData<fn() -> O>,
 }
 
@@ -65,29 +73,45 @@ where
     }
 
     /// Returns the byte order selected by this writer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the compile-time byte order as a runtime value.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn byte_order(&self) -> ByteOrder {
         O::ORDER
     }
 
     /// Returns a shared reference to the underlying writer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped writer.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &W {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying writer.
+    ///
+    /// # Returns
+    ///
+    /// Returns mutable access to the wrapped writer.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub fn inner_mut(&mut self) -> &mut W {
         &mut self.inner
     }
 
     /// Consumes this wrapper and returns the underlying writer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped writer.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub fn into_inner(self) -> W {
         self.inner
     }
@@ -96,6 +120,19 @@ where
 macro_rules! impl_value_write {
     ($order:ty, $method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Scalar to encode and write."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns after all encoded bytes have been written."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error, including a write-zero error when \
+                 the output stops making progress."]
         #[inline]
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = BinaryCodec<$ty, $order>;
@@ -185,6 +222,19 @@ macro_rules! impl_for_order {
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
 
             /// Writes a UTF-8 string prefixed by a 16-bit byte length.
+            ///
+            /// # Parameters
+            ///
+            /// - `value`: String to length-prefix and write.
+            ///
+            /// # Returns
+            ///
+            /// Returns after the length and payload have been written.
+            ///
+            /// # Errors
+            ///
+            /// Returns an invalid-input error when the length exceeds
+            /// `u16::MAX`, or an output error while writing.
             #[inline]
             pub fn write_utf8_string_u16(&mut self, value: &str) -> Result<()> {
                 self.write_u16(checked_u16_len(value.len())?)?;
@@ -193,6 +243,19 @@ macro_rules! impl_for_order {
             }
 
             /// Writes a UTF-8 string prefixed by a 32-bit byte length.
+            ///
+            /// # Parameters
+            ///
+            /// - `value`: String to length-prefix and write.
+            ///
+            /// # Returns
+            ///
+            /// Returns after the length and payload have been written.
+            ///
+            /// # Errors
+            ///
+            /// Returns an invalid-input error when the length exceeds
+            /// `u32::MAX`, or an output error while writing.
             #[inline]
             pub fn write_utf8_string_u32(&mut self, value: &str) -> Result<()> {
                 self.write_u32(checked_u32_len(value.len())?)?;
@@ -212,12 +275,36 @@ where
 {
     type Item = u8;
 
+    /// Reports whether the wrapped output is buffered.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped output's buffering state.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         self.inner.is_buffered()
     }
 
-    #[inline]
+    /// Writes up to `count` bytes from an indexed input range.
+    ///
+    /// # Parameters
+    ///
+    /// - `input`: Source slice.
+    /// - `index`: First source index.
+    /// - `count`: Maximum number of bytes to write.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error reported by the wrapped output.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `input`.
+    #[inline(always)]
     unsafe fn write_unchecked(
         &mut self,
         input: &[u8],
@@ -231,10 +318,14 @@ where
 
     /// Flushes the wrapped writer.
     ///
+    /// # Returns
+    ///
+    /// Returns after the wrapped output has flushed.
+    ///
     /// # Errors
     ///
     /// Returns the I/O error reported by the wrapped writer.
-    #[inline]
+    #[inline(always)]
     fn flush(&mut self) -> Result<()> {
         Output::flush(&mut self.inner)
     }
@@ -259,7 +350,7 @@ where
     /// # Errors
     ///
     /// Returns the seek error reported by the wrapped writer.
-    #[inline]
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.inner.seek_to(position)
     }

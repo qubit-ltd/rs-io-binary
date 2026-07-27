@@ -93,6 +93,30 @@ fn test_buffered_zig_zag_reader_accessors_raw_seek_and_into_inner() {
 }
 
 #[test]
+fn test_buffered_zig_zag_reader_recovers_inner_and_unread_buffer() {
+    let mut reader = BufferedZigZagReader::<_, NonStrict>::with_capacity(
+        Cursor::new(vec![1, 9, 10]),
+        19,
+    );
+
+    assert_eq!(-1, reader.read_i8().expect("ZigZag i8 should be read"));
+    assert_eq!(3, reader.inner_mut().position());
+
+    let (inner, unread) = reader.into_parts();
+    assert_eq!(3, inner.position());
+    assert_eq!(&[9, 10], unread.readable());
+
+    let mut reader = BufferedZigZagReader::<_, NonStrict>::with_capacity(
+        Cursor::new(vec![1, 9]),
+        19,
+    );
+    assert_eq!(-1, reader.read_i8().expect("ZigZag i8 should be read"));
+
+    let inner = reader.into_inner();
+    assert_eq!(2, inner.position());
+}
+
+#[test]
 fn test_buffered_zig_zag_reader_reports_invalid_and_truncated_values() {
     let mut reader = BufferedZigZagReader::<_, Strict>::with_capacity(
         Cursor::new(vec![0x80, 0x00]),

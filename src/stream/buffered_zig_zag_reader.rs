@@ -12,7 +12,6 @@ use std::io::{
     SeekFrom,
 };
 
-use crate::stream::TranscodeDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeDecodeInput;
 use qubit_codec_binary::{
@@ -22,9 +21,12 @@ use qubit_codec_binary::{
     ZigZagCodec,
 };
 use qubit_io::{
+    Buffer,
     Input,
     Seekable,
 };
+
+use super::internal::TranscodeDecodeInputExt;
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.
 ///
@@ -42,11 +44,18 @@ use qubit_io::{
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as `read_i64` for persistent files and
 /// cross-platform protocols.
+///
+/// # Type Parameters
+///
+/// - `R`: Underlying byte input.
+/// - `P`: LEB128 canonicality policy applied after ZigZag decoding.
 pub struct BufferedZigZagReader<R, P = NonStrict>
 where
     R: Input<Item = u8>,
 {
+    /// Buffered codec input and wrapped reader.
     input: TranscodeDecodeInput<R>,
+    /// Associates the selected decoding policy without storing a value.
     marker: PhantomData<fn() -> P>,
 }
 
@@ -56,6 +65,14 @@ where
     P: Leb128DecodePolicy,
 {
     /// Creates a buffered ZigZag reader with the default buffer capacity.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte input.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered reader using policy `P`.
     #[must_use]
     #[inline]
     pub fn new(inner: R) -> Self {
@@ -66,6 +83,16 @@ where
     }
 
     /// Creates a buffered ZigZag reader with at least `capacity` bytes.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte input.
+    /// - `capacity`: Requested internal buffer capacity in bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered reader whose capacity also satisfies the largest
+    /// supported codec payload.
     #[must_use]
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
@@ -79,8 +106,12 @@ where
     }
 
     /// Returns whether this reader rejects non-canonical LEB128 encodings.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` when policy `P` requires canonical encodings.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn is_strict(&self) -> bool {
         P::STRICT
     }
@@ -89,17 +120,72 @@ where
     ///
     /// The underlying reader may already be positioned past unread bytes held
     /// in this wrapper's internal buffer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &R {
         self.input.inner()
+    }
+
+    /// Returns mutable access to the underlying reader.
+    ///
+    /// Direct reads from the returned reader bypass unread bytes already held
+    /// by this wrapper and can desynchronize subsequent buffered reads. Use
+    /// [`Self::into_parts`] when ownership and unread bytes must be recovered
+    /// together.
+    ///
+    /// # Returns
+    ///
+    /// Returns a mutable reference to the wrapped reader.
+    #[must_use]
+    #[inline(always)]
+    pub fn inner_mut(&mut self) -> &mut R {
+        self.input.inner_mut()
+    }
+
+    /// Consumes this wrapper and returns the underlying reader.
+    ///
+    /// Any unread bytes prefetched into this wrapper are discarded. Use
+    /// [`Self::into_parts`] to recover those bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader at its physical stream position.
+    #[must_use]
+    #[inline(always)]
+    pub fn into_inner(self) -> R {
+        let (inner, _) = self.input.into_parts();
+        inner
+    }
+
+    /// Consumes this wrapper and preserves its unread buffered bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader and the buffer whose [`Buffer::readable`]
+    /// slice contains every prefetched byte not yet consumed logically.
+    #[inline(always)]
+    pub fn into_parts(self) -> (R, Buffer<u8>) {
+        self.input.into_parts()
     }
 }
 
 macro_rules! impl_read_value {
     ($policy:ty, $method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
-        #[inline]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = concat!("Returns the decoded `", stringify!($ty), "`.")]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an input error or an invalid-data error when the \
+                 payload is malformed or violates the selected policy."]
+        #[inline(always)]
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = ZigZagCodec<$ty, $policy>;
 
@@ -143,13 +229,36 @@ where
 {
     type Item = u8;
 
+    /// Reports that this adapter buffers input.
+    ///
+    /// # Returns
+    ///
+    /// Always returns `true`.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         true
     }
 
-    /// Reads bytes from the buffered input.
-    #[inline]
+    /// Reads up to `count` bytes into an indexed output range.
+    ///
+    /// # Parameters
+    ///
+    /// - `output`: Destination slice.
+    /// - `index`: First destination index.
+    /// - `count`: Maximum number of bytes to read.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes read.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error reported while reading the buffered input.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `output`.
+    #[inline(always)]
     unsafe fn read_unchecked(
         &mut self,
         output: &mut [u8],
@@ -168,7 +277,20 @@ where
     type Unit = u8;
 
     /// Seeks the wrapped reader and discards buffered bytes after success.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `position`: Target seek position.
+    ///
+    /// # Returns
+    ///
+    /// Returns the new physical stream position.
+    ///
+    /// # Errors
+    ///
+    /// Returns the seek error reported by the wrapped reader and preserves
+    /// buffered bytes when seeking fails.
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek(position)
     }

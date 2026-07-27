@@ -6,4 +6,6 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-mod stream;
+mod stream_codec_decode_error_tests;
+mod transcode_decode_input_ext_tests;
+mod transcode_encode_output_ext_tests;

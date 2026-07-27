@@ -11,7 +11,6 @@ use std::io::{
     SeekFrom,
 };
 
-use crate::stream::TranscodeEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::{
@@ -19,9 +18,12 @@ use qubit_codec_binary::{
     ZigZagCodec,
 };
 use qubit_io::{
+    IntoInnerError,
     Output,
     Seekable,
 };
+
+use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for canonical ZigZag + unsigned LEB128 integers.
 ///
@@ -42,10 +44,15 @@ use qubit_io::{
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as `write_i64` for persistent files and
 /// cross-platform protocols.
+///
+/// # Type Parameters
+///
+/// - `W`: Underlying byte output.
 pub struct BufferedZigZagWriter<W>
 where
     W: Output<Item = u8>,
 {
+    /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
 }
 
@@ -54,6 +61,14 @@ where
     W: Output<Item = u8>,
 {
     /// Creates a buffered ZigZag writer with the default buffer capacity.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte output.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered canonical ZigZag writer.
     #[must_use]
     #[inline]
     pub fn new(inner: W) -> Self {
@@ -63,6 +78,16 @@ where
     }
 
     /// Creates a buffered ZigZag writer with at least `capacity` bytes.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte output.
+    /// - `capacity`: Requested internal buffer capacity in bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered writer whose capacity also satisfies the largest
+    /// supported codec payload.
     #[must_use]
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
@@ -77,17 +102,75 @@ where
     /// Returns a shared reference to the underlying writer.
     ///
     /// Pending bytes may still be held in this wrapper's internal buffer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped writer.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &W {
         self.output.inner()
+    }
+
+    /// Returns mutable access to the underlying writer.
+    ///
+    /// Direct writes through the returned writer bypass pending bytes in this
+    /// wrapper and can reorder the physical byte stream. Flush this wrapper
+    /// before using the returned writer directly.
+    ///
+    /// # Returns
+    ///
+    /// Returns a mutable reference to the wrapped writer.
+    #[must_use]
+    #[inline(always)]
+    pub fn inner_mut(&mut self) -> &mut W {
+        self.output.inner_mut()
+    }
+
+    /// Flushes pending bytes and returns the underlying writer.
+    ///
+    /// If flushing fails, the returned [`IntoInnerError`] retains this entire
+    /// wrapper, including every byte that remains buffered, so callers can
+    /// inspect the error and retry.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped writer after a successful flush.
+    ///
+    /// # Errors
+    ///
+    /// Returns the I/O error reported while draining or flushing the wrapped
+    /// writer together with the retained wrapper.
+    #[inline]
+    pub fn into_inner(
+        mut self,
+    ) -> std::result::Result<W, IntoInnerError<Self>> {
+        if let Err(error) = self.output.flush() {
+            return Err(IntoInnerError::new(error, self));
+        }
+        let (inner, buffer) = self.output.into_parts();
+        debug_assert!(buffer.is_empty(), "flushed writer retained bytes");
+        Ok(inner)
     }
 }
 
 macro_rules! impl_write_value {
     ($method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
-        #[inline]
+        #[doc = ""]
+        #[doc = "# Parameters"]
+        #[doc = ""]
+        #[doc = "- `value`: Signed integer to encode and buffer."]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = "Returns after the canonical payload has been accepted."]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an output error encountered while making buffer \
+                 space."]
+        #[inline(always)]
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
@@ -114,13 +197,36 @@ where
 {
     type Item = u8;
 
+    /// Reports that this adapter buffers output.
+    ///
+    /// # Returns
+    ///
+    /// Always returns `true`.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         true
     }
 
-    /// Writes bytes through the internal buffer.
-    #[inline]
+    /// Writes up to `count` bytes from an indexed input range.
+    ///
+    /// # Parameters
+    ///
+    /// - `input`: Source slice.
+    /// - `index`: First source index.
+    /// - `count`: Maximum number of bytes to write.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes accepted.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error encountered while draining pending bytes.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `input`.
+    #[inline(always)]
     unsafe fn write_unchecked(
         &mut self,
         input: &[u8],
@@ -132,7 +238,15 @@ where
     }
 
     /// Flushes the internal buffer and then the wrapped writer.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns after buffered and wrapped output have flushed.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error encountered while draining or flushing.
+    #[inline(always)]
     fn flush(&mut self) -> Result<()> {
         self.output.flush()
     }
@@ -145,7 +259,19 @@ where
     type Unit = u8;
 
     /// Flushes pending bytes before seeking the wrapped writer.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `position`: Target seek position.
+    ///
+    /// # Returns
+    ///
+    /// Returns the new physical stream position.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error encountered while flushing or seeking.
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.output.seek(position)
     }

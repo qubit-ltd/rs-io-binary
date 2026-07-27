@@ -130,6 +130,37 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_string_and_into_inner()
 }
 
 #[test]
+fn test_buffered_leb128_writer_into_inner_flushes_and_recovers_writer() {
+    let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
+
+    writer.write_u64(300).expect("u64 should be buffered");
+    assert_eq!(0, writer.inner_mut().position());
+
+    let inner = writer.into_inner().unwrap_or_else(|error| {
+        panic!("writer recovery should succeed: {error}")
+    });
+    assert_eq!(vec![0xAC, 0x02], inner.into_inner());
+}
+
+#[test]
+fn test_buffered_leb128_writer_into_inner_retains_flush_failure() {
+    let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 8);
+    writer.write_u64(300).expect("u64 should be buffered");
+
+    let error = writer
+        .into_inner()
+        .err()
+        .expect("conversion should retain a flush failure");
+
+    assert_eq!(ErrorKind::Other, error.error().kind());
+    let mut retained = error.into_inner();
+    let retry_error = retained
+        .flush()
+        .expect_err("retained writer should remain retryable");
+    assert_eq!(ErrorKind::Other, retry_error.kind());
+}
+
+#[test]
 fn test_buffered_leb128_writer_returns_writer_error() {
     let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 8);
 

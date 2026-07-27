@@ -19,6 +19,31 @@
 //! This crate combines `qubit-io-binary` stream helpers with
 //! `qubit-codec-binary` buffer codecs to provide binary reader and writer
 //! extension traits and wrapper types.
+//!
+//! ## Asynchronous extension traits
+//!
+//! Async extension methods return `Send` futures. Their inputs and outputs
+//! therefore need to be `Send` as well as `Unpin`:
+//!
+//! ```
+//! use qubit_io::{
+//!     AsyncInput,
+//!     AsyncOutput,
+//! };
+//! use qubit_io_binary::{
+//!     AsyncBinaryReadExt,
+//!     AsyncBinaryWriteExt,
+//! };
+//!
+//! async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
+//! where
+//!     I: AsyncInput<Item = u8> + Unpin,
+//!     O: AsyncOutput<Item = u8> + Unpin,
+//! {
+//!     let value = input.read_u32_be_async().await?;
+//!     output.write_u32_be_async(value).await
+//! }
+//! ```
 
 mod ext;
 pub mod prelude;
@@ -56,10 +81,4 @@ pub use stream::{
     Leb128Writer,
     ZigZagReader,
     ZigZagWriter,
-};
-#[doc(hidden)]
-pub use stream::{
-    StreamCodecDecodeError,
-    TranscodeDecodeInputExt,
-    TranscodeEncodeOutputExt,
 };

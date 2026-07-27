@@ -209,6 +209,30 @@ fn test_buffered_leb128_reader_accessors_raw_seek_string_and_into_inner() {
 }
 
 #[test]
+fn test_buffered_leb128_reader_recovers_inner_and_unread_buffer() {
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+        Cursor::new(vec![1, 2, 3]),
+        19,
+    );
+
+    assert_eq!(1, reader.read_u8().expect("u8 should be read"));
+    assert_eq!(3, reader.inner_mut().position());
+
+    let (inner, unread) = reader.into_parts();
+    assert_eq!(3, inner.position());
+    assert_eq!(&[2, 3], unread.readable());
+
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+        Cursor::new(vec![4, 5]),
+        19,
+    );
+    assert_eq!(4, reader.read_u8().expect("u8 should be read"));
+
+    let inner = reader.into_inner();
+    assert_eq!(2, inner.position());
+}
+
+#[test]
 fn test_buffered_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix()
  {
     let mut reader =

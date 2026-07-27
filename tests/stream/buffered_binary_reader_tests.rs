@@ -420,6 +420,30 @@ fn test_buffered_binary_reader_accessors_raw_read_seek_and_into_inner() {
 }
 
 #[test]
+fn test_buffered_binary_reader_recovers_inner_and_unread_buffer() {
+    let mut reader = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+        Cursor::new(vec![1, 2, 3, 4]),
+        19,
+    );
+
+    assert_eq!(0x0201, reader.read_u16().expect("u16 should be read"));
+    assert_eq!(4, reader.inner_mut().position());
+
+    let (inner, unread) = reader.into_parts();
+    assert_eq!(4, inner.position());
+    assert_eq!(&[3, 4], unread.readable());
+
+    let mut reader = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+        Cursor::new(vec![5, 6]),
+        19,
+    );
+    assert_eq!(5, reader.read_u8().expect("u8 should be read"));
+
+    let inner = reader.into_inner();
+    assert_eq!(2, inner.position());
+}
+
+#[test]
 fn test_buffered_binary_reader_retries_interrupted_refill() {
     let inner = InterruptedOnceReader::new(vec![9]);
     let mut reader =

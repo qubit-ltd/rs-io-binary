@@ -40,9 +40,17 @@ use qubit_io::{
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as `read_u64` or `read_i64` for
 /// persistent files and cross-platform protocols.
+///
+/// # Type Parameters
+///
+/// - `R`: Underlying byte input.
+/// - `P`: LEB128 canonicality policy.
 pub struct Leb128Reader<R, P = NonStrict> {
+    /// Wrapped byte input.
     inner: R,
+    /// Scratch storage for the largest LEB128 payload.
     buffer: [u8; 19],
+    /// Associates the selected decoding policy without storing a value.
     marker: PhantomData<fn() -> P>,
 }
 
@@ -51,6 +59,14 @@ where
     P: Leb128DecodePolicy,
 {
     /// Creates a LEB128 reader.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte input.
+    ///
+    /// # Returns
+    ///
+    /// Returns a reader using policy `P`.
     #[must_use]
     #[inline]
     pub const fn new(inner: R) -> Self {
@@ -62,29 +78,45 @@ where
     }
 
     /// Returns whether this reader rejects non-canonical encodings.
+    ///
+    /// # Returns
+    ///
+    /// Returns `true` when policy `P` requires canonical encodings.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn is_strict(&self) -> bool {
         P::STRICT
     }
 
     /// Returns a shared reference to the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &R {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns mutable access to the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub fn inner_mut(&mut self) -> &mut R {
         &mut self.inner
     }
 
     /// Consumes this wrapper and returns the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub fn into_inner(self) -> R {
         self.inner
     }
@@ -93,7 +125,16 @@ where
 macro_rules! impl_read_value {
     ($policy:ty, $method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
-        #[inline]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = concat!("Returns the decoded `", stringify!($ty), "`.")]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an input error or an invalid-data error when the \
+                 payload is malformed or violates the selected policy."]
+        #[inline(always)]
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = Leb128Codec<$ty, $policy>;
 
@@ -220,6 +261,20 @@ macro_rules! impl_for_policy {
             /// persistent files and cross-platform protocols because the
             /// length field is independent of the current Rust target's
             /// pointer width.
+            ///
+            /// # Parameters
+            ///
+            /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
+            ///
+            /// # Returns
+            ///
+            /// Returns the decoded UTF-8 string.
+            ///
+            /// # Errors
+            ///
+            /// Returns an input, conversion, or allocation error, or an
+            /// invalid-data error for a malformed or excessive length or
+            /// invalid UTF-8.
             #[inline]
             pub fn read_utf8_string_u64(
                 &mut self,
@@ -245,12 +300,36 @@ where
 {
     type Item = u8;
 
+    /// Reports whether the wrapped input is buffered.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped input's buffering state.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         self.inner.is_buffered()
     }
 
-    #[inline]
+    /// Reads up to `count` bytes into an indexed output range.
+    ///
+    /// # Parameters
+    ///
+    /// - `output`: Destination slice.
+    /// - `index`: First destination index.
+    /// - `count`: Maximum number of bytes to read.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes read.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error reported by the wrapped input.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `output`.
+    #[inline(always)]
     unsafe fn read_unchecked(
         &mut self,
         output: &mut [u8],
@@ -281,7 +360,7 @@ where
     /// # Errors
     ///
     /// Returns the seek error reported by the wrapped reader.
-    #[inline]
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.inner.seek_to(position)
     }

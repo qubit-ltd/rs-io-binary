@@ -12,7 +12,6 @@ use std::io::{
     SeekFrom,
 };
 
-use crate::stream::TranscodeDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::{
     BigEndian,
@@ -23,9 +22,12 @@ use qubit_codec::{
 };
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::{
+    Buffer,
     Input,
     Seekable,
 };
+
+use super::internal::TranscodeDecodeInputExt;
 
 /// Buffered reader for fixed-width binary values.
 ///
@@ -37,11 +39,18 @@ use qubit_io::{
 /// This reader may prefetch bytes from the wrapped reader. As a result,
 /// [`Self::inner`] can observe an underlying stream position ahead of the
 /// logical position exposed by this wrapper.
+///
+/// # Type Parameters
+///
+/// - `R`: Underlying byte input.
+/// - `O`: Compile-time byte-order specification.
 pub struct BufferedBinaryReader<R, O = BigEndian>
 where
     R: Input<Item = u8>,
 {
+    /// Buffered codec input and wrapped reader.
     input: TranscodeDecodeInput<R>,
+    /// Associates the selected byte order without storing a value.
     marker: PhantomData<fn() -> O>,
 }
 
@@ -51,6 +60,14 @@ where
     O: ByteOrderSpec,
 {
     /// Creates a buffered binary reader with the default buffer capacity.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte input.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered reader using byte order `O`.
     #[must_use]
     #[inline]
     pub fn new(inner: R) -> Self {
@@ -61,6 +78,16 @@ where
     }
 
     /// Creates a buffered binary reader with at least `capacity` bytes.
+    ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte input.
+    /// - `capacity`: Requested internal buffer capacity in bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered reader whose capacity also satisfies the largest
+    /// supported codec payload.
     #[must_use]
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
@@ -74,8 +101,12 @@ where
     }
 
     /// Returns the byte order selected by this reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns the compile-time byte order as a runtime value.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn byte_order(&self) -> ByteOrder {
         O::ORDER
     }
@@ -84,17 +115,72 @@ where
     ///
     /// The underlying reader may already be positioned past unread bytes held
     /// in this wrapper's internal buffer.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &R {
         self.input.inner()
+    }
+
+    /// Returns mutable access to the underlying reader.
+    ///
+    /// Direct reads from the returned reader bypass unread bytes already held
+    /// by this wrapper and can desynchronize subsequent buffered reads. Use
+    /// [`Self::into_parts`] when ownership and unread bytes must be recovered
+    /// together.
+    ///
+    /// # Returns
+    ///
+    /// Returns a mutable reference to the wrapped reader.
+    #[must_use]
+    #[inline(always)]
+    pub fn inner_mut(&mut self) -> &mut R {
+        self.input.inner_mut()
+    }
+
+    /// Consumes this wrapper and returns the underlying reader.
+    ///
+    /// Any unread bytes prefetched into this wrapper are discarded. Use
+    /// [`Self::into_parts`] to recover those bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader at its physical stream position.
+    #[must_use]
+    #[inline(always)]
+    pub fn into_inner(self) -> R {
+        let (inner, _) = self.input.into_parts();
+        inner
+    }
+
+    /// Consumes this wrapper and preserves its unread buffered bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader and the buffer whose [`Buffer::readable`]
+    /// slice contains every prefetched byte not yet consumed logically.
+    #[inline(always)]
+    pub fn into_parts(self) -> (R, Buffer<u8>) {
+        self.input.into_parts()
     }
 }
 
 macro_rules! impl_value_read {
     ($order:ty, $method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
-        #[inline]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = concat!("Returns the decoded `", stringify!($ty), "`.")]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an input error, including an unexpected-end-of-input \
+                 error when the scalar is truncated."]
+        #[inline(always)]
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = BinaryCodec<$ty, $order>;
             self.input.read_decoded::<Codec>()
@@ -183,13 +269,36 @@ where
 {
     type Item = u8;
 
+    /// Reports that this adapter buffers input.
+    ///
+    /// # Returns
+    ///
+    /// Always returns `true`.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         true
     }
 
-    /// Reads bytes from the buffered input.
-    #[inline]
+    /// Reads up to `count` bytes into an indexed output range.
+    ///
+    /// # Parameters
+    ///
+    /// - `output`: Destination slice.
+    /// - `index`: First destination index.
+    /// - `count`: Maximum number of bytes to read.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes read.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error reported while reading the buffered input.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `output`.
+    #[inline(always)]
     unsafe fn read_unchecked(
         &mut self,
         output: &mut [u8],
@@ -208,7 +317,20 @@ where
     type Unit = u8;
 
     /// Seeks the wrapped reader and discards buffered bytes after success.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `position`: Target seek position.
+    ///
+    /// # Returns
+    ///
+    /// Returns the new physical stream position.
+    ///
+    /// # Errors
+    ///
+    /// Returns the seek error reported by the wrapped reader and preserves
+    /// buffered bytes when seeking fails.
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek(position)
     }

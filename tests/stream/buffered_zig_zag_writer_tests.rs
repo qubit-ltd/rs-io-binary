@@ -98,6 +98,37 @@ fn test_buffered_zig_zag_writer_accessors_write_all_seek_and_into_inner() {
 }
 
 #[test]
+fn test_buffered_zig_zag_writer_into_inner_flushes_and_recovers_writer() {
+    let mut writer = BufferedZigZagWriter::new(Cursor::new(Vec::new()));
+
+    writer.write_i64(-300).expect("i64 should be buffered");
+    assert_eq!(0, writer.inner_mut().position());
+
+    let inner = writer.into_inner().unwrap_or_else(|error| {
+        panic!("writer recovery should succeed: {error}")
+    });
+    assert_eq!(vec![0xD7, 0x04], inner.into_inner());
+}
+
+#[test]
+fn test_buffered_zig_zag_writer_into_inner_retains_flush_failure() {
+    let mut writer = BufferedZigZagWriter::with_capacity(FailingWriter, 8);
+    writer.write_i64(-300).expect("i64 should be buffered");
+
+    let error = writer
+        .into_inner()
+        .err()
+        .expect("conversion should retain a flush failure");
+
+    assert_eq!(ErrorKind::Other, error.error().kind());
+    let mut retained = error.into_inner();
+    let retry_error = retained
+        .flush()
+        .expect_err("retained writer should remain retryable");
+    assert_eq!(ErrorKind::Other, retry_error.kind());
+}
+
+#[test]
 fn test_buffered_zig_zag_writer_returns_writer_error() {
     let mut writer = BufferedZigZagWriter::with_capacity(FailingWriter, 8);
 

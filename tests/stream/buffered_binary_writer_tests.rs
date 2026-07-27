@@ -323,6 +323,20 @@ fn test_buffered_binary_writer_accessors_write_all_seek_and_into_inner() {
 }
 
 #[test]
+fn test_buffered_binary_writer_into_inner_flushes_and_recovers_writer() {
+    let mut writer =
+        BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
+
+    writer.write_u16(0x1234).expect("u16 should be buffered");
+    assert_eq!(0, writer.inner_mut().position());
+
+    let inner = writer.into_inner().unwrap_or_else(|error| {
+        panic!("writer recovery should succeed: {error}")
+    });
+    assert_eq!(vec![0x34, 0x12], inner.into_inner());
+}
+
+#[test]
 fn test_buffered_binary_writer_cursor_cold_paths_and_fixed_flush() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
         Cursor::new(Vec::new()),
@@ -591,10 +605,16 @@ fn test_buffered_binary_writer_into_inner_returns_flush_error() {
         .write_u32(0x0102_0304)
         .expect("value should be buffered");
     let error = writer
-        .flush()
-        .expect_err("flush should fail while flushing");
+        .into_inner()
+        .err()
+        .expect("conversion should retain a flush failure");
 
-    assert_eq!(ErrorKind::Other, error.kind());
+    assert_eq!(ErrorKind::Other, error.error().kind());
+    let mut retained = error.into_inner();
+    let retry_error = retained
+        .flush()
+        .expect_err("retained writer should remain retryable");
+    assert_eq!(ErrorKind::Other, retry_error.kind());
 }
 
 #[test]

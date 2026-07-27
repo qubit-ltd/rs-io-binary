@@ -2,6 +2,8 @@
 //    Copyright (c) 2026 Haixing Hu.
 //
 //    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::io::{
     Error,
@@ -17,12 +19,24 @@ use qubit_io::Input;
 use super::stream_codec_decode_error::StreamCodecDecodeError;
 
 /// Codec-oriented helpers for [`TranscodeDecodeInput`].
-pub trait TranscodeDecodeInputExt<I> {
+///
+/// # Type Parameters
+///
+/// - `I`: Underlying Qubit input type.
+pub(crate) trait TranscodeDecodeInputExt<I> {
     /// Strictly decodes one value through the underlying buffered input.
     ///
     /// The codec's decode reset and finish phases must not declare output.
     /// Codecs with lifecycle output should use
     /// [`TranscodeDecodeInput::read_decoded_lifecycle_with`] directly.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `C`: Codec used to decode the next value.
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded codec value.
     ///
     /// # Errors
     ///
@@ -41,6 +55,7 @@ where
     I: Input,
     I::Item: Copy + Default,
 {
+    #[inline]
     fn read_decoded<C>(&mut self) -> Result<C::Value>
     where
         C: Codec<Unit = I::Item> + Default,

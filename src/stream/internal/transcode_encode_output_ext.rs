@@ -2,6 +2,8 @@
 //    Copyright (c) 2026 Haixing Hu.
 //
 //    SPDX-License-Identifier: Apache-2.0
+//
+//    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::error::Error as StdError;
 use std::io::{
@@ -17,8 +19,30 @@ use qubit_codec::{
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].
-pub trait TranscodeEncodeOutputExt<O> {
+///
+/// # Type Parameters
+///
+/// - `O`: Underlying Qubit output type.
+pub(crate) trait TranscodeEncodeOutputExt<O> {
     /// Encodes one value through the underlying buffered output.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `C`: Codec used to encode the value.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Codec value to encode.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the encoded units have been accepted by the buffered
+    /// output.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error or an invalid-data error when the codec rejects
+    /// the value.
     fn write_encoded<C>(&mut self, value: C::Value) -> io::Result<()>
     where
         O: Output,

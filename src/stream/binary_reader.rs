@@ -38,9 +38,17 @@ use qubit_io::{
 /// The byte order is selected by the `O` type parameter. Use
 /// `BinaryReader<R, BigEndian>` for big-endian data and
 /// `BinaryReader<R, LittleEndian>` for little-endian data.
+///
+/// # Type Parameters
+///
+/// - `R`: Underlying byte input.
+/// - `O`: Compile-time byte-order specification.
 pub struct BinaryReader<R, O = BigEndian> {
+    /// Wrapped byte input.
     inner: R,
+    /// Scratch storage for the largest fixed-width scalar.
     buffer: [u8; 16],
+    /// Associates the selected byte order without storing a value.
     marker: PhantomData<fn() -> O>,
 }
 
@@ -68,29 +76,45 @@ where
     }
 
     /// Returns the byte order selected by this reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns the compile-time byte order as a runtime value.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn byte_order(&self) -> ByteOrder {
         O::ORDER
     }
 
     /// Returns a shared reference to the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub const fn inner(&self) -> &R {
         &self.inner
     }
 
     /// Returns an exclusive reference to the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns mutable access to the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub fn inner_mut(&mut self) -> &mut R {
         &mut self.inner
     }
 
     /// Consumes this wrapper and returns the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped reader.
     #[must_use]
-    #[inline]
+    #[inline(always)]
     pub fn into_inner(self) -> R {
         self.inner
     }
@@ -99,6 +123,15 @@ where
 macro_rules! impl_value_read {
     ($order:ty, $method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
+        #[doc = ""]
+        #[doc = "# Returns"]
+        #[doc = ""]
+        #[doc = concat!("Returns the decoded `", stringify!($ty), "`.")]
+        #[doc = ""]
+        #[doc = "# Errors"]
+        #[doc = ""]
+        #[doc = "Returns an input error, including an unexpected-end-of-input \
+                 error when the scalar is truncated."]
         #[inline]
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = BinaryCodec<$ty, $order>;
@@ -187,11 +220,15 @@ macro_rules! impl_for_order {
             ///
             /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
             ///
+            /// # Returns
+            ///
+            /// Returns the decoded UTF-8 string.
+            ///
             /// # Errors
             ///
-            /// Returns [`std::io::ErrorKind::InvalidData`] when the encoded
-            /// length exceeds `max_len` or when the payload is not valid
-            /// UTF-8.
+            /// Returns an input or allocation error, or
+            /// [`std::io::ErrorKind::InvalidData`] when the encoded length
+            /// exceeds `max_len` or the payload is not valid UTF-8.
             #[inline]
             pub fn read_utf8_string_u16(
                 &mut self,
@@ -207,11 +244,15 @@ macro_rules! impl_for_order {
             ///
             /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
             ///
+            /// # Returns
+            ///
+            /// Returns the decoded UTF-8 string.
+            ///
             /// # Errors
             ///
-            /// Returns [`std::io::ErrorKind::InvalidData`] when the encoded
-            /// length exceeds `max_len` or when the payload is not valid
-            /// UTF-8.
+            /// Returns an input, conversion, or allocation error, or
+            /// [`std::io::ErrorKind::InvalidData`] when the encoded length
+            /// exceeds `max_len` or the payload is not valid UTF-8.
             #[inline]
             pub fn read_utf8_string_u32(
                 &mut self,
@@ -243,12 +284,36 @@ where
 {
     type Item = u8;
 
+    /// Reports whether the wrapped input is buffered.
+    ///
+    /// # Returns
+    ///
+    /// Returns the wrapped input's buffering state.
     #[inline(always)]
     fn is_buffered(&self) -> bool {
         self.inner.is_buffered()
     }
 
-    #[inline]
+    /// Reads up to `count` bytes into an indexed output range.
+    ///
+    /// # Parameters
+    ///
+    /// - `output`: Destination slice.
+    /// - `index`: First destination index.
+    /// - `count`: Maximum number of bytes to read.
+    ///
+    /// # Returns
+    ///
+    /// Returns the number of bytes read.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error reported by the wrapped input.
+    ///
+    /// # Safety
+    ///
+    /// `index..index + count` must be a valid range within `output`.
+    #[inline(always)]
     unsafe fn read_unchecked(
         &mut self,
         output: &mut [u8],
@@ -280,7 +345,7 @@ where
     /// # Errors
     ///
     /// Returns the seek error reported by the wrapped reader.
-    #[inline]
+    #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.inner.seek_to(position)
     }
