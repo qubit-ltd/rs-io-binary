@@ -5,7 +5,6 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-// qubit-style: allow source-test-pair
 //! Shared asynchronous byte-stream codec drivers.
 
 use std::io::Result;
@@ -29,6 +28,30 @@ use super::streams::{
 use super::try_reserve_vec;
 
 /// Reads exactly enough bytes to fill `output`.
+///
+/// # Type Parameters
+///
+/// - `I`: Runtime-neutral asynchronous byte input.
+///
+/// # Parameters
+///
+/// - `input`: Source from which bytes are read.
+/// - `output`: Destination slice that must be filled.
+///
+/// # Returns
+///
+/// Returns after every destination byte has been initialized.
+///
+/// # Errors
+///
+/// Returns an input error, including an unexpected-end-of-input error when the
+/// source ends before `output` is full.
+///
+/// # Cancellation safety
+///
+/// This operation is not cancellation safe. Dropping it retains bytes already
+/// consumed from `input` and modifications already made to `output`.
+#[inline(always)]
 pub(crate) async fn read_exactly_async<I>(
     input: &mut I,
     output: &mut [u8],
@@ -40,6 +63,30 @@ where
 }
 
 /// Writes every byte in `input`.
+///
+/// # Type Parameters
+///
+/// - `O`: Runtime-neutral asynchronous byte output.
+///
+/// # Parameters
+///
+/// - `output`: Destination to which bytes are written.
+/// - `input`: Source bytes that must be written.
+///
+/// # Returns
+///
+/// Returns after every source byte has been written.
+///
+/// # Errors
+///
+/// Returns an output error, including a write-zero error when the output stops
+/// making progress.
+///
+/// # Cancellation safety
+///
+/// This operation is not cancellation safe. Dropping it leaves any
+/// already-written prefix in `output`.
+#[inline(always)]
 pub(crate) async fn write_all_async<O>(
     output: &mut O,
     input: &[u8],
@@ -51,6 +98,30 @@ where
 }
 
 /// Reads and decodes one LEB128-family payload.
+///
+/// # Type Parameters
+///
+/// - `N`: Maximum encoded payload length in bytes.
+/// - `C`: LEB128-family codec used to decode the payload.
+/// - `R`: Runtime-neutral asynchronous byte input.
+///
+/// # Parameters
+///
+/// - `reader`: Source from which the encoded payload is read.
+///
+/// # Returns
+///
+/// Returns the decoded codec value.
+///
+/// # Errors
+///
+/// Returns an input error or an invalid-data error when the payload is
+/// malformed or incomplete at its maximum width.
+///
+/// # Cancellation safety
+///
+/// This operation is not cancellation safe. Dropping it retains any bytes
+/// already consumed from `reader`.
 pub(crate) async fn read_leb128_payload_async<const N: usize, C, R>(
     reader: &mut R,
 ) -> Result<C::Value>
@@ -76,6 +147,30 @@ where
 }
 
 /// Reads and validates an already length-delimited UTF-8 payload.
+///
+/// # Type Parameters
+///
+/// - `R`: Runtime-neutral asynchronous byte input.
+///
+/// # Parameters
+///
+/// - `reader`: Source from which payload bytes are read.
+/// - `len`: Encoded payload length in bytes.
+/// - `max_len`: Maximum accepted payload length in bytes.
+///
+/// # Returns
+///
+/// Returns the decoded UTF-8 string.
+///
+/// # Errors
+///
+/// Returns an input or allocation error, or an invalid-data error when `len`
+/// exceeds `max_len` or the payload is not valid UTF-8.
+///
+/// # Cancellation safety
+///
+/// This operation is not cancellation safe. Dropping it retains bytes already
+/// consumed from `reader`.
 pub(crate) async fn read_utf8_payload_async<R>(
     reader: &mut R,
     len: usize,
