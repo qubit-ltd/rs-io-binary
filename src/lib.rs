@@ -37,8 +37,8 @@
 //!
 //! async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 //! where
-//!     I: AsyncInput<Item = u8> + Unpin,
-//!     O: AsyncOutput<Item = u8> + Unpin,
+//!     I: AsyncInput<Item = u8> + Send + Unpin,
+//!     O: AsyncOutput<Item = u8> + Send + Unpin,
 //! {
 //!     let value = input.read_u32_be_async().await?;
 //!     output.write_u32_be_async(value).await

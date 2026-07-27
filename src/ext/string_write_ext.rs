@@ -31,7 +31,7 @@ pub trait StringWriteExt: Output<Item = u8> {
     ///
     /// # Returns
     ///
-    /// Returns after the prefix and payload have been written.
+    /// Returns after the payload has been written.
     ///
     /// # Errors
     ///

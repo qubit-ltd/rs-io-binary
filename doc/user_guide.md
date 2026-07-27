@@ -72,8 +72,8 @@ use qubit_io_binary::{
 
 async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 where
-    I: AsyncInput<Item = u8> + Unpin,
-    O: AsyncOutput<Item = u8> + Unpin,
+    I: AsyncInput<Item = u8> + Send + Unpin,
+    O: AsyncOutput<Item = u8> + Send + Unpin,
 {
     let value = input.read_i64_le_async().await?;
     output.write_i64_le_async(value).await
