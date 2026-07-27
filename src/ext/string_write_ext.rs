@@ -26,9 +26,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 payload without a length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns an I/O error from the underlying writer.
     fn write_utf8_payload(&mut self, value: &str) -> Result<()>;
 
@@ -39,9 +45,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// files and cross-platform protocols.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns an I/O error from the underlying writer.
     fn write_utf8_string_uleb(&mut self, value: &str) -> Result<()>;
 
@@ -52,9 +64,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// independent of the current Rust target's pointer width.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// cannot be represented as `u64`, or an I/O error from the underlying
     /// writer.
@@ -63,10 +81,16 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 string with a runtime-order `u16` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     /// - `byte_order`: Byte order used by the length prefix.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u16`, or an I/O error from the underlying writer.
     fn write_utf8_string_u16(
@@ -78,9 +102,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 string with a big-endian `u16` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u16`, or an I/O error from the underlying writer.
     fn write_utf8_string_u16_be(&mut self, value: &str) -> Result<()>;
@@ -88,9 +118,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 string with a little-endian `u16` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u16`, or an I/O error from the underlying writer.
     fn write_utf8_string_u16_le(&mut self, value: &str) -> Result<()>;
@@ -98,10 +134,16 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 string with a runtime-order `u32` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     /// - `byte_order`: Byte order used by the length prefix.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u32`, or an I/O error from the underlying writer.
     fn write_utf8_string_u32(
@@ -113,9 +155,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 string with a big-endian `u32` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u32`, or an I/O error from the underlying writer.
     fn write_utf8_string_u32_be(&mut self, value: &str) -> Result<()>;
@@ -123,9 +171,15 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 string with a little-endian `u32` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `value`: String slice to write.
     ///
+    /// # Returns
+    ///
+    /// Returns after the prefix and payload have been written.
+    ///
     /// # Errors
+    ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u32`, or an I/O error from the underlying writer.
     fn write_utf8_string_u32_le(&mut self, value: &str) -> Result<()>;

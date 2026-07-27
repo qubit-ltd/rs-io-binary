@@ -27,13 +27,16 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 payload with an already decoded byte length.
     ///
     /// # Parameters
+    ///
     /// - `len`: UTF-8 payload length in bytes.
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when `len` exceeds `max_len`, or
     /// [`std::io::ErrorKind::InvalidData`] when the payload is not valid
@@ -51,12 +54,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// files and cross-platform protocols.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
@@ -71,12 +77,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// files and cross-platform protocols.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the length prefix is
     /// malformed or non-canonical, [`std::io::ErrorKind::InvalidData`] when
@@ -95,12 +104,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// independent of the current Rust target's pointer width.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded `u64` length
     /// does not fit the local `usize`, when the encoded length exceeds
@@ -115,12 +127,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// is independent of the current Rust target's pointer width.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the length prefix is
     /// malformed or non-canonical, when the encoded `u64` length does not
@@ -134,13 +149,16 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a runtime-order `u16` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `byte_order`: Byte order used by the length prefix.
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
@@ -154,12 +172,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a big-endian `u16` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
@@ -169,12 +190,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a little-endian `u16` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
@@ -184,13 +208,16 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a runtime-order `u32` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `byte_order`: Byte order used by the length prefix.
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
@@ -204,12 +231,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a big-endian `u32` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
@@ -219,12 +249,15 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a little-endian `u32` byte-length prefix.
     ///
     /// # Parameters
+    ///
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
     /// # Returns
+    ///
     /// The decoded string.
     ///
     /// # Errors
+    ///
     /// Returns an I/O error for length or payload reads,
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload

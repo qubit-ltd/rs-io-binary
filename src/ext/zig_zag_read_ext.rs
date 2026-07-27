@@ -35,73 +35,181 @@ macro_rules! read_zig_zag_value {
 /// persistent files and cross-platform protocols.
 pub trait ZigZagReadExt: Input<Item = u8> {
     /// Reads a non-strict ZigZag `i8`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i8(&mut self) -> Result<i8> {
         read_zig_zag_value!(self, i8, NonStrict)
     }
 
     /// Reads a strict ZigZag `i8`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i8_strict(&mut self) -> Result<i8> {
         read_zig_zag_value!(self, i8, Strict)
     }
 
     /// Reads a non-strict ZigZag `i16`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i16(&mut self) -> Result<i16> {
         read_zig_zag_value!(self, i16, NonStrict)
     }
 
     /// Reads a strict ZigZag `i16`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i16_strict(&mut self) -> Result<i16> {
         read_zig_zag_value!(self, i16, Strict)
     }
 
     /// Reads a non-strict ZigZag `i32`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i32(&mut self) -> Result<i32> {
         read_zig_zag_value!(self, i32, NonStrict)
     }
 
     /// Reads a strict ZigZag `i32`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i32_strict(&mut self) -> Result<i32> {
         read_zig_zag_value!(self, i32, Strict)
     }
 
     /// Reads a non-strict ZigZag `i64`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i64(&mut self) -> Result<i64> {
         read_zig_zag_value!(self, i64, NonStrict)
     }
 
     /// Reads a strict ZigZag `i64`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i64_strict(&mut self) -> Result<i64> {
         read_zig_zag_value!(self, i64, Strict)
     }
 
     /// Reads a non-strict ZigZag `i128`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i128(&mut self) -> Result<i128> {
         read_zig_zag_value!(self, i128, NonStrict)
     }
 
     /// Reads a strict ZigZag `i128`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_i128_strict(&mut self) -> Result<i128> {
         read_zig_zag_value!(self, i128, Strict)
     }
 
     /// Reads a non-strict ZigZag `isize`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_isize(&mut self) -> Result<isize> {
         read_zig_zag_value!(self, isize, NonStrict)
     }
 
     /// Reads a strict ZigZag `isize`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_zig_zag_isize_strict(&mut self) -> Result<isize> {
         read_zig_zag_value!(self, isize, Strict)
     }

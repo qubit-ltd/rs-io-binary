@@ -43,37 +43,115 @@ macro_rules! write_zig_zag_value {
 /// persistent files and cross-platform protocols.
 pub trait ZigZagWriteExt: Output<Item = u8> {
     /// Writes a ZigZag `i8`.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Integer to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the canonical payload has been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error, including a write-zero error when the output
+    /// stops making progress.
+    #[inline(always)]
     fn write_zig_zag_i8(&mut self, value: i8) -> Result<()> {
         write_zig_zag_value!(self, value, i8)
     }
 
     /// Writes a ZigZag `i16`.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Integer to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the canonical payload has been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error, including a write-zero error when the output
+    /// stops making progress.
+    #[inline(always)]
     fn write_zig_zag_i16(&mut self, value: i16) -> Result<()> {
         write_zig_zag_value!(self, value, i16)
     }
 
     /// Writes a ZigZag `i32`.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Integer to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the canonical payload has been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error, including a write-zero error when the output
+    /// stops making progress.
+    #[inline(always)]
     fn write_zig_zag_i32(&mut self, value: i32) -> Result<()> {
         write_zig_zag_value!(self, value, i32)
     }
 
     /// Writes a ZigZag `i64`.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Integer to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the canonical payload has been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error, including a write-zero error when the output
+    /// stops making progress.
+    #[inline(always)]
     fn write_zig_zag_i64(&mut self, value: i64) -> Result<()> {
         write_zig_zag_value!(self, value, i64)
     }
 
     /// Writes a ZigZag `i128`.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Integer to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the canonical payload has been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error, including a write-zero error when the output
+    /// stops making progress.
+    #[inline(always)]
     fn write_zig_zag_i128(&mut self, value: i128) -> Result<()> {
         write_zig_zag_value!(self, value, i128)
     }
 
     /// Writes a ZigZag `isize`.
-    #[inline]
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: Integer to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the canonical payload has been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an output error, including a write-zero error when the output
+    /// stops making progress.
+    #[inline(always)]
     fn write_zig_zag_isize(&mut self, value: isize) -> Result<()> {
         write_zig_zag_value!(self, value, isize)
     }
@@ -81,6 +159,30 @@ pub trait ZigZagWriteExt: Output<Item = u8> {
 
 impl<W> ZigZagWriteExt for W where W: Output<Item = u8> + ?Sized {}
 
+/// Encodes and writes one canonical ZigZag value.
+///
+/// # Type Parameters
+///
+/// - `N`: Maximum encoded payload length in bytes.
+/// - `T`: Value type accepted by the encoder.
+/// - `W`: Destination byte output.
+/// - `F`: Infallible encoding callback.
+///
+/// # Parameters
+///
+/// - `writer`: Destination for the encoded payload.
+/// - `value`: Value passed to `encode`.
+/// - `encode`: Callback that fills the local buffer and returns its used
+///   length.
+///
+/// # Returns
+///
+/// Returns after the complete payload has been written.
+///
+/// # Errors
+///
+/// Returns an output error, including a write-zero error when the output stops
+/// making progress.
 #[inline]
 fn write_zig_zag<const N: usize, T, W, F>(
     writer: &mut W,

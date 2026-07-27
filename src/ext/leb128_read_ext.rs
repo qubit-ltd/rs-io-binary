@@ -35,145 +35,361 @@ macro_rules! read_leb128_value {
 /// [`Self::read_sleb_i64`] for persistent files and cross-platform protocols.
 pub trait Leb128ReadExt: Input<Item = u8> {
     /// Reads a non-strict unsigned LEB128 `u8`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u8(&mut self) -> Result<u8> {
         read_leb128_value!(self, u8, NonStrict)
     }
 
     /// Reads a strict unsigned LEB128 `u8`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u8_strict(&mut self) -> Result<u8> {
         read_leb128_value!(self, u8, Strict)
     }
 
     /// Reads a non-strict unsigned LEB128 `u16`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u16(&mut self) -> Result<u16> {
         read_leb128_value!(self, u16, NonStrict)
     }
 
     /// Reads a strict unsigned LEB128 `u16`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u16_strict(&mut self) -> Result<u16> {
         read_leb128_value!(self, u16, Strict)
     }
 
     /// Reads a non-strict unsigned LEB128 `u32`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u32(&mut self) -> Result<u32> {
         read_leb128_value!(self, u32, NonStrict)
     }
 
     /// Reads a strict unsigned LEB128 `u32`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u32_strict(&mut self) -> Result<u32> {
         read_leb128_value!(self, u32, Strict)
     }
 
     /// Reads a non-strict unsigned LEB128 `u64`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u64(&mut self) -> Result<u64> {
         read_leb128_value!(self, u64, NonStrict)
     }
 
     /// Reads a strict unsigned LEB128 `u64`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u64_strict(&mut self) -> Result<u64> {
         read_leb128_value!(self, u64, Strict)
     }
 
     /// Reads a non-strict unsigned LEB128 `u128`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u128(&mut self) -> Result<u128> {
         read_leb128_value!(self, u128, NonStrict)
     }
 
     /// Reads a strict unsigned LEB128 `u128`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_u128_strict(&mut self) -> Result<u128> {
         read_leb128_value!(self, u128, Strict)
     }
 
     /// Reads a non-strict unsigned LEB128 `usize`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_usize(&mut self) -> Result<usize> {
         read_leb128_value!(self, usize, NonStrict)
     }
 
     /// Reads a strict unsigned LEB128 `usize`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_uleb_usize_strict(&mut self) -> Result<usize> {
         read_leb128_value!(self, usize, Strict)
     }
 
     /// Reads a non-strict signed LEB128 `i8`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i8(&mut self) -> Result<i8> {
         read_leb128_value!(self, i8, NonStrict)
     }
 
     /// Reads a strict signed LEB128 `i8`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i8_strict(&mut self) -> Result<i8> {
         read_leb128_value!(self, i8, Strict)
     }
 
     /// Reads a non-strict signed LEB128 `i16`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i16(&mut self) -> Result<i16> {
         read_leb128_value!(self, i16, NonStrict)
     }
 
     /// Reads a strict signed LEB128 `i16`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i16_strict(&mut self) -> Result<i16> {
         read_leb128_value!(self, i16, Strict)
     }
 
     /// Reads a non-strict signed LEB128 `i32`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i32(&mut self) -> Result<i32> {
         read_leb128_value!(self, i32, NonStrict)
     }
 
     /// Reads a strict signed LEB128 `i32`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i32_strict(&mut self) -> Result<i32> {
         read_leb128_value!(self, i32, Strict)
     }
 
     /// Reads a non-strict signed LEB128 `i64`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i64(&mut self) -> Result<i64> {
         read_leb128_value!(self, i64, NonStrict)
     }
 
     /// Reads a strict signed LEB128 `i64`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i64_strict(&mut self) -> Result<i64> {
         read_leb128_value!(self, i64, Strict)
     }
 
     /// Reads a non-strict signed LEB128 `i128`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i128(&mut self) -> Result<i128> {
         read_leb128_value!(self, i128, NonStrict)
     }
 
     /// Reads a strict signed LEB128 `i128`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_i128_strict(&mut self) -> Result<i128> {
         read_leb128_value!(self, i128, Strict)
     }
 
     /// Reads a non-strict signed LEB128 `isize`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_isize(&mut self) -> Result<isize> {
         read_leb128_value!(self, isize, NonStrict)
     }
 
     /// Reads a strict signed LEB128 `isize`.
-    #[inline]
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded integer.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input error or an invalid-data error when the payload is
+    /// malformed or violates the selected canonicality policy.
+    #[inline(always)]
     fn read_sleb_isize_strict(&mut self) -> Result<isize> {
         read_leb128_value!(self, isize, Strict)
     }
