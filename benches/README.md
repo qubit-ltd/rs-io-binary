@@ -3,11 +3,15 @@
 本文档用于约束 `benches/stream.rs` 的基准口径，避免不同版本间口径漂移导致误判。
 
 - 基准只覆盖二进制整数路径：
+  - `micro_binary_pipeline`：受控短读短写内存流上的固定宽度读写，用于隔离
+    adapter、临时缓冲和内部 buffer 的成本。
   - `prod_binary_pipeline`：固定字段的二进制读写。
   - `prod_varints`：随机类型字段流的无符号 LEB128 编解码。
   - `prod_signed_varints`：随机类型字段流的 ZigZag 编解码。
 - 已移除 UTF-8 文本读写基准。
-- 输入规模采用大批量重复：
+- `micro_binary_pipeline` 使用 32,768 个 `u64` 值、每次最多读写 7 字节的
+  合成内存流；它不使用 `Cursor`，并以 16 字节内部缓冲强制覆盖 buffer 边界。
+- 生产型输入规模采用大批量重复：
   - 单批记录数：`BINARY_BATCH = 1_048_576`
   - 单批 varint 字段数：`VARINT_COUNT = 262_144`
   - 每次 benchmark iteration 内重复次数：`BINARY_REPEAT = 32`、`VARINT_REPEAT = 64`

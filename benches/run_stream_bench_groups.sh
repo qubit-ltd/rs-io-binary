@@ -4,6 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 groups=(
+  micro_binary_pipeline
   prod_binary_pipeline
   prod_varints
   prod_signed_varints

@@ -57,10 +57,12 @@ use qubit_io_binary::{
 const BINARY_BATCH: usize = 1_048_576;
 const BINARY_REPEAT: usize = 32;
 const BINARY_RECORD_BYTES: usize = 41;
+const MICRO_VALUE_COUNT: usize = 32_768;
 const VARINT_COUNT: usize = 262_144;
 const VARINT_REPEAT: usize = 64;
 const STREAM_BENCH_GROUP_ENV: &str = "QUBIT_IO_STREAM_BENCH_GROUP";
-const STREAM_BENCH_GROUP_NAMES: [&str; 3] = [
+const STREAM_BENCH_GROUP_NAMES: [&str; 4] = [
+    "micro_binary_pipeline",
     "prod_binary_pipeline",
     "prod_varints",
     "prod_signed_varints",
@@ -68,6 +70,7 @@ const STREAM_BENCH_GROUP_NAMES: [&str; 3] = [
 
 #[derive(Clone, Copy)]
 enum StreamBenchGroup {
+    MicroBinaryPipeline,
     BinaryPipeline,
     Varints,
     SignedVarints,
@@ -84,6 +87,7 @@ fn selected_stream_bench_group() -> StreamBenchGroup {
     });
 
     match value.as_str() {
+        "micro_binary_pipeline" => StreamBenchGroup::MicroBinaryPipeline,
         "prod_binary_pipeline" => StreamBenchGroup::BinaryPipeline,
         "prod_varints" => StreamBenchGroup::Varints,
         "prod_signed_varints" => StreamBenchGroup::SignedVarints,
@@ -109,6 +113,62 @@ impl BenchmarkFiles {
 
     fn path(&self, name: &str) -> PathBuf {
         self.dir.path().join(name)
+    }
+}
+
+struct ChunkedMemoryInput<'a> {
+    bytes: &'a [u8],
+    position: usize,
+    chunk_size: usize,
+}
+
+impl<'a> ChunkedMemoryInput<'a> {
+    fn new(bytes: &'a [u8], chunk_size: usize) -> Self {
+        Self {
+            bytes,
+            position: 0,
+            chunk_size,
+        }
+    }
+}
+
+impl Read for ChunkedMemoryInput<'_> {
+    fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
+        let remaining = &self.bytes[self.position..];
+        let count = remaining.len().min(output.len()).min(self.chunk_size);
+        output[..count].copy_from_slice(&remaining[..count]);
+        self.position += count;
+        Ok(count)
+    }
+}
+
+struct ChunkedMemoryOutput {
+    bytes: Vec<u8>,
+    chunk_size: usize,
+}
+
+impl ChunkedMemoryOutput {
+    fn new(chunk_size: usize) -> Self {
+        Self {
+            bytes: Vec::new(),
+            chunk_size,
+        }
+    }
+
+    fn into_inner(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+impl Write for ChunkedMemoryOutput {
+    fn write(&mut self, input: &[u8]) -> std::io::Result<usize> {
+        let count = input.len().min(self.chunk_size);
+        self.bytes.extend_from_slice(&input[..count]);
+        Ok(count)
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
     }
 }
 
@@ -224,6 +284,81 @@ fn build_records() -> Vec<Record> {
     (0..BINARY_BATCH as u64)
         .map(|idx| rng.gen_record(idx))
         .collect()
+}
+
+fn build_micro_values() -> Vec<u64> {
+    let mut random = PseudoRng::new(0xFEDC_BA98_7654_3210);
+    (0..MICRO_VALUE_COUNT).map(|_| random.next_u64()).collect()
+}
+
+fn write_micro_values_ext(values: &[u64]) -> Vec<u8> {
+    let mut output = ChunkedMemoryOutput::new(7);
+    for &value in values {
+        output
+            .write_u64_le(value)
+            .expect("extension write should succeed");
+    }
+    output.into_inner()
+}
+
+fn write_micro_values_wrapper(values: &[u64]) -> Vec<u8> {
+    let mut writer =
+        BinaryWriter::<_, LittleEndian>::new(ChunkedMemoryOutput::new(7));
+    for &value in values {
+        writer
+            .write_u64(value)
+            .expect("wrapper write should succeed");
+    }
+    writer.into_inner().into_inner()
+}
+
+fn write_micro_values_buffered(values: &[u64]) -> Vec<u8> {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        ChunkedMemoryOutput::new(7),
+        16,
+    );
+    for &value in values {
+        writer
+            .write_u64(value)
+            .expect("buffered write should succeed");
+    }
+    match writer.into_inner() {
+        Ok(output) => output.into_inner(),
+        Err(_) => panic!("buffered writer should flush"),
+    }
+}
+
+fn read_micro_values_ext(bytes: &[u8]) -> u64 {
+    let mut input = ChunkedMemoryInput::new(bytes, 7);
+    values_digest(
+        (0..MICRO_VALUE_COUNT).map(|_| {
+            input.read_u64_le().expect("extension read should succeed")
+        }),
+    )
+}
+
+fn read_micro_values_wrapper(bytes: &[u8]) -> u64 {
+    let mut reader =
+        BinaryReader::<_, LittleEndian>::new(ChunkedMemoryInput::new(bytes, 7));
+    values_digest(
+        (0..MICRO_VALUE_COUNT)
+            .map(|_| reader.read_u64().expect("wrapper read should succeed")),
+    )
+}
+
+fn read_micro_values_buffered(bytes: &[u8]) -> u64 {
+    let mut reader = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+        ChunkedMemoryInput::new(bytes, 7),
+        16,
+    );
+    values_digest(
+        (0..MICRO_VALUE_COUNT)
+            .map(|_| reader.read_u64().expect("buffered read should succeed")),
+    )
+}
+
+fn values_digest(values: impl Iterator<Item = u64>) -> u64 {
+    values.fold(0, |digest, value| digest ^ value)
 }
 
 #[inline]
@@ -1130,6 +1265,44 @@ fn read_zigzag_buffered_file(path: &Path, fields: &[ZigZagField]) {
     black_box(checksum);
 }
 
+fn bench_micro_binary_pipeline(c: &mut Criterion) {
+    let values = build_micro_values();
+    let ext_bytes = write_micro_values_ext(&values);
+    let wrapper_bytes = write_micro_values_wrapper(&values);
+    let buffered_bytes = write_micro_values_buffered(&values);
+    let expected_digest = values_digest(values.iter().copied());
+
+    assert_eq!(ext_bytes, wrapper_bytes);
+    assert_eq!(ext_bytes, buffered_bytes);
+    assert_eq!(expected_digest, read_micro_values_ext(&ext_bytes));
+    assert_eq!(expected_digest, read_micro_values_wrapper(&ext_bytes));
+    assert_eq!(expected_digest, read_micro_values_buffered(&ext_bytes));
+
+    let bytes_processed = (MICRO_VALUE_COUNT * size_of::<u64>()) as u64;
+    let mut group = c.benchmark_group("micro_binary_pipeline");
+    group.throughput(Throughput::Bytes(bytes_processed));
+
+    group.bench_function("ext_write_u64", |b| {
+        b.iter(|| black_box(write_micro_values_ext(black_box(&values))))
+    });
+    group.bench_function("wrapper_write_u64", |b| {
+        b.iter(|| black_box(write_micro_values_wrapper(black_box(&values))))
+    });
+    group.bench_function("buffered_write_u64", |b| {
+        b.iter(|| black_box(write_micro_values_buffered(black_box(&values))))
+    });
+    group.bench_function("ext_read_u64", |b| {
+        b.iter(|| black_box(read_micro_values_ext(black_box(&ext_bytes))))
+    });
+    group.bench_function("wrapper_read_u64", |b| {
+        b.iter(|| black_box(read_micro_values_wrapper(black_box(&ext_bytes))))
+    });
+    group.bench_function("buffered_read_u64", |b| {
+        b.iter(|| black_box(read_micro_values_buffered(black_box(&ext_bytes))))
+    });
+    group.finish();
+}
+
 fn bench_prod_binary_pipeline(c: &mut Criterion) {
     let records = build_records();
     let files = BenchmarkFiles::new();
@@ -1548,6 +1721,7 @@ fn bench_prod_signed_varints(c: &mut Criterion) {
 
 fn bench_selected_stream_group(c: &mut Criterion) {
     match selected_stream_bench_group() {
+        StreamBenchGroup::MicroBinaryPipeline => bench_micro_binary_pipeline(c),
         StreamBenchGroup::BinaryPipeline => bench_prod_binary_pipeline(c),
         StreamBenchGroup::Varints => bench_prod_varints(c),
         StreamBenchGroup::SignedVarints => bench_prod_signed_varints(c),
