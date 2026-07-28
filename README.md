@@ -101,9 +101,10 @@ with buffered variants. They are generic over `Input` and `Output`; they are not
 defined in terms of `std::io::Read` and `std::io::Write`.
 
 Buffered readers provide `into_parts` to recover the wrapped input together
-with unread prefetched bytes; `into_inner` intentionally discards those unread
-bytes. Buffered writers provide a flushing `into_inner` that returns an
-`IntoInnerError` retaining the complete wrapper when flushing fails.
+with unread prefetched bytes. Buffered writers provide `into_parts` to recover
+the wrapped output together with bytes not yet written. These methods perform
+no I/O: flush first for normal completion, and retain the writer to retry a
+flush failure.
 
 Strict LEB128 methods reject non-canonical encodings. String read methods accept
 a maximum payload length to bound allocation. For persistent formats, prefer

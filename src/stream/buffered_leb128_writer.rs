@@ -6,26 +6,12 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::{Result, SeekFrom};
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u64_len,
-    write_all,
-};
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len, write_all};
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
-use qubit_io::{
-    IntoInnerError,
-    Output,
-    Seekable,
-};
+use qubit_codec_binary::{Leb128Codec, NonStrict};
+use qubit_io::{Buffer, Output, Seekable};
 
 use super::internal::TranscodeEncodeOutputExt;
 
@@ -110,7 +96,7 @@ where
     /// # Returns
     ///
     /// Returns the wrapped writer.
-    #[must_use]
+    #[must_use = "the returned inner writer and pending buffer must be handled"]
     #[inline(always)]
     pub const fn inner(&self) -> &W {
         self.output.inner()
@@ -131,30 +117,20 @@ where
         self.output.inner_mut()
     }
 
-    /// Flushes pending bytes and returns the underlying writer.
+    /// Returns the underlying writer and every encoded byte still pending.
     ///
-    /// If flushing fails, the returned [`IntoInnerError`] retains this entire
-    /// wrapper, including every byte that remains buffered, so callers can
-    /// inspect the error and retry.
+    /// This method performs no I/O. Call [`Self::flush`] first for normal
+    /// completion; a successful flush leaves the returned buffer empty.
+    /// Otherwise, the returned buffer transfers responsibility for pending
+    /// bytes to the caller.
     ///
     /// # Returns
     ///
-    /// Returns the wrapped writer after a successful flush.
-    ///
-    /// # Errors
-    ///
-    /// Returns the I/O error reported while draining or flushing the wrapped
-    /// writer together with the retained wrapper.
-    #[inline]
-    pub fn into_inner(
-        mut self,
-    ) -> std::result::Result<W, IntoInnerError<Self>> {
-        if let Err(error) = self.output.flush() {
-            return Err(IntoInnerError::new(error, self));
-        }
-        let (inner, buffer) = self.output.into_parts();
-        debug_assert!(buffer.is_empty(), "flushed writer retained bytes");
-        Ok(inner)
+    /// Returns the wrapped writer and pending bytes in logical write order.
+    #[must_use = "the returned inner writer and pending buffer must be handled"]
+    #[inline(always)]
+    pub fn into_parts(self) -> (W, Buffer<u8>) {
+        self.output.into_parts()
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 byte length.

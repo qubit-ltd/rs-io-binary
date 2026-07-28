@@ -96,9 +96,9 @@ where
 `Leb128Writer`、`ZigZagReader`、`ZigZagWriter` 及其 buffered 变体。它们以
 `Input` / `Output` 为泛型边界，并不是基于 `std::io::Read` / `Write` 定义。
 
-缓冲 reader 可通过 `into_parts` 同时取回底层输入与尚未消费的预取字节；
-`into_inner` 会明确丢弃这些未读字节。缓冲 writer 的 `into_inner` 会先刷新，
-若刷新失败，则通过 `IntoInnerError` 保留完整 wrapper 供调用方检查或重试。
+缓冲 reader 可通过 `into_parts` 同时取回底层输入与尚未消费的预取字节；缓冲 writer
+可通过 `into_parts` 同时取回底层输出与尚未写出的字节。这些方法不执行 I/O：正常
+完成时先刷新，刷新失败时保留 writer 以便检查或重试。
 
 Strict LEB128 方法会拒绝非 canonical 编码。字符串读取方法要求传入最大
 payload 长度，以限制内存分配。持久化格式应优先使用固定宽度长度字段或

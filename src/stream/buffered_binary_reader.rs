@@ -7,25 +7,12 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::{Result, SeekFrom};
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    ByteOrderSpec,
-    LittleEndian,
-    TranscodeDecodeInput,
-};
+use qubit_codec::{BigEndian, ByteOrder, ByteOrderSpec, LittleEndian, TranscodeDecodeInput};
 use qubit_codec_binary::BinaryCodec;
-use qubit_io::{
-    Buffer,
-    Input,
-    Seekable,
-};
+use qubit_io::{Buffer, Input, Seekable};
 
 use super::internal::TranscodeDecodeInputExt;
 
@@ -141,28 +128,16 @@ where
         self.input.inner_mut()
     }
 
-    /// Consumes this wrapper and returns the underlying reader.
-    ///
-    /// Any unread bytes prefetched into this wrapper are discarded. Use
-    /// [`Self::into_parts`] to recover those bytes.
-    ///
-    /// # Returns
-    ///
-    /// Returns the wrapped reader at its physical stream position.
-    #[must_use]
-    #[inline(always)]
-    pub fn into_inner(self) -> R {
-        let (inner, _) = self.input.into_parts();
-        inner
-    }
-
     /// Consumes this wrapper and preserves its unread buffered bytes.
     ///
     /// # Returns
     ///
     /// Returns the wrapped reader and the buffer whose [`Buffer::readable`]
-    /// slice contains every prefetched byte not yet consumed logically.
+    /// slice contains every prefetched byte not yet consumed logically. To
+    /// continue the same logical stream, consume that slice before reading
+    /// from the returned reader.
     #[inline(always)]
+    #[must_use = "the returned inner reader and unread buffer must be handled"]
     pub fn into_parts(self) -> (R, Buffer<u8>) {
         self.input.into_parts()
     }
@@ -194,66 +169,21 @@ macro_rules! impl_for_order {
         where
             R: Input<Item = u8>,
         {
-            impl_value_read!(
-                $order,
-                read_u8,
-                u8,
-                "Reads an unsigned 8-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i8,
-                i8,
-                "Reads a signed 8-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u16,
-                u16,
-                "Reads an unsigned 16-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u32,
-                u32,
-                "Reads an unsigned 32-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u64,
-                u64,
-                "Reads an unsigned 64-bit integer."
-            );
+            impl_value_read!($order, read_u8, u8, "Reads an unsigned 8-bit integer.");
+            impl_value_read!($order, read_i8, i8, "Reads a signed 8-bit integer.");
+            impl_value_read!($order, read_u16, u16, "Reads an unsigned 16-bit integer.");
+            impl_value_read!($order, read_u32, u32, "Reads an unsigned 32-bit integer.");
+            impl_value_read!($order, read_u64, u64, "Reads an unsigned 64-bit integer.");
             impl_value_read!(
                 $order,
                 read_u128,
                 u128,
                 "Reads an unsigned 128-bit integer."
             );
-            impl_value_read!(
-                $order,
-                read_i16,
-                i16,
-                "Reads a signed 16-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i32,
-                i32,
-                "Reads a signed 32-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i64,
-                i64,
-                "Reads a signed 64-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i128,
-                i128,
-                "Reads a signed 128-bit integer."
-            );
+            impl_value_read!($order, read_i16, i16, "Reads a signed 16-bit integer.");
+            impl_value_read!($order, read_i32, i32, "Reads a signed 32-bit integer.");
+            impl_value_read!($order, read_i64, i64, "Reads a signed 64-bit integer.");
+            impl_value_read!($order, read_i128, i128, "Reads a signed 128-bit integer.");
             impl_value_read!($order, read_f32, f32, "Reads a 32-bit float.");
             impl_value_read!($order, read_f64, f64, "Reads a 64-bit float.");
         }

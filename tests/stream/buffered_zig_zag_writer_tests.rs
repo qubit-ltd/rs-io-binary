@@ -5,21 +5,10 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Cursor, Error, ErrorKind, Write};
 
-use qubit_io::{
-    Output,
-    Seekable,
-};
-use qubit_io_binary::{
-    BufferedZigZagWriter,
-    ZigZagWriteExt,
-};
+use qubit_io::{Output, Seekable};
+use qubit_io_binary::{BufferedZigZagWriter, ZigZagWriteExt};
 
 struct FailingWriter;
 
@@ -74,7 +63,7 @@ fn test_buffered_zig_zag_writer_writes_values_across_buffer_boundaries() {
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_accessors_write_all_seek_and_into_inner() {
+fn test_buffered_zig_zag_writer_accessors_write_all_and_seek() {
     let mut writer = BufferedZigZagWriter::new(Cursor::new(Vec::new()));
 
     assert_eq!(0, writer.inner().position());
@@ -98,33 +87,30 @@ fn test_buffered_zig_zag_writer_accessors_write_all_seek_and_into_inner() {
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_into_inner_flushes_and_recovers_writer() {
+fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushing() {
     let mut writer = BufferedZigZagWriter::new(Cursor::new(Vec::new()));
 
     writer.write_i64(-300).expect("i64 should be buffered");
     assert_eq!(0, writer.inner_mut().position());
 
-    let inner = writer.into_inner().unwrap_or_else(|error| {
-        panic!("writer recovery should succeed: {error}")
-    });
-    assert_eq!(vec![0xD7, 0x04], inner.into_inner());
+    let (inner, pending) = writer.into_parts();
+    assert_eq!(b"\xD7\x04", pending.readable());
+    assert!(inner.into_inner().is_empty());
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_into_inner_retains_flush_failure() {
+fn test_buffered_zig_zag_writer_flush_error_leaves_writer_available_for_retry() {
     let mut writer = BufferedZigZagWriter::with_capacity(FailingWriter, 8);
     writer.write_i64(-300).expect("i64 should be buffered");
 
     let error = writer
-        .into_inner()
-        .err()
-        .expect("conversion should retain a flush failure");
-
-    assert_eq!(ErrorKind::Other, error.error().kind());
-    let mut retained = error.into_inner();
-    let retry_error = retained
         .flush()
-        .expect_err("retained writer should remain retryable");
+        .expect_err("flush should report write failure");
+
+    assert_eq!(ErrorKind::Other, error.kind());
+    let retry_error = writer
+        .flush()
+        .expect_err("writer should remain retryable after a flush failure");
     assert_eq!(ErrorKind::Other, retry_error.kind());
 }
 

@@ -322,10 +322,10 @@ fn write_micro_values_buffered(values: &[u64]) -> Vec<u8> {
             .write_u64(value)
             .expect("buffered write should succeed");
     }
-    match writer.into_inner() {
-        Ok(output) => output.into_inner(),
-        Err(_) => panic!("buffered writer should flush"),
-    }
+    qubit_io::Output::flush(&mut writer).expect("buffered writer should flush");
+    let (output, pending) = writer.into_parts();
+    assert!(pending.is_empty(), "flushed writer retained bytes");
+    output.into_inner()
 }
 
 fn read_micro_values_ext(bytes: &[u8]) -> u64 {
