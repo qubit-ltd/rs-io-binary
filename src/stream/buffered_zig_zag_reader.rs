@@ -7,24 +7,12 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::{Result, SeekFrom};
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeDecodeInput;
-use qubit_codec_binary::{
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Buffer,
-    Input,
-    Seekable,
-};
+use qubit_codec_binary::{Leb128DecodePolicy, NonStrict, Strict, ZigZagCodec};
+use qubit_io::{Buffer, Input, Seekable};
 
 use super::internal::TranscodeDecodeInputExt;
 
@@ -139,13 +127,6 @@ where
     ///
     /// # Returns
     ///
-    /// Returns a mutable reference to the wrapped reader.
-    #[must_use]
-    #[inline(always)]
-    pub fn inner_mut(&mut self) -> &mut R {
-        self.input.inner_mut()
-    }
-
     /// Consumes this wrapper and preserves its unread buffered bytes.
     ///
     /// # Returns
@@ -192,18 +173,8 @@ macro_rules! impl_for_policy {
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
             impl_read_value!($policy, read_i32, i32, "Reads a ZigZag `i32`.");
             impl_read_value!($policy, read_i64, i64, "Reads a ZigZag `i64`.");
-            impl_read_value!(
-                $policy,
-                read_i128,
-                i128,
-                "Reads a ZigZag `i128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_isize,
-                isize,
-                "Reads a ZigZag `isize`."
-            );
+            impl_read_value!($policy, read_i128, i128, "Reads a ZigZag `i128`.");
+            impl_read_value!($policy, read_isize, isize, "Reads a ZigZag `isize`.");
         }
     };
 }

@@ -6,26 +6,12 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::{Result, SeekFrom};
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u64_len,
-    write_all,
-};
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len, write_all};
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
-use qubit_io::{
-    Buffer,
-    Output,
-    Seekable,
-};
+use qubit_codec_binary::{Leb128Codec, NonStrict};
+use qubit_io::{Buffer, Output, Seekable};
 
 use super::internal::TranscodeEncodeOutputExt;
 
@@ -124,13 +110,6 @@ where
     ///
     /// # Returns
     ///
-    /// Returns a mutable reference to the wrapped writer.
-    #[must_use]
-    #[inline(always)]
-    pub fn inner_mut(&mut self) -> &mut W {
-        self.output.inner_mut()
-    }
-
     /// Returns the underlying writer and every encoded byte still pending.
     ///
     /// This method does not call [`Self::flush`] and performs no I/O. Call

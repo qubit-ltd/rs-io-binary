@@ -5,21 +5,10 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Cursor, Error, ErrorKind, Write};
 
-use qubit_io::{
-    Output,
-    Seekable,
-};
-use qubit_io_binary::{
-    BufferedZigZagWriter,
-    ZigZagWriteExt,
-};
+use qubit_io::{Output, Seekable};
+use qubit_io_binary::{BufferedZigZagWriter, ZigZagWriteExt};
 
 struct FailingWriter;
 
@@ -98,12 +87,11 @@ fn test_buffered_zig_zag_writer_accessors_write_all_and_seek() {
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushing()
- {
+fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushing() {
     let mut writer = BufferedZigZagWriter::new(Cursor::new(Vec::new()));
 
     writer.write_i64(-300).expect("i64 should be buffered");
-    assert_eq!(0, writer.inner_mut().position());
+    assert_eq!(0, writer.inner().position());
 
     let (inner, pending) = writer.into_parts();
     assert_eq!(b"\xD7\x04", pending.readable());
@@ -111,8 +99,7 @@ fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushin
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_flush_error_leaves_writer_available_for_retry()
-{
+fn test_buffered_zig_zag_writer_flush_error_leaves_writer_available_for_retry() {
     let mut writer = BufferedZigZagWriter::with_capacity(FailingWriter, 8);
     writer.write_i64(-300).expect("i64 should be buffered");
 

@@ -5,21 +5,10 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Cursor, Error, ErrorKind, Write};
 
-use qubit_io::{
-    Output,
-    Seekable,
-};
-use qubit_io_binary::{
-    BufferedLeb128Writer,
-    Leb128WriteExt,
-};
+use qubit_io::{Output, Seekable};
+use qubit_io_binary::{BufferedLeb128Writer, Leb128WriteExt};
 
 struct FailingWriter;
 
@@ -129,12 +118,11 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_and_string() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_into_parts_returns_pending_bytes_without_flushing()
- {
+fn test_buffered_leb128_writer_into_parts_returns_pending_bytes_without_flushing() {
     let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
 
     writer.write_u64(300).expect("u64 should be buffered");
-    assert_eq!(0, writer.inner_mut().position());
+    assert_eq!(0, writer.inner().position());
 
     let (inner, pending) = writer.into_parts();
     assert_eq!(b"\xAC\x02", pending.readable());
@@ -202,8 +190,7 @@ fn test_buffered_leb128_writer_defers_utf8_string_flush_error() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix()
- {
+fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
     let mut writer = BufferedLeb128Writer::new(Vec::new());
 
     writer
