@@ -7,10 +7,9 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![English Document](https://img.shields.io/badge/Document-English-blue.svg)](README.md)
 
-面向 Rust 的、运行时无关的同步与异步二进制流 I/O。
-
-`qubit-io-binary` 把 `qubit-codec-binary` 的缓冲区 codec 适配到
-`qubit-io` 的流抽象：
+`qubit-io-binary` 让 Rust 应用在既有流上读写结构化二进制协议，而不把协议绑定到
+某种文件类型或异步运行时。它把 `qubit-codec-binary` 的缓冲区 codec 适配到
+`qubit-io` 流抽象：
 
 - 同步扩展基于 `Input<Item = u8>` 与 `Output<Item = u8>`；
 - 异步扩展基于 `AsyncInput<Item = u8>` 与 `AsyncOutput<Item = u8>`；
@@ -28,7 +27,7 @@
 qubit-io-binary = "0.3"
 ```
 
-## 同步示例
+## 快速开始：同步记录
 
 标准库 `Read`、`Write` 实现（包括 `Cursor` 和 `Vec<u8>`）可通过 adapter
 实现 `qubit-io` 抽象。
@@ -54,7 +53,7 @@ assert_eq!(300, input.read_uleb_u64()?);
 # Ok::<(), std::io::Error>(())
 ```
 
-## 异步示例
+## 运行时无关的异步 API
 
 异步方法统一使用 `_async` 后缀，因此一个类型可以同时暴露同步和异步流
 API，而不会产生名字歧义。
@@ -83,7 +82,7 @@ where
 与 `Unpin`。这些操作不具备取消安全性：丢弃尚未完成的读取 future 会保留
 已经消费的字节，丢弃尚未完成的写入 future 会在输出中留下已经写入的前缀。
 
-## API 族
+## 核心能力
 
 | 编码 | 同步 trait | 异步 trait |
 | --- | --- | --- |
@@ -104,13 +103,15 @@ Strict LEB128 方法会拒绝非 canonical 编码。字符串读取方法要求�
 payload 长度，以限制内存分配。持久化格式应优先使用固定宽度长度字段或
 `u64` LEB128 长度，而不是依赖目标平台宽度的 `usize` helper。
 
-## 分层
+## 边界与延伸阅读
 
 - `qubit-codec-binary` 负责缓冲区级二进制算法；
 - `qubit-io` 负责通用同步流和运行时无关的异步流；
 - `qubit-io-binary` 组合两者，不负责文件系统，也不绑定异步运行时。
 
-详细说明见[中文用户指南](doc/user_guide.zh_CN.md)和
+本 crate 适用于既有流上的二进制值，不负责打开文件，也不拥有异步运行时。需要贯穿
+场景教程时，请参阅[中文用户指南](doc/user_guide.zh_CN.md)或
+[English user guide](doc/user_guide.md)；全部公开项目请参阅
 [API 文档](https://docs.rs/qubit-io-binary)。
 
 ## 测试

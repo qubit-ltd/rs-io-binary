@@ -1,163 +1,88 @@
 # Qubit IO Binary User Guide
 
-Use `qubit-io-binary` when a byte stream carries structured binary values. The
-crate deliberately separates three concerns:
+[中文](user_guide.zh_CN.md) · [README](../README.md) ·
+[API reference](https://docs.rs/qubit-io-binary)
 
-- `qubit-codec-binary` encodes and decodes in-memory buffers;
-- `qubit-io` defines synchronous and runtime-neutral asynchronous streams;
-- `qubit-io-binary` drives the codecs over those streams.
+This guide is for Rust applications that read or write structured values on a
+byte stream. It covers `qubit-io-binary` 0.3: a runtime-neutral bridge between
+the buffer codecs in `qubit-codec-binary` and the stream abstractions in
+`qubit-io`. It does not open files, choose a transport, or select an async
+runtime.
 
-It does not open files and does not select an async runtime.
+## Conceptual Model
+
+`qubit-codec-binary` owns binary representations; `qubit-io` supplies generic
+synchronous `Input`/`Output` and asynchronous `AsyncInput`/`AsyncOutput`; this
+crate applies the codecs to those streams.
+
+| Wire representation | Synchronous API | Asynchronous API |
+| --- | --- | --- |
+| Fixed-width scalars | `BinaryReadExt`, `BinaryWriteExt` | `AsyncBinaryReadExt`, `AsyncBinaryWriteExt` |
+| LEB128 | `Leb128ReadExt`, `Leb128WriteExt` | `AsyncLeb128ReadExt`, `AsyncLeb128WriteExt` |
+| ZigZag integers | `ZigZagReadExt`, `ZigZagWriteExt` | `AsyncZigZagReadExt`, `AsyncZigZagWriteExt` |
+| Length-prefixed UTF-8 | `StringReadExt`, `StringWriteExt` | `AsyncStringReadExt`, `AsyncStringWriteExt` |
+
+Use extension traits when an operation only needs one stream call. Use the
+typed reader and writer families when a stream has one enduring byte order or
+decode policy. Their buffered variants preserve unread or unwritten bytes and
+are useful for many small operations.
+
+## Scenario: Write and Read a Small Record
+
+Imagine a file format with a big-endian format marker, a compact unsigned
+record id, and a UTF-8 label whose length is encoded as `u64` LEB128. The
+successful result is the same values after a round trip.
 
 ## Installation
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.2"
+qubit-io-binary = "0.3"
 ```
 
-## Choosing an API
+The examples use `Vec<u8>` and `Cursor`; standard-library byte sources and
+sinks participate through `qubit-io` adapters.
 
-| Data | Synchronous | Asynchronous |
-| --- | --- | --- |
-| Fixed-width integers and floats | `BinaryReadExt`, `BinaryWriteExt` | `AsyncBinaryReadExt`, `AsyncBinaryWriteExt` |
-| Unsigned/signed LEB128 | `Leb128ReadExt`, `Leb128WriteExt` | `AsyncLeb128ReadExt`, `AsyncLeb128WriteExt` |
-| ZigZag signed integers | `ZigZagReadExt`, `ZigZagWriteExt` | `AsyncZigZagReadExt`, `AsyncZigZagWriteExt` |
-| Length-prefixed UTF-8 | `StringReadExt`, `StringWriteExt` | `AsyncStringReadExt`, `AsyncStringWriteExt` |
-
-Synchronous traits extend `Input<Item = u8>` or `Output<Item = u8>`.
-Asynchronous traits extend `AsyncInput<Item = u8>` or
-`AsyncOutput<Item = u8>`. Importing `qubit_io_binary::prelude::*` brings both
-sets into scope.
-
-## Fixed-Width Values
-
-Use runtime byte order when it comes from format metadata:
+## Core Workflow
 
 ```rust
 use std::io::Cursor;
 
 use qubit_codec::ByteOrder;
-use qubit_io_binary::{BinaryReadExt, BinaryWriteExt};
-
-let mut bytes = Vec::new();
-bytes.write_u32(0x0102_0304, ByteOrder::BigEndian)?;
-
-let mut input = Cursor::new(bytes);
-assert_eq!(0x0102_0304, input.read_u32(ByteOrder::BigEndian)?);
-# Ok::<(), std::io::Error>(())
-```
-
-Use `_be` and `_le` methods when the format fixes the byte order:
-
-```rust
-use qubit_io_binary::BinaryWriteExt;
-
-let mut bytes = Vec::new();
-bytes.write_i64_le(-42)?;
-# Ok::<(), std::io::Error>(())
-```
-
-The async layer preserves the same naming and adds `_async`:
-
-```rust
-use qubit_io::{
-    AsyncInput,
-    AsyncOutput,
-};
 use qubit_io_binary::{
-    AsyncBinaryReadExt,
-    AsyncBinaryWriteExt,
-};
-
-async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
-where
-    I: AsyncInput<Item = u8> + Send + Unpin,
-    O: AsyncOutput<Item = u8> + Send + Unpin,
-{
-    let value = input.read_i64_le_async().await?;
-    output.write_i64_le_async(value).await
-}
-```
-
-## LEB128
-
-`uleb` methods encode unsigned integers. `sleb` methods encode signed integers.
-
-```rust
-use std::io::Cursor;
-
-use qubit_io_binary::{
+    BinaryReadExt,
+    BinaryWriteExt,
     Leb128ReadExt,
     Leb128WriteExt,
-};
-
-let mut bytes = Vec::new();
-bytes.write_uleb_u64(300)?;
-bytes.write_sleb_i64(-42)?;
-
-let mut input = Cursor::new(bytes);
-assert_eq!(300, input.read_uleb_u64()?);
-assert_eq!(-42, input.read_sleb_i64()?);
-# Ok::<(), std::io::Error>(())
-```
-
-Normal readers accept any terminating representation that fits the target type.
-Strict methods, such as `read_uleb_u64_strict`, additionally reject
-non-canonical representations. Typed readers select the same behavior with
-`Leb128Reader<R, NonStrict>` or `Leb128Reader<R, Strict>`.
-
-For persistent formats, prefer `u32` or `u64` methods over `usize`; the latter
-changes width with the compilation target.
-
-## ZigZag
-
-ZigZag maps signed values to unsigned LEB128 payloads so values near zero remain
-compact on both sides of zero.
-
-```rust
-use std::io::Cursor;
-
-use qubit_io_binary::{
-    ZigZagReadExt,
-    ZigZagWriteExt,
-};
-
-let mut bytes = Vec::new();
-bytes.write_zig_zag_i32(-15)?;
-
-let mut input = Cursor::new(bytes);
-assert_eq!(-15, input.read_zig_zag_i32()?);
-# Ok::<(), std::io::Error>(())
-```
-
-## Length-Prefixed UTF-8
-
-String helpers write a length followed by an exact UTF-8 payload.
-
-```rust
-use std::io::Cursor;
-
-use qubit_io_binary::{
     StringReadExt,
     StringWriteExt,
 };
 
 let mut bytes = Vec::new();
-bytes.write_utf8_string_uleb_u64("hello")?;
+bytes.write_u32(0x5142_4954, ByteOrder::BigEndian)?;
+bytes.write_uleb_u64(300)?;
+bytes.write_utf8_string_uleb_u64("inventory")?;
 
 let mut input = Cursor::new(bytes);
-assert_eq!("hello", input.read_utf8_string_uleb_u64(16)?);
+assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
+assert_eq!(300, input.read_uleb_u64()?);
+assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
 # Ok::<(), std::io::Error>(())
 ```
 
-Every string read accepts `max_len`. Treat it as an input validation boundary,
-not merely a performance hint. Prefer fixed-width `u16`/`u32` lengths or `u64`
-LEB128 lengths for portable file formats.
+The `max_len` argument is an input-validation boundary: it limits the payload
+length accepted before allocating the returned `String`. Pick it from the file
+format or protocol limit, rather than from currently expected data.
 
-## Typed Synchronous Wrappers
+For fixed byte order, use `_be` and `_le` methods. For example,
+`write_i64_le(-42)` writes a little-endian integer. `uleb` methods handle
+unsigned LEB128, `sleb` methods handle signed LEB128, and ZigZag combines a
+signed mapping with a LEB128 payload for compact values near zero.
 
-Typed wrappers carry configuration when a format uses one dominant encoding:
+## Typed and Buffered Streams
+
+When a format consistently uses one order, a typed wrapper keeps that choice
+in its type:
 
 ```rust
 use std::io::Cursor;
@@ -167,38 +92,68 @@ use qubit_io_binary::{BinaryReader, BinaryWriter};
 
 let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
 writer.write_u16(0x1234)?;
-
 let bytes = writer.into_inner();
+
 let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
 assert_eq!(0x1234, reader.read_u16()?);
 # Ok::<(), std::io::Error>(())
 ```
 
-The wrapper families are:
+`Buffered*Reader::into_parts()` returns the wrapped input and unread prefetched
+bytes. `Buffered*Writer::into_parts()` returns the wrapped output and bytes not
+yet written. Neither method performs I/O: flush a writer first for normal
+completion, and retain it if a flush fails so that it can be retried.
 
-- `BinaryReader` / `BinaryWriter`;
-- `Leb128Reader` / `Leb128Writer`;
-- `ZigZagReader` / `ZigZagWriter`;
-- their `Buffered*` variants.
+## Async Workflow
 
-They are generic over `Input` and `Output`. A standard `Read` or `Write` type is
-usable because `qubit-io` adapts it, not because the wrapper is tied to the
-standard traits.
+Async counterparts add an `_async` suffix. Their futures are `Send`, so the
+stream must implement `Send + Unpin` in addition to the relevant async trait.
 
-Non-buffered wrappers expose direct inner access because they retain no
-prefetched or pending bytes. Buffered wrappers retain state; perform raw
-operations through the wrapper and explicitly flush writers before relying on
-the underlying destination.
+```rust
+use qubit_io::{AsyncInput, AsyncOutput};
+use qubit_io_binary::{AsyncBinaryReadExt, AsyncBinaryWriteExt};
 
-## Pending, Errors, and Cancellation
+async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
+where
+    I: AsyncInput<Item = u8> + Send + Unpin,
+    O: AsyncOutput<Item = u8> + Send + Unpin,
+{
+    let marker = input.read_u32_be_async().await?;
+    output.write_u32_be_async(marker).await
+}
+```
 
-Async methods correctly retain local progress while returning `Poll::Pending`.
-As with most multi-poll extension methods, dropping an operation after the
-underlying stream has made progress may consume part of an input value or write
-part of an output value. Do not cancel and blindly retry a whole binary
-operation unless the underlying transport is transactional or independently
-framed.
+These high-level operations are not cancellation safe. Cancelling a pending
+read can leave part of a value consumed; cancelling a pending write can leave a
+prefix in the output. Retry only when the surrounding transport or framing
+makes that safe.
 
-End-of-stream in the middle of a fixed-width value, length prefix, or payload is
-an `UnexpectedEof`. Codec validation failures remain explicit I/O errors rather
-than silently producing a partial value.
+## Errors and Diagnostics
+
+- A stream ending in the middle of a scalar, prefix, or payload reports
+  `UnexpectedEof`.
+- Malformed codec data, non-canonical data rejected by strict LEB128 methods,
+  invalid UTF-8, and a string length above `max_len` are reported as I/O errors.
+- Strict LEB128 methods reject non-canonical encodings. For persistent or
+  cross-platform formats, prefer fixed-width length fields or `u64` LEB128
+  lengths over target-width `usize` helpers.
+
+## Troubleshooting and Limits
+
+| Symptom | Check first |
+| --- | --- |
+| Values decode incorrectly | Ensure writer and reader use the same byte order and representation. |
+| A string read fails | Verify the chosen length-prefix method and set a compatible `max_len`. |
+| Buffered output is missing | Flush the buffered writer before inspecting the underlying sink. |
+| Retrying async work duplicates data | Treat the operation as partially completed and use framing or a transactional transport. |
+
+The crate is stream-oriented rather than file-oriented, and it does not provide
+a runtime. Import `qubit_io_binary::prelude::*` when bringing all extension
+traits into scope is convenient; import codec and byte-order types from their
+own crates.
+
+## Further Reading
+
+- [README](../README.md) and [中文 README](../README.zh_CN.md)
+- [中文用户指南](user_guide.zh_CN.md)
+- [API reference](https://docs.rs/qubit-io-binary)

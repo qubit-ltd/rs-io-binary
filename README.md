@@ -7,10 +7,9 @@
 [![License](https://img.shields.io/badge/license-Apache%202.0-blue.svg)](LICENSE)
 [![中文文档](https://img.shields.io/badge/文档-中文版-blue.svg)](README.zh_CN.md)
 
-Runtime-neutral synchronous and asynchronous binary stream I/O for Rust.
-
-`qubit-io-binary` adapts the buffer codecs in `qubit-codec-binary` to the
-stream abstractions in `qubit-io`:
+`qubit-io-binary` lets Rust applications read and write a structured binary
+protocol without coupling the protocol to a file type or async runtime. It
+adapts the buffer codecs in `qubit-codec-binary` to `qubit-io` streams:
 
 - synchronous extensions use `Input<Item = u8>` and `Output<Item = u8>`;
 - asynchronous extensions use `AsyncInput<Item = u8>` and
@@ -30,7 +29,7 @@ The core API does not depend on Tokio, `futures-io`, or another executor.
 qubit-io-binary = "0.3"
 ```
 
-## Synchronous Example
+## Quick Start: a Synchronous Record
 
 Standard `Read` and `Write` implementations, including `Cursor` and `Vec<u8>`,
 implement the `qubit-io` abstractions through adapters.
@@ -56,7 +55,7 @@ assert_eq!(300, input.read_uleb_u64()?);
 # Ok::<(), std::io::Error>(())
 ```
 
-## Asynchronous Example
+## Runtime-Neutral Async
 
 Async method names use the `_async` suffix so a type may expose both sync and
 async stream APIs without ambiguity.
@@ -86,7 +85,7 @@ the input or output to implement both `Send` and `Unpin`. These operations are
 not cancellation safe: dropping a pending read retains bytes already consumed,
 and dropping a pending write leaves any already-written prefix in the output.
 
-## API Families
+## What It Provides
 
 | Encoding | Synchronous traits | Asynchronous traits |
 | --- | --- | --- |
@@ -111,14 +110,16 @@ a maximum payload length to bound allocation. For persistent formats, prefer
 fixed-width length fields or `u64` LEB128 lengths over target-width `usize`
 helpers.
 
-## Layering
+## Boundaries and Further Reading
 
 - `qubit-codec-binary` owns buffer-level binary algorithms.
 - `qubit-io` owns generic synchronous and runtime-neutral asynchronous streams.
 - `qubit-io-binary` composes the two without owning files or runtimes.
 
-See the [user guide](doc/user_guide.md) and
-[API reference](https://docs.rs/qubit-io-binary) for details.
+Use this crate for binary values on an existing stream. It does not open files
+or own an async runtime. For a scenario-led tutorial, see the
+[user guide](doc/user_guide.md) or [中文用户指南](doc/user_guide.zh_CN.md); for
+every public item, see the [API reference](https://docs.rs/qubit-io-binary).
 
 ## Testing
 
