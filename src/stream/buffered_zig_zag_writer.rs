@@ -6,12 +6,22 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Result, SeekFrom};
+use std::io::{
+    Result,
+    SeekFrom,
+};
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{NonStrict, ZigZagCodec};
-use qubit_io::{Buffer, Output, Seekable};
+use qubit_codec_binary::{
+    NonStrict,
+    ZigZagCodec,
+};
+use qubit_io::{
+    Buffer,
+    Output,
+    Seekable,
+};
 
 use super::internal::TranscodeEncodeOutputExt;
 

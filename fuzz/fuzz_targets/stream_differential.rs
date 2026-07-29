@@ -35,7 +35,8 @@ const MAX_FUZZ_INPUT_LEN: usize = 4096;
 
 fuzz_target!(|data: &[u8]| {
     let data = &data[..data.len().min(MAX_FUZZ_INPUT_LEN)];
-    let chunk_size = usize::from(data.first().copied().unwrap_or_default() % 8) + 1;
+    let chunk_size =
+        usize::from(data.first().copied().unwrap_or_default() % 8) + 1;
     let payload = data.get(1..).unwrap_or_default();
 
     fuzz_fixed_width(payload, chunk_size);
@@ -50,8 +51,7 @@ fn fuzz_fixed_width(payload: &[u8], chunk_size: usize) {
     let extension_position = extension.position();
 
     let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(
-        payload,
-        chunk_size,
+        payload, chunk_size,
     ));
     let wrapper_result = wrapper.read_u32();
     let wrapper_position = wrapper.into_inner().position();
@@ -64,9 +64,15 @@ fn fuzz_fixed_width(payload: &[u8], chunk_size: usize) {
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
     assert_eq!(extension_position, wrapper_position);
-    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
     assert_eq!(extension_position, buffered_position);
 }
 
@@ -77,8 +83,7 @@ fn fuzz_leb128(payload: &[u8], chunk_size: usize) {
     let extension_position = extension.position();
 
     let mut wrapper = Leb128Reader::<_, NonStrict>::new(ChunkedReader::new(
-        payload,
-        chunk_size,
+        payload, chunk_size,
     ));
     let wrapper_result = wrapper.read_u64();
     let wrapper_position = wrapper.into_inner().position();
@@ -91,9 +96,15 @@ fn fuzz_leb128(payload: &[u8], chunk_size: usize) {
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
     assert_eq!(extension_position, wrapper_position);
-    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
     assert_eq!(extension_position, buffered_position);
 }
 
@@ -104,8 +115,7 @@ fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     let extension_position = extension.position();
 
     let mut wrapper = ZigZagReader::<_, NonStrict>::new(ChunkedReader::new(
-        payload,
-        chunk_size,
+        payload, chunk_size,
     ));
     let wrapper_result = wrapper.read_i64();
     let wrapper_position = wrapper.into_inner().position();
@@ -118,9 +128,15 @@ fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
     assert_eq!(extension_position, wrapper_position);
-    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
     assert_eq!(extension_position, buffered_position);
 }
 
