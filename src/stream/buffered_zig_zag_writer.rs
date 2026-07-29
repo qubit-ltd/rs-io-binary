@@ -129,10 +129,10 @@ where
 
     /// Returns the underlying writer and every encoded byte still pending.
     ///
-    /// This method performs no I/O. Call [`Self::flush`] first for normal
-    /// completion; a successful flush leaves the returned buffer empty.
-    /// Otherwise, the returned buffer transfers responsibility for pending
-    /// bytes to the caller.
+    /// This method does not call [`Self::flush`] and performs no I/O. Call
+    /// [`Self::flush`] first for normal completion; a successful flush leaves
+    /// the returned buffer empty. Otherwise, the returned buffer transfers
+    /// responsibility for pending bytes to the caller.
     ///
     /// # Returns
     ///

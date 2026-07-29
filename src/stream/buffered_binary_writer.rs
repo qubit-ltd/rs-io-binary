@@ -145,10 +145,11 @@ where
 
     /// Returns the underlying writer and every encoded byte still pending.
     ///
-    /// This method performs no I/O. Pending bytes in the returned buffer have
-    /// already been accepted by this writer but have not reached the returned
-    /// writer. To complete a stream normally, call [`Self::flush`] first; a
-    /// successful flush leaves the returned buffer empty.
+    /// This method does not call [`Self::flush`] and performs no I/O. Pending
+    /// bytes in the returned buffer have already been accepted by this writer
+    /// but have not reached the returned writer. To complete a stream normally,
+    /// call [`Self::flush`] first; a successful flush leaves the returned
+    /// buffer empty.
     ///
     /// # Returns
     ///
