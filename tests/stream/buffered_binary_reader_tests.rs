@@ -479,3 +479,22 @@ fn test_buffered_binary_reader_seek_end_discards_buffer_after_success() {
     let mut byte = [0_u8; 1];
     assert_eq!(0, reader.read(&mut byte).expect("reader should be at EOF"));
 }
+
+#[test]
+fn test_buffered_binary_reader_reads_strings_with_fixed_length_prefixes() {
+    let bytes = vec![3, 0, b'f', b'o', b'o', 3, 0, 0, 0, b'b', b'a', b'r'];
+    let mut reader = BufferedBinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
+
+    assert_eq!(
+        "foo",
+        reader
+            .read_string_with_u16_len(3)
+            .expect("u16-prefixed string should be read")
+    );
+    assert_eq!(
+        "bar",
+        reader
+            .read_string_with_u32_len(3)
+            .expect("u32-prefixed string should be read")
+    );
+}

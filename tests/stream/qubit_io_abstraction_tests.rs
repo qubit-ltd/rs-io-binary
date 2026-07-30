@@ -134,6 +134,22 @@ fn buffered_binary_writer_accepts_output_without_std_write() {
 }
 
 #[test]
+fn buffered_wrappers_support_fallible_capacity_allocation() {
+    BufferedBinaryReader::<_, BigEndian>::try_with_capacity(QubitInput::new(vec![]), 1)
+        .expect("binary reader buffer should allocate");
+    BufferedBinaryWriter::<_, BigEndian>::try_with_capacity(QubitOutput::default(), 1)
+        .expect("binary writer buffer should allocate");
+    BufferedLeb128Reader::<_, NonStrict>::try_with_capacity(QubitInput::new(vec![]), 1)
+        .expect("LEB128 reader buffer should allocate");
+    BufferedLeb128Writer::try_with_capacity(QubitOutput::default(), 1)
+        .expect("LEB128 writer buffer should allocate");
+    BufferedZigZagReader::<_, NonStrict>::try_with_capacity(QubitInput::new(vec![]), 1)
+        .expect("ZigZag reader buffer should allocate");
+    BufferedZigZagWriter::try_with_capacity(QubitOutput::default(), 1)
+        .expect("ZigZag writer buffer should allocate");
+}
+
+#[test]
 fn leb128_readers_accept_input_without_std_read() {
     let mut reader =
         Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));

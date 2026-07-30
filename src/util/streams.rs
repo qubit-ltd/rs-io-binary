@@ -613,6 +613,6 @@ pub(crate) fn length_exceeded_error(len: usize, max_len: usize) -> Error {
 pub(crate) fn invalid_utf8_error(error: FromUtf8Error) -> Error {
     Error::new(
         ErrorKind::InvalidData,
-        format!("length-prefixed string is not valid UTF-8: {error}"),
+        error,
     )
 }

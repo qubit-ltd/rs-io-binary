@@ -6,7 +6,7 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Result, SeekFrom};
+use std::{collections::TryReserveError, io::{Result, SeekFrom}};
 
 use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len, write_all};
 use qubit_codec::TranscodeEncodeOutput;
@@ -89,6 +89,25 @@ where
         }
     }
 
+    /// Tries to create a buffered LEB128 writer with at least `capacity` bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an allocation error when the requested buffer cannot be
+    /// allocated.
+    #[inline]
+    pub fn try_with_capacity(
+        inner: W,
+        capacity: usize,
+    ) -> std::result::Result<Self, TryReserveError> {
+        Ok(Self {
+            output: TranscodeEncodeOutput::try_with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            )?,
+        })
+    }
+
     /// Returns a shared reference to the underlying writer.
     ///
     /// Pending bytes may still be held in this wrapper's internal buffer.
@@ -96,7 +115,7 @@ where
     /// # Returns
     ///
     /// Returns the wrapped writer.
-    #[must_use = "the returned inner writer and pending buffer must be handled"]
+    #[must_use]
     #[inline(always)]
     pub const fn inner(&self) -> &W {
         self.output.inner()

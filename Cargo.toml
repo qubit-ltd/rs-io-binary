@@ -19,7 +19,8 @@ include = [
     "/README.zh_CN.md",
     "/RUST_CODING_STYLE.md",
     "/RUST_CODING_STYLE.zh_CN.md",
-    "/doc/**/user_guide*.md",
+ "/doc/**/user_guide*.md",
+ "/benches/**",
     "/examples/**",
     "/resources/**",
     "/src/**",
@@ -31,7 +32,7 @@ name = "qubit_io_binary"
 doctest = true
 
 [dependencies]
-qubit-codec = { path = "../rs-codec", version = "0.11.0", features = ["io"] }
+qubit-codec = { path = "../rs-codec", version = "0.11", features = ["io"] }
 qubit-codec-binary = { path = "../rs-codec-binary", version = "0.3.0" }
 qubit-io = { path = "../rs-io", version = "0.14.0" }
 
@@ -43,7 +44,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)'] }
 
 [dev-dependencies]
 criterion = { version = "0.8", default-features = false }
-qubit-codec = { path = "../rs-codec", version = "0.11.0", features = ["io"] }
+qubit-codec = { path = "../rs-codec", version = "0.11", features = ["io"] }
 tempfile = "3.27"
 
 [[bench]]

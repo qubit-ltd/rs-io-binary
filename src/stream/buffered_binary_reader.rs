@@ -7,9 +7,14 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{Result, SeekFrom};
+use std::{collections::TryReserveError, io::{Result, SeekFrom}};
 
-use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+#[cfg(not(any(
+    target_pointer_width = "32",
+    target_pointer_width = "64"
+)))]
+use crate::util::usize_from_u32_len;
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, read_utf8_payload};
 use qubit_codec::{BigEndian, ByteOrder, ByteOrderSpec, LittleEndian, TranscodeDecodeInput};
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::{Buffer, Input, Seekable};
@@ -87,6 +92,26 @@ where
         }
     }
 
+    /// Tries to create a buffered binary reader with at least `capacity` bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an allocation error when the requested buffer cannot be
+    /// allocated.
+    #[inline]
+    pub fn try_with_capacity(
+        inner: R,
+        capacity: usize,
+    ) -> std::result::Result<Self, TryReserveError> {
+        Ok(Self {
+            input: TranscodeDecodeInput::try_with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            )?,
+            marker: PhantomData,
+        })
+    }
+
     /// Returns the byte order selected by this reader.
     ///
     /// # Returns
@@ -112,15 +137,6 @@ where
         self.input.inner()
     }
 
-    /// Returns mutable access to the underlying reader.
-    ///
-    /// Direct reads from the returned reader bypass unread bytes already held
-    /// by this wrapper and can desynchronize subsequent buffered reads. Use
-    /// [`Self::into_parts`] when ownership and unread bytes must be recovered
-    /// together.
-    ///
-    /// # Returns
-    ///
     /// Consumes this wrapper and preserves its unread buffered bytes.
     ///
     /// # Returns
@@ -179,6 +195,33 @@ macro_rules! impl_for_order {
             impl_value_read!($order, read_i128, i128, "Reads a signed 128-bit integer.");
             impl_value_read!($order, read_f32, f32, "Reads a 32-bit float.");
             impl_value_read!($order, read_f64, f64, "Reads a 64-bit float.");
+
+            /// Reads a UTF-8 string prefixed by a `u16` byte length.
+            ///
+            /// # Errors
+            ///
+            /// Returns an input error, or [`std::io::ErrorKind::InvalidData`]
+            /// when the byte length exceeds `max_len` or the payload is not
+            /// valid UTF-8.
+            pub fn read_string_with_u16_len(&mut self, max_len: usize) -> Result<String> {
+                let len = usize::from(self.read_u16()?);
+                read_utf8_payload(self, len, max_len)
+            }
+
+            /// Reads a UTF-8 string prefixed by a `u32` byte length.
+            ///
+            /// # Errors
+            ///
+            /// Returns an input error, or [`std::io::ErrorKind::InvalidData`]
+            /// when the byte length does not fit `usize`, exceeds `max_len`,
+            /// or the payload is not valid UTF-8.
+            pub fn read_string_with_u32_len(&mut self, max_len: usize) -> Result<String> {
+                #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+                let len = self.read_u32()? as usize;
+                #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+                let len = usize_from_u32_len(self.read_u32()?)?;
+                read_utf8_payload(self, len, max_len)
+            }
         }
     };
 }

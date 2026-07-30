@@ -664,3 +664,21 @@ fn test_buffered_binary_writer_drops_flushed_prefix_after_error() {
 
     assert_eq!([4, 3, 2, 1], output.borrow().as_slice());
 }
+
+#[test]
+fn test_buffered_binary_writer_writes_strings_with_fixed_length_prefixes() {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(Vec::new());
+
+    writer
+        .write_string_with_u16_len("foo")
+        .expect("u16-prefixed string should be written");
+    writer
+        .write_string_with_u32_len("bar")
+        .expect("u32-prefixed string should be written");
+
+    writer.flush().expect("buffered writer should flush");
+    assert_eq!(
+        vec![3, 0, b'f', b'o', b'o', 3, 0, 0, 0, b'b', b'a', b'r'],
+        writer.inner().as_slice(),
+    );
+}

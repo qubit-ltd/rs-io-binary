@@ -7,9 +7,9 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{Result, SeekFrom};
+use std::{collections::TryReserveError, io::{Result, SeekFrom}};
 
-use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u16_len, checked_u32_len, write_all};
 use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec::{BigEndian, ByteOrder, ByteOrderSpec, LittleEndian};
 use qubit_codec_binary::BinaryCodec;
@@ -92,12 +92,32 @@ where
         }
     }
 
+    /// Tries to create a buffered binary writer with at least `capacity` bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an allocation error when the requested buffer cannot be
+    /// allocated.
+    #[inline]
+    pub fn try_with_capacity(
+        inner: W,
+        capacity: usize,
+    ) -> std::result::Result<Self, TryReserveError> {
+        Ok(Self {
+            output: TranscodeEncodeOutput::try_with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            )?,
+            marker: PhantomData,
+        })
+    }
+
     /// Returns the byte order selected by this writer.
     ///
     /// # Returns
     ///
     /// Returns the compile-time byte order as a runtime value.
-    #[must_use = "the returned inner writer and pending buffer must be handled"]
+    #[must_use]
     #[inline(always)]
     pub const fn byte_order(&self) -> ByteOrder {
         O::ORDER
@@ -116,16 +136,6 @@ where
         self.output.inner()
     }
 
-    /// Returns mutable access to the underlying writer.
-    ///
-    /// Direct writes through the returned writer bypass pending bytes in this
-    /// wrapper and can reorder the physical byte stream. Flush this wrapper
-    /// before using the returned writer directly.
-    ///
-    /// # Returns
-    ///
-    /// Returns the underlying writer and every encoded byte still pending.
-    ///
     /// This method does not call [`Self::flush`] and performs no I/O. Pending
     /// bytes in the returned buffer have already been accepted by this writer
     /// but have not reached the returned writer. To complete a stream normally,
@@ -190,6 +200,28 @@ macro_rules! impl_for_order {
             impl_value_write!($order, write_i128, i128, "Writes a signed 128-bit integer.");
             impl_value_write!($order, write_f32, f32, "Writes a 32-bit float.");
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
+
+            /// Writes a UTF-8 string prefixed by a `u16` byte length.
+            ///
+            /// # Errors
+            ///
+            /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8
+            /// byte length does not fit `u16`, or an output error.
+            pub fn write_string_with_u16_len(&mut self, value: &str) -> Result<()> {
+                self.write_u16(checked_u16_len(value.len())?)?;
+                write_all(self, value.as_bytes())
+            }
+
+            /// Writes a UTF-8 string prefixed by a `u32` byte length.
+            ///
+            /// # Errors
+            ///
+            /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8
+            /// byte length does not fit `u32`, or an output error.
+            pub fn write_string_with_u32_len(&mut self, value: &str) -> Result<()> {
+                self.write_u32(checked_u32_len(value.len())?)?;
+                write_all(self, value.as_bytes())
+            }
         }
     };
 }

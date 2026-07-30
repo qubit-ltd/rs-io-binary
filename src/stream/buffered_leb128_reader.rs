@@ -7,7 +7,7 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{Result, SeekFrom};
+use std::{collections::TryReserveError, io::{Result, SeekFrom}};
 
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
@@ -93,6 +93,26 @@ where
             ),
             marker: PhantomData,
         }
+    }
+
+    /// Tries to create a buffered LEB128 reader with at least `capacity` bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an allocation error when the requested buffer cannot be
+    /// allocated.
+    #[inline]
+    pub fn try_with_capacity(
+        inner: R,
+        capacity: usize,
+    ) -> std::result::Result<Self, TryReserveError> {
+        Ok(Self {
+            input: TranscodeDecodeInput::try_with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            )?,
+            marker: PhantomData,
+        })
     }
 
     /// Returns whether this reader rejects non-canonical encodings.

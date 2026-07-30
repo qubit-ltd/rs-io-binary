@@ -7,7 +7,7 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{Result, SeekFrom};
+use std::{collections::TryReserveError, io::{Result, SeekFrom}};
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeDecodeInput;
@@ -91,6 +91,26 @@ where
             ),
             marker: PhantomData,
         }
+    }
+
+    /// Tries to create a buffered ZigZag reader with at least `capacity` bytes.
+    ///
+    /// # Errors
+    ///
+    /// Returns an allocation error when the requested buffer cannot be
+    /// allocated.
+    #[inline]
+    pub fn try_with_capacity(
+        inner: R,
+        capacity: usize,
+    ) -> std::result::Result<Self, TryReserveError> {
+        Ok(Self {
+            input: TranscodeDecodeInput::try_with_capacity(
+                inner,
+                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
+            )?,
+            marker: PhantomData,
+        })
     }
 
     /// Returns whether this reader rejects non-canonical LEB128 encodings.

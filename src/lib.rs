@@ -16,7 +16,7 @@
 //! the same codec implementations for fixed-width values, LEB128, ZigZag, and
 //! length-prefixed UTF-8 strings.
 //!
-//! This crate combines `qubit-io-binary` stream helpers with
+//! This crate combines `qubit-io` stream helpers with
 //! `qubit-codec-binary` buffer codecs to provide binary reader and writer
 //! extension traits and wrapper types.
 //!
