@@ -17,7 +17,7 @@ use std::io::{
 
 use libfuzzer_sys::fuzz_target;
 use qubit_codec::LittleEndian;
-use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::{NonStrict, Strict};
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryReader,
@@ -26,6 +26,9 @@ use qubit_io_binary::{
     BufferedZigZagReader,
     Leb128ReadExt,
     Leb128Reader,
+    Leb128WriteExt,
+    StringReadExt,
+    StringWriteExt,
     ZigZagReadExt,
     ZigZagReader,
 };
@@ -41,7 +44,9 @@ fuzz_target!(|data: &[u8]| {
 
     fuzz_fixed_width(payload, chunk_size);
     fuzz_leb128(payload, chunk_size);
+    fuzz_strict_leb128(payload, chunk_size);
     fuzz_zig_zag(payload, chunk_size);
+    fuzz_string(payload, chunk_size);
 });
 
 /// Compares fixed-width extension and wrapper readers across short reads.
@@ -74,6 +79,65 @@ fn fuzz_fixed_width(payload: &[u8], chunk_size: usize) {
         result_signature(&buffered_result)
     );
     assert_eq!(extension_position, buffered_position);
+}
+
+/// Checks canonical LEB128 values through the strict public reader APIs.
+fn fuzz_strict_leb128(payload: &[u8], chunk_size: usize) {
+    let mut bytes = [0_u8; 8];
+    let count = payload.len().min(bytes.len());
+    bytes[..count].copy_from_slice(&payload[..count]);
+    let value = u64::from_le_bytes(bytes);
+    let mut encoded = Vec::new();
+    encoded.write_uleb_u64(value).expect("LEB128 value should encode");
+
+    let mut extension = ChunkedReader::new(&encoded, chunk_size);
+    let extension_result = extension.read_uleb_u64_strict();
+    let mut wrapper = Leb128Reader::<_, Strict>::new(ChunkedReader::new(&encoded, chunk_size));
+    let wrapper_result = wrapper.read_u64();
+    let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        ChunkedReader::new(&encoded, chunk_size),
+        16,
+    );
+    let buffered_result = buffered.read_u64();
+
+    assert_eq!(Ok(value), result_signature(&extension_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+}
+
+/// Checks fixed-length UTF-8 string framing through all synchronous readers.
+fn fuzz_string(payload: &[u8], chunk_size: usize) {
+    let value = String::from_utf8_lossy(payload);
+    let mut encoded = Vec::new();
+    encoded
+        .write_string_with_u16_len(&value, qubit_codec::ByteOrder::LittleEndian)
+        .expect("UTF-8 string should encode");
+
+    let mut extension = ChunkedReader::new(&encoded, chunk_size);
+    let extension_result = extension
+        .read_string_with_u16_len(qubit_codec::ByteOrder::LittleEndian, MAX_FUZZ_INPUT_LEN)
+        .map(|text| text.into_bytes());
+    let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
+    let wrapper_result = wrapper
+        .read_string_with_u16_len(MAX_FUZZ_INPUT_LEN)
+        .map(|text| text.into_bytes());
+    let mut buffered = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+        ChunkedReader::new(&encoded, chunk_size),
+        16,
+    );
+    let buffered_result = buffered
+        .read_string_with_u16_len(MAX_FUZZ_INPUT_LEN)
+        .map(|text| text.into_bytes());
+
+    assert_eq!(Ok(value.as_bytes().to_vec()), string_result_signature(&extension_result));
+    assert_eq!(
+        string_result_signature(&extension_result),
+        string_result_signature(&wrapper_result)
+    );
+    assert_eq!(
+        string_result_signature(&extension_result),
+        string_result_signature(&buffered_result)
+    );
 }
 
 /// Compares unsigned LEB128 extension and wrapper readers across short reads.
@@ -147,6 +211,14 @@ where
 {
     match result {
         Ok(value) => Ok(*value),
+        Err(error) => Err(error.kind()),
+    }
+}
+
+/// Converts owned string-read outcomes into assertion-friendly signatures.
+fn string_result_signature(result: &io::Result<Vec<u8>>) -> Result<Vec<u8>, ErrorKind> {
+    match result {
+        Ok(value) => Ok(value.clone()),
         Err(error) => Err(error.kind()),
     }
 }
