@@ -14,17 +14,11 @@ use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
 
 use crate::util::read_utf8_payload_async;
-#[cfg(not(any(
-    target_pointer_width = "32",
-    target_pointer_width = "64"
-)))]
+#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::{
-    AsyncBinaryReadExt,
-    AsyncLeb128ReadExt,
-};
+use crate::{AsyncBinaryReadExt, AsyncLeb128ReadExt};
 
 /// Future-based length-prefixed UTF-8 reads.
 ///
@@ -228,7 +222,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_u16_async(
+    fn read_string_with_u16_len_async(
         &mut self,
         byte_order: ByteOrder,
         max_len: usize,
@@ -262,7 +256,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_u16_be_async(
+    fn read_string_with_u16_len_be_async(
         &mut self,
         max_len: usize,
     ) -> impl Future<Output = Result<String>> + Send + '_
@@ -295,7 +289,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_u16_le_async(
+    fn read_string_with_u16_len_le_async(
         &mut self,
         max_len: usize,
     ) -> impl Future<Output = Result<String>> + Send + '_
@@ -329,7 +323,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_u32_async(
+    fn read_string_with_u32_len_async(
         &mut self,
         byte_order: ByteOrder,
         max_len: usize,
@@ -339,15 +333,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     {
         async move {
             let len = self.read_u32_async(byte_order).await?;
-            #[cfg(any(
-                target_pointer_width = "32",
-                target_pointer_width = "64"
-            ))]
+            #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
             let len = len as usize;
-            #[cfg(not(any(
-                target_pointer_width = "32",
-                target_pointer_width = "64"
-            )))]
+            #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
             let len = usize_from_u32_len(len)?;
             read_utf8_payload_async(self, len, max_len).await
         }
@@ -373,7 +361,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_u32_be_async(
+    fn read_string_with_u32_len_be_async(
         &mut self,
         max_len: usize,
     ) -> impl Future<Output = Result<String>> + Send + '_
@@ -382,15 +370,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     {
         async move {
             let len = self.read_u32_be_async().await?;
-            #[cfg(any(
-                target_pointer_width = "32",
-                target_pointer_width = "64"
-            ))]
+            #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
             let len = len as usize;
-            #[cfg(not(any(
-                target_pointer_width = "32",
-                target_pointer_width = "64"
-            )))]
+            #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
             let len = usize_from_u32_len(len)?;
             read_utf8_payload_async(self, len, max_len).await
         }
@@ -416,7 +398,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_u32_le_async(
+    fn read_string_with_u32_len_le_async(
         &mut self,
         max_len: usize,
     ) -> impl Future<Output = Result<String>> + Send + '_
@@ -425,15 +407,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     {
         async move {
             let len = self.read_u32_le_async().await?;
-            #[cfg(any(
-                target_pointer_width = "32",
-                target_pointer_width = "64"
-            ))]
+            #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
             let len = len as usize;
-            #[cfg(not(any(
-                target_pointer_width = "32",
-                target_pointer_width = "64"
-            )))]
+            #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
             let len = usize_from_u32_len(len)?;
             read_utf8_payload_async(self, len, max_len).await
         }

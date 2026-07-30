@@ -13,20 +13,8 @@
 //! `qubit-codec` or `qubit-codec-binary` crate.
 
 pub use crate::{
-    AsyncBinaryReadExt,
-    AsyncBinaryWriteExt,
-    AsyncLeb128ReadExt,
-    AsyncLeb128WriteExt,
-    AsyncStringReadExt,
-    AsyncStringWriteExt,
-    AsyncZigZagReadExt,
-    AsyncZigZagWriteExt,
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagWriteExt,
+    AsyncBinaryReadExt, AsyncBinaryWriteExt, AsyncLeb128ReadExt, AsyncLeb128WriteExt,
+    AsyncStringReadExt, AsyncStringWriteExt, AsyncZigZagReadExt, AsyncZigZagWriteExt,
+    BinaryReadExt, BinaryWriteExt, Leb128ReadExt, Leb128WriteExt, StringReadExt, StringWriteExt,
+    ZigZagReadExt, ZigZagWriteExt,
 };

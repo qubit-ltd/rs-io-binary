@@ -5,20 +5,10 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::{Cursor, ErrorKind};
 
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    LittleEndian,
-};
-use qubit_io::{
-    Input,
-    Seekable,
-};
+use qubit_codec::{BigEndian, ByteOrder, LittleEndian};
+use qubit_io::{Input, Seekable};
 use qubit_io_binary::BinaryReader;
 
 fn push_be_values(output: &mut Vec<u8>) {
@@ -28,15 +18,11 @@ fn push_be_values(output: &mut Vec<u8>) {
     output.extend_from_slice(&0x1234_u16.to_be_bytes());
     output.extend_from_slice(&0x1234_5678_u32.to_be_bytes());
     output.extend_from_slice(&0x0123_4567_89ab_cdef_u64.to_be_bytes());
-    output.extend_from_slice(
-        &0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_be_bytes(),
-    );
+    output.extend_from_slice(&0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_be_bytes());
     output.extend_from_slice(&(-0x1234_i16).to_be_bytes());
     output.extend_from_slice(&(-0x0123_4567_i32).to_be_bytes());
     output.extend_from_slice(&(-0x0123_4567_89ab_cdef_i64).to_be_bytes());
-    output.extend_from_slice(
-        &(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_be_bytes(),
-    );
+    output.extend_from_slice(&(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_be_bytes());
     output.extend_from_slice(&12.5_f32.to_bits().to_be_bytes());
     output.extend_from_slice(&(-25.25_f64).to_bits().to_be_bytes());
     output.extend_from_slice(&2_u16.to_be_bytes());
@@ -52,15 +38,11 @@ fn push_le_values(output: &mut Vec<u8>) {
     output.extend_from_slice(&0x1234_u16.to_le_bytes());
     output.extend_from_slice(&0x1234_5678_u32.to_le_bytes());
     output.extend_from_slice(&0x0123_4567_89ab_cdef_u64.to_le_bytes());
-    output.extend_from_slice(
-        &0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_le_bytes(),
-    );
+    output.extend_from_slice(&0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_le_bytes());
     output.extend_from_slice(&(-0x1234_i16).to_le_bytes());
     output.extend_from_slice(&(-0x0123_4567_i32).to_le_bytes());
     output.extend_from_slice(&(-0x0123_4567_89ab_cdef_i64).to_le_bytes());
-    output.extend_from_slice(
-        &(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_le_bytes(),
-    );
+    output.extend_from_slice(&(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_le_bytes());
     output.extend_from_slice(&12.5_f32.to_bits().to_le_bytes());
     output.extend_from_slice(&(-25.25_f64).to_bits().to_le_bytes());
     output.extend_from_slice(&2_u16.to_le_bytes());
@@ -106,13 +88,13 @@ fn test_binary_reader_reads_all_big_endian_methods() {
     assert_eq!(
         "hi",
         reader
-            .read_utf8_string_u16(usize::MAX)
+            .read_string_with_u16_len(usize::MAX)
             .expect("u16 string should be read")
     );
     assert_eq!(
         "ok",
         reader
-            .read_utf8_string_u32(usize::MAX)
+            .read_string_with_u32_len(usize::MAX)
             .expect("u32 string should be read")
     );
 }
@@ -157,13 +139,13 @@ fn test_binary_reader_reads_little_endian_and_exposes_accessors() {
     assert_eq!(
         "hi",
         reader
-            .read_utf8_string_u16(usize::MAX)
+            .read_string_with_u16_len(usize::MAX)
             .expect("u16 string should be read")
     );
     assert_eq!(
         "ok",
         reader
-            .read_utf8_string_u32(usize::MAX)
+            .read_string_with_u32_len(usize::MAX)
             .expect("u32 string should be read")
     );
     assert_eq!(len, reader.into_inner().position());
@@ -180,24 +162,21 @@ fn test_binary_reader_reports_read_and_utf8_errors() {
             .kind()
     );
 
-    let mut reader = BinaryReader::<_, BigEndian>::new(Cursor::new(vec![
-        0x00, 0x02, 0xff, 0xff,
-    ]));
+    let mut reader = BinaryReader::<_, BigEndian>::new(Cursor::new(vec![0x00, 0x02, 0xff, 0xff]));
     assert_eq!(
         ErrorKind::InvalidData,
         reader
-            .read_utf8_string_u16(usize::MAX)
+            .read_string_with_u16_len(usize::MAX)
             .expect_err("invalid UTF-8 should fail")
             .kind()
     );
 
-    let mut reader = BinaryReader::<_, BigEndian>::new(Cursor::new(vec![
-        0x00, 0x03, b'a', b'b', b'c',
-    ]));
+    let mut reader =
+        BinaryReader::<_, BigEndian>::new(Cursor::new(vec![0x00, 0x03, b'a', b'b', b'c']));
     assert_eq!(
         ErrorKind::InvalidData,
         reader
-            .read_utf8_string_u16(2)
+            .read_string_with_u16_len(2)
             .expect_err("oversized u16 string should fail")
             .kind()
     );
@@ -208,7 +187,7 @@ fn test_binary_reader_reports_read_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         reader
-            .read_utf8_string_u32(2)
+            .read_string_with_u32_len(2)
             .expect_err("oversized u32 string should fail")
             .kind()
     );
@@ -216,8 +195,7 @@ fn test_binary_reader_reports_read_and_utf8_errors() {
 
 #[test]
 fn test_binary_reader_reports_truncated_scalar_errors_for_all_methods() {
-    let mut reader =
-        BinaryReader::<_, LittleEndian>::new(Cursor::new(Vec::new()));
+    let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(Vec::new()));
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader.read_u8().expect_err("u8 should fail").kind()
@@ -270,10 +248,9 @@ fn test_binary_reader_reports_truncated_scalar_errors_for_all_methods() {
 
 #[test]
 fn test_binary_reader_read_and_seek_delegate_to_inner_reader() {
-    let mut reader = qubit_io_binary::BinaryReader::<
-        _,
-        qubit_codec::LittleEndian,
-    >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
+    let mut reader = qubit_io_binary::BinaryReader::<_, qubit_codec::LittleEndian>::new(
+        std::io::Cursor::new(vec![1, 2, 3, 4]),
+    );
 
     Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))
         .expect("seeking through BinaryReader should succeed");

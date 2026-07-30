@@ -11,16 +11,10 @@ use std::task::Poll;
 
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
-use qubit_io_binary::{
-    AsyncBinaryReadExt,
-    BinaryWriteExt,
-};
+use qubit_io_binary::{AsyncBinaryReadExt, BinaryWriteExt};
 
 use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput,
-    assert_send,
-    complete,
-    poll_once,
+    ChunkedAsyncInput, assert_send, complete, poll_once,
 };
 
 #[allow(dead_code)]
@@ -136,8 +130,7 @@ fn async_binary_read_covers_scalars_and_byte_orders() {
 
 #[test]
 fn dropping_binary_read_future_retains_consumed_input() {
-    let mut input =
-        ChunkedAsyncInput::starts_ready(vec![0x12, 0x34, 0x56, 0x78]);
+    let mut input = ChunkedAsyncInput::starts_ready(vec![0x12, 0x34, 0x56, 0x78]);
 
     assert!(matches!(
         poll_once(input.read_u32_be_async()),
@@ -151,8 +144,7 @@ fn dropping_binary_read_future_retains_consumed_input() {
 fn async_binary_read_reports_truncated_values() {
     let mut input = ChunkedAsyncInput::new(vec![0x12]);
 
-    let error = complete(input.read_u32_be_async())
-        .expect_err("truncated scalar should fail");
+    let error = complete(input.read_u32_be_async()).expect_err("truncated scalar should fail");
 
     assert_eq!(ErrorKind::UnexpectedEof, error.kind());
 }

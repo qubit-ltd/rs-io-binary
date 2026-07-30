@@ -6,18 +6,14 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::{Cursor, ErrorKind};
 
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::BufferedLeb128Reader;
 
 #[test]
 fn test_stream_codec_decode_error_maps_incomplete_to_unexpected_eof() {
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
 
     let error = reader
         .read_u64()
@@ -28,10 +24,7 @@ fn test_stream_codec_decode_error_maps_incomplete_to_unexpected_eof() {
 
 #[test]
 fn test_stream_codec_decode_error_maps_invalid_to_invalid_data() {
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
-            0x80, 0x80, 0x80,
-        ]));
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80, 0x80, 0x80]));
 
     let error = reader
         .read_u16()

@@ -5,20 +5,10 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::{Cursor, ErrorKind};
 
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    LittleEndian,
-};
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_codec::{BigEndian, ByteOrder, LittleEndian};
+use qubit_io::{Output, Seekable};
 use qubit_io_binary::BinaryWriter;
 
 #[test]
@@ -26,8 +16,7 @@ fn test_binary_writer_writes_all_big_endian_methods() {
     let mut writer = BinaryWriter::<_, BigEndian>::new(Vec::new());
 
     assert_eq!(ByteOrder::BigEndian, writer.byte_order());
-    Output::write_fully(&mut writer, &[0xaa, 0xbb])
-        .expect("bytes should be written");
+    Output::write_fully(&mut writer, &[0xaa, 0xbb]).expect("bytes should be written");
     writer.write_u8(0x12).expect("u8 should be written");
     writer.write_i8(-2).expect("i8 should be written");
     writer.write_u16(0x1234).expect("u16 should be written");
@@ -53,10 +42,10 @@ fn test_binary_writer_writes_all_big_endian_methods() {
     writer.write_f32(12.5).expect("f32 should be written");
     writer.write_f64(-25.25).expect("f64 should be written");
     writer
-        .write_utf8_string_u16("hi")
+        .write_string_with_u16_len("hi")
         .expect("u16 string should be written");
     writer
-        .write_utf8_string_u32("ok")
+        .write_string_with_u32_len("ok")
         .expect("u32 string should be written");
 
     assert!(!writer.into_inner().is_empty());
@@ -64,8 +53,7 @@ fn test_binary_writer_writes_all_big_endian_methods() {
 
 #[test]
 fn test_binary_writer_writes_little_endian_and_exposes_accessors() {
-    let mut writer =
-        BinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
+    let mut writer = BinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
     assert_eq!(0, writer.inner().position());
@@ -95,10 +83,10 @@ fn test_binary_writer_writes_little_endian_and_exposes_accessors() {
     writer.write_f32(12.5).expect("f32 should be written");
     writer.write_f64(-25.25).expect("f64 should be written");
     writer
-        .write_utf8_string_u16("hi")
+        .write_string_with_u16_len("hi")
         .expect("u16 string should be written");
     writer
-        .write_utf8_string_u32("ok")
+        .write_string_with_u32_len("ok")
         .expect("u32 string should be written");
 
     let mut expected = Vec::new();
@@ -107,15 +95,11 @@ fn test_binary_writer_writes_little_endian_and_exposes_accessors() {
     expected.extend_from_slice(&0x1234_u16.to_le_bytes());
     expected.extend_from_slice(&0x1234_5678_u32.to_le_bytes());
     expected.extend_from_slice(&0x0123_4567_89ab_cdef_u64.to_le_bytes());
-    expected.extend_from_slice(
-        &0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_le_bytes(),
-    );
+    expected.extend_from_slice(&0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_le_bytes());
     expected.extend_from_slice(&(-0x1234_i16).to_le_bytes());
     expected.extend_from_slice(&(-0x0123_4567_i32).to_le_bytes());
     expected.extend_from_slice(&(-0x0123_4567_89ab_cdef_i64).to_le_bytes());
-    expected.extend_from_slice(
-        &(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_le_bytes(),
-    );
+    expected.extend_from_slice(&(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_le_bytes());
     expected.extend_from_slice(&12.5_f32.to_bits().to_le_bytes());
     expected.extend_from_slice(&(-25.25_f64).to_bits().to_le_bytes());
     expected.extend_from_slice(&2_u16.to_le_bytes());
@@ -133,7 +117,7 @@ fn test_binary_writer_reports_length_errors() {
     assert_eq!(
         ErrorKind::InvalidInput,
         writer
-            .write_utf8_string_u16(&value)
+            .write_string_with_u16_len(&value)
             .expect_err("oversized u16 string should fail")
             .kind()
     );
@@ -141,17 +125,14 @@ fn test_binary_writer_reports_length_errors() {
 
 #[test]
 fn test_binary_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer = qubit_io_binary::BinaryWriter::<
-        _,
-        qubit_codec::LittleEndian,
-    >::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer = qubit_io_binary::BinaryWriter::<_, qubit_codec::LittleEndian>::new(
+        std::io::Cursor::new(vec![0; 4]),
+    );
 
     Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through BinaryWriter should succeed");
-    Output::write_fully(&mut writer, b"xy")
-        .expect("writing through BinaryWriter should succeed");
-    Output::flush(&mut writer)
-        .expect("flushing through BinaryWriter should succeed");
+    Output::write_fully(&mut writer, b"xy").expect("writing through BinaryWriter should succeed");
+    Output::flush(&mut writer).expect("flushing through BinaryWriter should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

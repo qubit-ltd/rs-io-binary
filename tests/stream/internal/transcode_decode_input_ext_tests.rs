@@ -6,27 +6,12 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    ErrorKind,
-    SeekFrom,
-};
+use std::io::{Cursor, ErrorKind, SeekFrom};
 
-use qubit_codec::{
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_codec::{ByteOrder, LittleEndian};
 use qubit_codec_binary::NonStrict;
-use qubit_io::{
-    Input,
-    Output,
-    Seekable,
-};
-use qubit_io_binary::{
-    BufferedBinaryReader,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-};
+use qubit_io::{Input, Output, Seekable};
+use qubit_io_binary::{BufferedBinaryReader, BufferedLeb128Reader, BufferedLeb128Writer};
 
 #[test]
 fn test_transcode_decode_input_ext_delegates_public_raw_and_codec_reads() {
@@ -60,10 +45,8 @@ fn test_transcode_decode_input_ext_delegates_public_raw_and_codec_reads() {
 
 #[test]
 fn test_transcode_decode_input_ext_maps_incomplete_public_decode() {
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
-        Cursor::new(vec![0x80]),
-        1,
-    );
+    let mut reader =
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity(Cursor::new(vec![0x80]), 1);
 
     let error = reader
         .read_i8()
@@ -82,10 +65,7 @@ fn test_transcode_decode_input_ext_reads_public_utf8_payload() {
     writer.flush().expect("encoded bytes should flush");
     let bytes = writer.inner().clone();
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
-        Cursor::new(bytes),
-        1,
-    );
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(Cursor::new(bytes), 1);
     let decoded = reader
         .read_utf8_string(10)
         .expect("UTF-8 payload should decode");

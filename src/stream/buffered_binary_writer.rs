@@ -7,7 +7,10 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::{collections::TryReserveError, io::{Result, SeekFrom}};
+use std::{
+    collections::TryReserveError,
+    io::{Result, SeekFrom},
+};
 
 use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u16_len, checked_u32_len, write_all};
 use qubit_codec::TranscodeEncodeOutput;

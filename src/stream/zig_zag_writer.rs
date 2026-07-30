@@ -6,23 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::{Result, SeekFrom};
 
-use crate::util::{
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec_binary::{
-    NonStrict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use crate::util::{encode_infallible_unchecked, write_all};
+use qubit_codec_binary::{NonStrict, ZigZagCodec};
+use qubit_io::{Output, Seekable};
 
 /// Writer wrapper for canonical ZigZag + unsigned LEB128 integers.
 ///
@@ -117,9 +105,7 @@ macro_rules! impl_write_value {
 
             self.write_zig_zag::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
                 value,
-                |bytes, value| unsafe {
-                    encode_infallible_unchecked::<Codec>(value, bytes, 0)
-                },
+                |bytes, value| unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) },
             )
         }
     };
@@ -159,11 +145,7 @@ where
     /// Returns an output error, including a write-zero error when the output
     /// stops making progress.
     #[inline]
-    fn write_zig_zag<T, const N: usize, F>(
-        &mut self,
-        value: T,
-        encode: F,
-    ) -> Result<()>
+    fn write_zig_zag<T, const N: usize, F>(&mut self, value: T, encode: F) -> Result<()>
     where
         F: FnOnce(&mut [u8; 19], T) -> usize,
     {

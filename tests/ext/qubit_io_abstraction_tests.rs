@@ -8,19 +8,10 @@
 
 use std::io::Result;
 
-use qubit_io::{
-    Input,
-    Output,
-};
+use qubit_io::{Input, Output};
 use qubit_io_binary::{
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagWriteExt,
+    BinaryReadExt, BinaryWriteExt, Leb128ReadExt, Leb128WriteExt, StringReadExt, StringWriteExt,
+    ZigZagReadExt, ZigZagWriteExt,
 };
 
 struct QubitInput {

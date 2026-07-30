@@ -11,16 +11,10 @@ use std::task::Poll;
 
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
-use qubit_io_binary::{
-    AsyncStringReadExt,
-    StringWriteExt,
-};
+use qubit_io_binary::{AsyncStringReadExt, StringWriteExt};
 
 use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput,
-    assert_send,
-    complete,
-    poll_once,
+    ChunkedAsyncInput, assert_send, complete, poll_once,
 };
 
 #[allow(dead_code)]
@@ -39,15 +33,15 @@ fn string_fixture() -> Vec<u8> {
     bytes.write_utf8_string_uleb_u64("uleb-u64").unwrap();
     bytes.write_utf8_string_uleb_u64("uleb-u64-strict").unwrap();
     bytes
-        .write_utf8_string_u16("u16-be", ByteOrder::BigEndian)
+        .write_string_with_u16_len("u16-be", ByteOrder::BigEndian)
         .unwrap();
-    bytes.write_utf8_string_u16_be("fixed-u16-be").unwrap();
-    bytes.write_utf8_string_u16_le("fixed-u16-le").unwrap();
+    bytes.write_string_with_u16_len_be("fixed-u16-be").unwrap();
+    bytes.write_string_with_u16_len_le("fixed-u16-le").unwrap();
     bytes
-        .write_utf8_string_u32("u32-le", ByteOrder::LittleEndian)
+        .write_string_with_u32_len("u32-le", ByteOrder::LittleEndian)
         .unwrap();
-    bytes.write_utf8_string_u32_be("fixed-u32-be").unwrap();
-    bytes.write_utf8_string_u32_le("fixed-u32-le").unwrap();
+    bytes.write_string_with_u32_len_be("fixed-u32-be").unwrap();
+    bytes.write_string_with_u32_len_le("fixed-u32-le").unwrap();
     bytes
 }
 
@@ -77,31 +71,27 @@ fn async_string_read_covers_every_length_prefix() {
     );
     assert_eq!(
         "u16-be",
-        complete(input.read_utf8_string_u16_async(ByteOrder::BigEndian, 32,))
-            .unwrap(),
+        complete(input.read_string_with_u16_len_async(ByteOrder::BigEndian, 32,)).unwrap(),
     );
     assert_eq!(
         "fixed-u16-be",
-        complete(input.read_utf8_string_u16_be_async(32)).unwrap(),
+        complete(input.read_string_with_u16_len_be_async(32)).unwrap(),
     );
     assert_eq!(
         "fixed-u16-le",
-        complete(input.read_utf8_string_u16_le_async(32)).unwrap(),
+        complete(input.read_string_with_u16_len_le_async(32)).unwrap(),
     );
     assert_eq!(
         "u32-le",
-        complete(
-            input.read_utf8_string_u32_async(ByteOrder::LittleEndian, 32,)
-        )
-        .unwrap(),
+        complete(input.read_string_with_u32_len_async(ByteOrder::LittleEndian, 32,)).unwrap(),
     );
     assert_eq!(
         "fixed-u32-be",
-        complete(input.read_utf8_string_u32_be_async(32)).unwrap(),
+        complete(input.read_string_with_u32_len_be_async(32)).unwrap(),
     );
     assert_eq!(
         "fixed-u32-le",
-        complete(input.read_utf8_string_u32_le_async(32)).unwrap(),
+        complete(input.read_string_with_u32_len_le_async(32)).unwrap(),
     );
 }
 
@@ -120,17 +110,17 @@ fn dropping_string_read_future_retains_consumed_input() {
 #[test]
 fn async_string_read_reports_prefix_payload_and_utf8_errors() {
     let mut input = ChunkedAsyncInput::new(Vec::new());
-    let prefix_error = complete(input.read_utf8_string_u32_be_async(32))
+    let prefix_error = complete(input.read_string_with_u32_len_be_async(32))
         .expect_err("missing prefix should fail");
     assert_eq!(ErrorKind::UnexpectedEof, prefix_error.kind());
 
     let mut input = ChunkedAsyncInput::new(Vec::new());
-    let length_error = complete(input.read_utf8_payload_async(2, 1))
-        .expect_err("oversized payload should fail");
+    let length_error =
+        complete(input.read_utf8_payload_async(2, 1)).expect_err("oversized payload should fail");
     assert_eq!(ErrorKind::InvalidData, length_error.kind());
 
     let mut input = ChunkedAsyncInput::new(vec![0xFF]);
-    let utf8_error = complete(input.read_utf8_payload_async(1, 1))
-        .expect_err("invalid UTF-8 should fail");
+    let utf8_error =
+        complete(input.read_utf8_payload_async(1, 1)).expect_err("invalid UTF-8 should fail");
     assert_eq!(ErrorKind::InvalidData, utf8_error.kind());
 }

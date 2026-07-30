@@ -6,10 +6,7 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::{Cursor, ErrorKind};
 
 use qubit_codec::ByteOrder;
 use qubit_io_binary::StringReadExt;
@@ -60,7 +57,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hi",
         input
-            .read_utf8_string_u16_be(8)
+            .read_string_with_u16_len_be(8)
             .expect("u16 BE string should be read")
     );
 
@@ -68,7 +65,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hi",
         input
-            .read_utf8_string_u16(ByteOrder::BigEndian, 8)
+            .read_string_with_u16_len(ByteOrder::BigEndian, 8)
             .expect("runtime u16 BE string should be read")
     );
 
@@ -76,7 +73,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hi",
         input
-            .read_utf8_string_u16_le(8)
+            .read_string_with_u16_len_le(8)
             .expect("u16 LE string should be read")
     );
 
@@ -84,7 +81,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hi",
         input
-            .read_utf8_string_u16(ByteOrder::LittleEndian, 8)
+            .read_string_with_u16_len(ByteOrder::LittleEndian, 8)
             .expect("runtime u16 LE string should be read")
     );
 
@@ -92,7 +89,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "ok",
         input
-            .read_utf8_string_u32_be(8)
+            .read_string_with_u32_len_be(8)
             .expect("u32 BE string should be read")
     );
 
@@ -100,7 +97,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "ok",
         input
-            .read_utf8_string_u32(ByteOrder::BigEndian, 8)
+            .read_string_with_u32_len(ByteOrder::BigEndian, 8)
             .expect("runtime u32 BE string should be read")
     );
 
@@ -108,7 +105,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "ok",
         input
-            .read_utf8_string_u32_le(8)
+            .read_string_with_u32_len_le(8)
             .expect("u32 LE string should be read")
     );
 
@@ -116,7 +113,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "ok",
         input
-            .read_utf8_string_u32(ByteOrder::LittleEndian, 8)
+            .read_string_with_u32_len(ByteOrder::LittleEndian, 8)
             .expect("runtime u32 LE string should be read")
     );
 }
@@ -172,7 +169,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u16_be(8)
+            .read_string_with_u16_len_be(8)
             .expect_err("invalid UTF-8 should fail")
             .kind()
     );
@@ -181,7 +178,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u16_le(8)
+            .read_string_with_u16_len_le(8)
             .expect_err("invalid UTF-8 should fail")
             .kind()
     );
@@ -190,7 +187,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u32_be(2)
+            .read_string_with_u32_len_be(2)
             .expect_err("oversized u32 BE string should fail")
             .kind()
     );
@@ -199,7 +196,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u32_le(2)
+            .read_string_with_u32_len_le(2)
             .expect_err("oversized u32 LE string should fail")
             .kind()
     );
@@ -208,7 +205,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u16(ByteOrder::BigEndian, 2)
+            .read_string_with_u16_len(ByteOrder::BigEndian, 2)
             .expect_err("oversized runtime u16 string should fail")
             .kind()
     );
@@ -217,10 +214,8 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u16(ByteOrder::LittleEndian, 2)
-            .expect_err(
-                "oversized runtime little-endian u16 string should fail"
-            )
+            .read_string_with_u16_len(ByteOrder::LittleEndian, 2)
+            .expect_err("oversized runtime little-endian u16 string should fail")
             .kind()
     );
 
@@ -228,7 +223,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u32(ByteOrder::BigEndian, 2)
+            .read_string_with_u32_len(ByteOrder::BigEndian, 2)
             .expect_err("oversized runtime u32 string should fail")
             .kind()
     );
@@ -237,10 +232,8 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_u32(ByteOrder::LittleEndian, 2)
-            .expect_err(
-                "oversized runtime little-endian u32 string should fail"
-            )
+            .read_string_with_u32_len(ByteOrder::LittleEndian, 2)
+            .expect_err("oversized runtime little-endian u32 string should fail")
             .kind()
     );
 }
@@ -269,7 +262,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u16(ByteOrder::BigEndian, 8)
+            .read_string_with_u16_len(ByteOrder::BigEndian, 8)
             .expect_err("runtime u16 length read error should be returned")
             .kind()
     );
@@ -278,10 +271,8 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u16(ByteOrder::LittleEndian, 8)
-            .expect_err(
-                "runtime little-endian u16 length read error should be returned"
-            )
+            .read_string_with_u16_len(ByteOrder::LittleEndian, 8)
+            .expect_err("runtime little-endian u16 length read error should be returned")
             .kind()
     );
 
@@ -289,7 +280,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u16_be(8)
+            .read_string_with_u16_len_be(8)
             .expect_err("u16 BE length read error should be returned")
             .kind()
     );
@@ -298,7 +289,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u16_le(8)
+            .read_string_with_u16_len_le(8)
             .expect_err("u16 LE length read error should be returned")
             .kind()
     );
@@ -307,7 +298,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u32(ByteOrder::BigEndian, 8)
+            .read_string_with_u32_len(ByteOrder::BigEndian, 8)
             .expect_err("runtime u32 length read error should be returned")
             .kind()
     );
@@ -316,10 +307,8 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u32(ByteOrder::LittleEndian, 8)
-            .expect_err(
-                "runtime little-endian u32 length read error should be returned"
-            )
+            .read_string_with_u32_len(ByteOrder::LittleEndian, 8)
+            .expect_err("runtime little-endian u32 length read error should be returned")
             .kind()
     );
 
@@ -327,7 +316,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u32_be(8)
+            .read_string_with_u32_len_be(8)
             .expect_err("u32 BE length read error should be returned")
             .kind()
     );
@@ -336,7 +325,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_u32_le(8)
+            .read_string_with_u32_len_le(8)
             .expect_err("u32 LE length read error should be returned")
             .kind()
     );

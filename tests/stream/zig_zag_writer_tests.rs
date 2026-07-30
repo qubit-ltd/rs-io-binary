@@ -5,16 +5,9 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Error, ErrorKind, Write};
 
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_io::{Output, Seekable};
 use qubit_io_binary::ZigZagWriter;
 
 struct FailingWriter;
@@ -62,15 +55,12 @@ fn test_zig_zag_writer_returns_writer_error() {
 
 #[test]
 fn test_zig_zag_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer =
-        qubit_io_binary::ZigZagWriter::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer = qubit_io_binary::ZigZagWriter::new(std::io::Cursor::new(vec![0; 4]));
 
     Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through ZigZagWriter should succeed");
-    Output::write_fully(&mut writer, b"xy")
-        .expect("writing through ZigZagWriter should succeed");
-    Output::flush(&mut writer)
-        .expect("flushing through ZigZagWriter should succeed");
+    Output::write_fully(&mut writer, b"xy").expect("writing through ZigZagWriter should succeed");
+    Output::flush(&mut writer).expect("flushing through ZigZagWriter should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

@@ -13,16 +13,8 @@ use std::io::Result;
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncOutput;
 
-use crate::util::{
-    checked_u16_len,
-    checked_u32_len,
-    checked_u64_len,
-    write_all_async,
-};
-use crate::{
-    AsyncBinaryWriteExt,
-    AsyncLeb128WriteExt,
-};
+use crate::util::{checked_u16_len, checked_u32_len, checked_u64_len, write_all_async};
+use crate::{AsyncBinaryWriteExt, AsyncLeb128WriteExt};
 
 /// Future-based length-prefixed UTF-8 writes.
 ///
@@ -154,7 +146,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_u16_async<'a>(
+    fn write_string_with_u16_len_async<'a>(
         &'a mut self,
         value: &'a str,
         byte_order: ByteOrder,
@@ -190,7 +182,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_u16_be_async<'a>(
+    fn write_string_with_u16_len_be_async<'a>(
         &'a mut self,
         value: &'a str,
     ) -> impl Future<Output = Result<()>> + Send + 'a
@@ -225,7 +217,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_u16_le_async<'a>(
+    fn write_string_with_u16_len_le_async<'a>(
         &'a mut self,
         value: &'a str,
     ) -> impl Future<Output = Result<()>> + Send + 'a
@@ -261,7 +253,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_u32_async<'a>(
+    fn write_string_with_u32_len_async<'a>(
         &'a mut self,
         value: &'a str,
         byte_order: ByteOrder,
@@ -297,7 +289,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_u32_be_async<'a>(
+    fn write_string_with_u32_len_be_async<'a>(
         &'a mut self,
         value: &'a str,
     ) -> impl Future<Output = Result<()>> + Send + 'a
@@ -332,7 +324,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_u32_le_async<'a>(
+    fn write_string_with_u32_len_le_async<'a>(
         &'a mut self,
         value: &'a str,
     ) -> impl Future<Output = Result<()>> + Send + 'a

@@ -6,16 +6,9 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::{Error, ErrorKind, Write};
 #[cfg(all(unix, target_pointer_width = "64"))]
-use std::{
-    ffi::c_void,
-    ptr::null_mut,
-};
+use std::{ffi::c_void, ptr::null_mut};
 
 use qubit_codec::ByteOrder;
 use qubit_io_binary::StringWriteExt;
@@ -83,9 +76,7 @@ impl MappedBytes {
     fn as_str(&self) -> &str {
         // SAFETY: Anonymous mappings are zero-filled, and NUL bytes are valid
         // UTF-8.
-        let bytes = unsafe {
-            std::slice::from_raw_parts(self.ptr.cast::<u8>(), self.len)
-        };
+        let bytes = unsafe { std::slice::from_raw_parts(self.ptr.cast::<u8>(), self.len) };
         // SAFETY: The byte slice consists entirely of valid UTF-8 NUL bytes.
         unsafe { std::str::from_utf8_unchecked(bytes) }
     }
@@ -127,37 +118,36 @@ fn test_string_write_ext_writes_all_length_prefix_kinds() {
         .write_utf8_string_uleb_u64("u6")
         .expect("u64 ULEB string should be written");
     output
-        .write_utf8_string_u16("rt", ByteOrder::BigEndian)
+        .write_string_with_u16_len("rt", ByteOrder::BigEndian)
         .expect("runtime u16 BE string should be written");
     output
-        .write_utf8_string_u16_be("be")
+        .write_string_with_u16_len_be("be")
         .expect("u16 BE string should be written");
     output
-        .write_utf8_string_u16("lr", ByteOrder::LittleEndian)
+        .write_string_with_u16_len("lr", ByteOrder::LittleEndian)
         .expect("runtime u16 LE string should be written");
     output
-        .write_utf8_string_u16_le("le")
+        .write_string_with_u16_len_le("le")
         .expect("u16 LE string should be written");
     output
-        .write_utf8_string_u32("up", ByteOrder::BigEndian)
+        .write_string_with_u32_len("up", ByteOrder::BigEndian)
         .expect("runtime u32 BE string should be written");
     output
-        .write_utf8_string_u32_be("up")
+        .write_string_with_u32_len_be("up")
         .expect("u32 BE string should be written");
     output
-        .write_utf8_string_u32("dn", ByteOrder::LittleEndian)
+        .write_string_with_u32_len("dn", ByteOrder::LittleEndian)
         .expect("runtime u32 LE string should be written");
     output
-        .write_utf8_string_u32_le("dn")
+        .write_string_with_u32_len_le("dn")
         .expect("u32 LE string should be written");
 
     assert_eq!(
         vec![
-            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02,
-            b'r', b't', 0x00, 0x02, b'b', b'e', 0x02, 0x00, b'l', b'r', 0x02,
-            0x00, b'l', b'e', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x00, 0x00,
-            0x00, 0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd', b'n', 0x02,
-            0x00, 0x00, 0x00, b'd', b'n'
+            b'r', b'a', b'w', 0x02, b'h', b'i', 0x02, b'u', b'6', 0x00, 0x02, b'r', b't', 0x00,
+            0x02, b'b', b'e', 0x02, 0x00, b'l', b'r', 0x02, 0x00, b'l', b'e', 0x00, 0x00, 0x00,
+            0x02, b'u', b'p', 0x00, 0x00, 0x00, 0x02, b'u', b'p', 0x02, 0x00, 0x00, 0x00, b'd',
+            b'n', 0x02, 0x00, 0x00, 0x00, b'd', b'n'
         ],
         output
     );
@@ -170,21 +160,21 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::InvalidInput,
         output
-            .write_utf8_string_u16(&value, ByteOrder::BigEndian)
+            .write_string_with_u16_len(&value, ByteOrder::BigEndian)
             .expect_err("oversized runtime u16 string should fail")
             .kind()
     );
     assert_eq!(
         ErrorKind::InvalidInput,
         output
-            .write_utf8_string_u16_be(&value)
+            .write_string_with_u16_len_be(&value)
             .expect_err("oversized u16 BE string should fail")
             .kind()
     );
     assert_eq!(
         ErrorKind::InvalidInput,
         output
-            .write_utf8_string_u16_le(&value)
+            .write_string_with_u16_len_le(&value)
             .expect_err("oversized u16 LE string should fail")
             .kind()
     );
@@ -220,7 +210,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_u16("hi", ByteOrder::BigEndian)
+            .write_string_with_u16_len("hi", ByteOrder::BigEndian)
             .expect_err("runtime u16 writer error should be returned")
             .kind()
     );
@@ -229,7 +219,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_u16_be("hi")
+            .write_string_with_u16_len_be("hi")
             .expect_err("u16 BE writer error should be returned")
             .kind()
     );
@@ -238,7 +228,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_u16_le("hi")
+            .write_string_with_u16_len_le("hi")
             .expect_err("u16 LE writer error should be returned")
             .kind()
     );
@@ -247,7 +237,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_u32("hi", ByteOrder::BigEndian)
+            .write_string_with_u32_len("hi", ByteOrder::BigEndian)
             .expect_err("runtime u32 writer error should be returned")
             .kind()
     );
@@ -256,7 +246,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_u32_be("hi")
+            .write_string_with_u32_len_be("hi")
             .expect_err("u32 BE writer error should be returned")
             .kind()
     );
@@ -265,7 +255,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_u32_le("hi")
+            .write_string_with_u32_len_le("hi")
             .expect_err("u32 LE writer error should be returned")
             .kind()
     );
@@ -278,7 +268,7 @@ fn test_string_write_ext_reports_u32_length_overflow() {
     let mut output = Vec::new();
 
     let error = output
-        .write_utf8_string_u32(value.as_str(), ByteOrder::BigEndian)
+        .write_string_with_u32_len(value.as_str(), ByteOrder::BigEndian)
         .expect_err("oversized u32 string should fail");
 
     assert_eq!(ErrorKind::InvalidInput, error.kind());

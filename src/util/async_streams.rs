@@ -12,18 +12,10 @@ use std::pin::Pin;
 
 use qubit_codec::Codec;
 use qubit_codec_binary::Leb128DecodeError;
-use qubit_io::{
-    AsyncInput,
-    AsyncOutput,
-    PinnedAsyncInputExt,
-    WriteFullyFuture,
-};
+use qubit_io::{AsyncInput, AsyncOutput, PinnedAsyncInputExt, WriteFullyFuture};
 
 use super::streams::{
-    decode_leb128_unchecked,
-    invalid_utf8_error,
-    length_exceeded_error,
-    map_leb128_decode_error,
+    decode_leb128_unchecked, invalid_utf8_error, length_exceeded_error, map_leb128_decode_error,
 };
 use super::try_reserve_vec;
 
@@ -52,10 +44,7 @@ use super::try_reserve_vec;
 /// This operation is not cancellation safe. Dropping it retains bytes already
 /// consumed from `input` and modifications already made to `output`.
 #[inline(always)]
-pub(crate) async fn read_exactly_async<I>(
-    input: &mut I,
-    output: &mut [u8],
-) -> Result<()>
+pub(crate) async fn read_exactly_async<I>(input: &mut I, output: &mut [u8]) -> Result<()>
 where
     I: AsyncInput<Item = u8> + Unpin + ?Sized,
 {
@@ -87,10 +76,7 @@ where
 /// This operation is not cancellation safe. Dropping it leaves any
 /// already-written prefix in `output`.
 #[inline(always)]
-pub(crate) async fn write_all_async<O>(
-    output: &mut O,
-    input: &[u8],
-) -> Result<()>
+pub(crate) async fn write_all_async<O>(output: &mut O, input: &[u8]) -> Result<()>
 where
     O: AsyncOutput<Item = u8> + Unpin + ?Sized,
 {

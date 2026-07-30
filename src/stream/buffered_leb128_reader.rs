@@ -7,7 +7,10 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::{collections::TryReserveError, io::{Result, SeekFrom}};
+use std::{
+    collections::TryReserveError,
+    io::{Result, SeekFrom},
+};
 
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;

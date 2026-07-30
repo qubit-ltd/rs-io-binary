@@ -7,12 +7,12 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::{collections::TryReserveError, io::{Result, SeekFrom}};
+use std::{
+    collections::TryReserveError,
+    io::{Result, SeekFrom},
+};
 
-#[cfg(not(any(
-    target_pointer_width = "32",
-    target_pointer_width = "64"
-)))]
+#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
 use crate::util::usize_from_u32_len;
 use crate::util::{MIN_CODEC_BUFFER_CAPACITY, read_utf8_payload};
 use qubit_codec::{BigEndian, ByteOrder, ByteOrderSpec, LittleEndian, TranscodeDecodeInput};

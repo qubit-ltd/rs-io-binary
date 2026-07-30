@@ -6,7 +6,10 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::{collections::TryReserveError, io::{Result, SeekFrom}};
+use std::{
+    collections::TryReserveError,
+    io::{Result, SeekFrom},
+};
 
 use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len, write_all};
 use qubit_codec::TranscodeEncodeOutput;

@@ -10,11 +10,7 @@
 use core::future::Future;
 use std::io::Result;
 
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-    Strict,
-};
+use qubit_codec_binary::{Leb128Codec, NonStrict, Strict};
 use qubit_io::AsyncInput;
 
 use crate::util::read_leb128_payload_async;
