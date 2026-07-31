@@ -11,10 +11,16 @@ use std::task::Poll;
 
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
-use qubit_io_binary::{AsyncStringReadExt, StringWriteExt};
+use qubit_io_binary::{
+    AsyncStringReadExt,
+    StringWriteExt,
+};
 
 use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput, assert_send, complete, poll_once,
+    ChunkedAsyncInput,
+    assert_send,
+    complete,
+    poll_once,
 };
 
 #[allow(dead_code)]
@@ -71,7 +77,10 @@ fn async_string_read_covers_every_length_prefix() {
     );
     assert_eq!(
         "u16-be",
-        complete(input.read_string_with_u16_len_async(ByteOrder::BigEndian, 32,)).unwrap(),
+        complete(
+            input.read_string_with_u16_len_async(ByteOrder::BigEndian, 32,)
+        )
+        .unwrap(),
     );
     assert_eq!(
         "fixed-u16-be",
@@ -83,7 +92,10 @@ fn async_string_read_covers_every_length_prefix() {
     );
     assert_eq!(
         "u32-le",
-        complete(input.read_string_with_u32_len_async(ByteOrder::LittleEndian, 32,)).unwrap(),
+        complete(
+            input.read_string_with_u32_len_async(ByteOrder::LittleEndian, 32,)
+        )
+        .unwrap(),
     );
     assert_eq!(
         "fixed-u32-be",
@@ -115,12 +127,12 @@ fn async_string_read_reports_prefix_payload_and_utf8_errors() {
     assert_eq!(ErrorKind::UnexpectedEof, prefix_error.kind());
 
     let mut input = ChunkedAsyncInput::new(Vec::new());
-    let length_error =
-        complete(input.read_utf8_payload_async(2, 1)).expect_err("oversized payload should fail");
+    let length_error = complete(input.read_utf8_payload_async(2, 1))
+        .expect_err("oversized payload should fail");
     assert_eq!(ErrorKind::InvalidData, length_error.kind());
 
     let mut input = ChunkedAsyncInput::new(vec![0xFF]);
-    let utf8_error =
-        complete(input.read_utf8_payload_async(1, 1)).expect_err("invalid UTF-8 should fail");
+    let utf8_error = complete(input.read_utf8_payload_async(1, 1))
+        .expect_err("invalid UTF-8 should fail");
     assert_eq!(ErrorKind::InvalidData, utf8_error.kind());
 }

@@ -8,22 +8,29 @@
 
 use std::io::Result;
 
-use crate::util::{encode_infallible_unchecked, write_all};
-use qubit_codec_binary::{NonStrict, ZigZagCodec};
+use crate::util::{
+    encode_infallible_unchecked,
+    write_all,
+};
+use qubit_codec_binary::{
+    NonStrict,
+    ZigZagCodec,
+};
 use qubit_io::Output;
 
 macro_rules! write_zig_zag_value {
     ($writer:expr, $value:expr, $ty:ty) => {
-        write_zig_zag::<{ ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE }, _, _, _>(
-            $writer,
-            $value,
-            |bytes, value| {
-                type Codec = ZigZagCodec<$ty, NonStrict>;
-                // SAFETY: The local buffer is exactly the codec's maximum buffer
-                // length.
-                unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) }
-            },
-        )
+        write_zig_zag::<
+            { ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE },
+            _,
+            _,
+            _,
+        >($writer, $value, |bytes, value| {
+            type Codec = ZigZagCodec<$ty, NonStrict>;
+            // SAFETY: The local buffer is exactly the codec's maximum buffer
+            // length.
+            unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) }
+        })
     };
 }
 
@@ -177,7 +184,11 @@ impl<W> ZigZagWriteExt for W where W: Output<Item = u8> + ?Sized {}
 /// Returns an output error, including a write-zero error when the output stops
 /// making progress.
 #[inline]
-fn write_zig_zag<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
+fn write_zig_zag<const N: usize, T, W, F>(
+    writer: &mut W,
+    value: T,
+    encode: F,
+) -> Result<()>
 where
     W: Output<Item = u8> + ?Sized,
     F: FnOnce(&mut [u8], T) -> usize,

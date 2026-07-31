@@ -10,25 +10,33 @@
 use core::future::Future;
 use std::io::Result;
 
-use qubit_codec::{BigEndian, ByteOrder, LittleEndian};
+use qubit_codec::{
+    BigEndian,
+    ByteOrder,
+    LittleEndian,
+};
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::AsyncOutput;
 
-use crate::util::{encode_infallible_unchecked, write_all_async};
+use crate::util::{
+    encode_infallible_unchecked,
+    write_all_async,
+};
 
 macro_rules! write_binary_value_async {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
-        write_binary_async::<{ BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE }, _, _, _>(
-            $writer,
-            $value,
-            |bytes, value| {
-                type Codec = BinaryCodec<$ty, $order>;
-                // SAFETY: The local buffer has exactly the codec's fixed width.
-                unsafe {
-                    let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
-                }
-            },
-        )
+        write_binary_async::<
+            { BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE },
+            _,
+            _,
+            _,
+        >($writer, $value, |bytes, value| {
+            type Codec = BinaryCodec<$ty, $order>;
+            // SAFETY: The local buffer has exactly the codec's fixed width.
+            unsafe {
+                let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
+            }
+        })
         .await
     };
 }
@@ -56,7 +64,10 @@ macro_rules! fixed_write_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already written to the output."]
         #[inline(always)]
-        fn $name(&mut self, value: $ty) -> impl Future<Output = Result<()>> + Send + '_
+        fn $name(
+            &mut self,
+            value: $ty,
+        ) -> impl Future<Output = Result<()>> + Send + '_
         where
             Self: Send + Unpin,
         {

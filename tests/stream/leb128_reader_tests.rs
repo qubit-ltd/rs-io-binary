@@ -5,11 +5,23 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{Cursor, ErrorKind};
+use std::io::{
+    Cursor,
+    ErrorKind,
+};
 
-use qubit_codec_binary::{NonStrict, Strict};
-use qubit_io::{Input, Seekable};
-use qubit_io_binary::{Leb128Reader, Leb128Writer};
+use qubit_codec_binary::{
+    NonStrict,
+    Strict,
+};
+use qubit_io::{
+    Input,
+    Seekable,
+};
+use qubit_io_binary::{
+    Leb128Reader,
+    Leb128Writer,
+};
 
 #[test]
 fn test_leb128_reader_reads_all_methods() {
@@ -39,7 +51,8 @@ fn test_leb128_reader_reads_all_methods() {
         .write_isize(isize::MIN)
         .expect("isize should be written");
 
-    let mut reader = Leb128Reader::<_, NonStrict>::new(Cursor::new(writer.into_inner()));
+    let mut reader =
+        Leb128Reader::<_, NonStrict>::new(Cursor::new(writer.into_inner()));
     assert!(!reader.is_strict());
     assert_eq!(u8::MAX, reader.read_u8().expect("u8 should be read"));
     assert_eq!(300, reader.read_u16().expect("u16 should be read"));
@@ -78,7 +91,8 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
     let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![1]));
     assert_eq!(1, reader.read_u16().expect("strict u16 should be read"));
 
-    let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
+    let mut reader =
+        Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
     assert!(reader.is_strict());
     assert_eq!(0, reader.inner().position());
     reader.inner_mut().set_position(0);
@@ -100,7 +114,8 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
             .kind()
     );
 
-    let mut reader = Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80, 0x80, 0x80]));
+    let mut reader =
+        Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80, 0x80, 0x80]));
     assert_eq!(
         ErrorKind::InvalidData,
         reader
@@ -113,9 +128,10 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
 #[test]
 fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
     let bytes = vec![3, b'h', 0xC3, 0xA9];
-    let mut reader = qubit_io_binary::Leb128Reader::<_, qubit_codec_binary::NonStrict>::new(
-        std::io::Cursor::new(bytes),
-    );
+    let mut reader = qubit_io_binary::Leb128Reader::<
+        _,
+        qubit_codec_binary::NonStrict,
+    >::new(std::io::Cursor::new(bytes));
 
     let text = reader
         .read_utf8_string(3)
@@ -127,9 +143,10 @@ fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
 #[test]
 fn test_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
     let bytes = vec![3, b'h', 0xC3, 0xA9];
-    let mut reader = qubit_io_binary::Leb128Reader::<_, qubit_codec_binary::NonStrict>::new(
-        std::io::Cursor::new(bytes),
-    );
+    let mut reader = qubit_io_binary::Leb128Reader::<
+        _,
+        qubit_codec_binary::NonStrict,
+    >::new(std::io::Cursor::new(bytes));
 
     let text = reader
         .read_utf8_string_u64(3)
@@ -140,7 +157,8 @@ fn test_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
 
 #[test]
 fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
-    let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![3, b'a', b'b', b'c']));
+    let mut reader =
+        Leb128Reader::<_, Strict>::new(Cursor::new(vec![3, b'a', b'b', b'c']));
 
     let text = reader
         .read_utf8_string(3)
@@ -148,14 +166,16 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
 
     assert_eq!("abc", text);
 
-    let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![3, b'd', b'e', b'f']));
+    let mut reader =
+        Leb128Reader::<_, Strict>::new(Cursor::new(vec![3, b'd', b'e', b'f']));
     let text = reader
         .read_utf8_string_u64(3)
         .expect("strict u64 length-prefixed UTF-8 string should succeed");
 
     assert_eq!("def", text);
 
-    let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
+    let mut reader =
+        Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
     assert_eq!(
         ErrorKind::InvalidData,
         reader
@@ -164,7 +184,8 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
             .kind()
     );
 
-    let mut reader = Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
+    let mut reader =
+        Leb128Reader::<_, Strict>::new(Cursor::new(vec![0x80, 0x00]));
     assert_eq!(
         ErrorKind::InvalidData,
         reader
@@ -176,9 +197,10 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
 
 #[test]
 fn test_leb128_reader_read_and_seek_delegate_to_inner_reader() {
-    let mut reader = qubit_io_binary::Leb128Reader::<_, qubit_codec_binary::NonStrict>::new(
-        std::io::Cursor::new(vec![1, 2, 3, 4]),
-    );
+    let mut reader = qubit_io_binary::Leb128Reader::<
+        _,
+        qubit_codec_binary::NonStrict,
+    >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
 
     Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))
         .expect("seeking through Leb128Reader should succeed");

@@ -6,9 +6,16 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::error::Error as StdError;
-use std::io::{self, Error, ErrorKind};
+use std::io::{
+    self,
+    Error,
+    ErrorKind,
+};
 
-use qubit_codec::{Codec, TranscodeEncodeOutput};
+use qubit_codec::{
+    Codec,
+    TranscodeEncodeOutput,
+};
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].

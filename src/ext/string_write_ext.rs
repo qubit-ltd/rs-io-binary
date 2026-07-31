@@ -8,10 +8,16 @@
 use std::io::Result;
 
 use crate::util::{
-    checked_u64_len, write_all, write_utf8_payload as write_utf8_payload_impl,
-    write_utf8_string_with_u16_len, write_utf8_string_with_u32_len,
+    checked_u64_len,
+    write_all,
+    write_utf8_payload as write_utf8_payload_impl,
+    write_utf8_string_with_u16_len,
+    write_utf8_string_with_u32_len,
 };
-use crate::{BinaryWriteExt, Leb128WriteExt};
+use crate::{
+    BinaryWriteExt,
+    Leb128WriteExt,
+};
 use qubit_codec::ByteOrder;
 use qubit_io::Output;
 
@@ -87,7 +93,11 @@ pub trait StringWriteExt: Output<Item = u8> {
     ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u16`, or an I/O error from the underlying writer.
-    fn write_string_with_u16_len(&mut self, value: &str, byte_order: ByteOrder) -> Result<()>;
+    fn write_string_with_u16_len(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()>;
 
     /// Writes a UTF-8 string with a big-endian `u16` byte-length prefix.
     ///
@@ -136,7 +146,11 @@ pub trait StringWriteExt: Output<Item = u8> {
     ///
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// does not fit into `u32`, or an I/O error from the underlying writer.
-    fn write_string_with_u32_len(&mut self, value: &str, byte_order: ByteOrder) -> Result<()>;
+    fn write_string_with_u32_len(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()>;
 
     /// Writes a UTF-8 string with a big-endian `u32` byte-length prefix.
     ///
@@ -195,32 +209,52 @@ where
     }
 
     #[inline]
-    fn write_string_with_u16_len(&mut self, value: &str, byte_order: ByteOrder) -> Result<()> {
-        write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16(len, byte_order))
+    fn write_string_with_u16_len(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()> {
+        write_utf8_string_with_u16_len(self, value, |writer, len| {
+            writer.write_u16(len, byte_order)
+        })
     }
 
     #[inline]
     fn write_string_with_u16_len_be(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16_be(len))
+        write_utf8_string_with_u16_len(self, value, |writer, len| {
+            writer.write_u16_be(len)
+        })
     }
 
     #[inline]
     fn write_string_with_u16_len_le(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16_le(len))
+        write_utf8_string_with_u16_len(self, value, |writer, len| {
+            writer.write_u16_le(len)
+        })
     }
 
     #[inline]
-    fn write_string_with_u32_len(&mut self, value: &str, byte_order: ByteOrder) -> Result<()> {
-        write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32(len, byte_order))
+    fn write_string_with_u32_len(
+        &mut self,
+        value: &str,
+        byte_order: ByteOrder,
+    ) -> Result<()> {
+        write_utf8_string_with_u32_len(self, value, |writer, len| {
+            writer.write_u32(len, byte_order)
+        })
     }
 
     #[inline]
     fn write_string_with_u32_len_be(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32_be(len))
+        write_utf8_string_with_u32_len(self, value, |writer, len| {
+            writer.write_u32_be(len)
+        })
     }
 
     #[inline]
     fn write_string_with_u32_len_le(&mut self, value: &str) -> Result<()> {
-        write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32_le(len))
+        write_utf8_string_with_u32_len(self, value, |writer, len| {
+            writer.write_u32_le(len)
+        })
     }
 }

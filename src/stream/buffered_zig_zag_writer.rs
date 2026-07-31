@@ -8,13 +8,23 @@
 
 use std::{
     collections::TryReserveError,
-    io::{Result, SeekFrom},
+    io::{
+        Result,
+        SeekFrom,
+    },
 };
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{NonStrict, ZigZagCodec};
-use qubit_io::{Buffer, Output, Seekable};
+use qubit_codec_binary::{
+    NonStrict,
+    ZigZagCodec,
+};
+use qubit_io::{
+    Buffer,
+    Output,
+    Seekable,
+};
 
 use super::internal::TranscodeEncodeOutputExt;
 

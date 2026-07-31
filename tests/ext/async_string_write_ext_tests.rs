@@ -6,15 +6,24 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{ErrorKind, Result};
+use std::io::{
+    ErrorKind,
+    Result,
+};
 use std::task::Poll;
 
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncOutput;
-use qubit_io_binary::{AsyncStringWriteExt, StringWriteExt};
+use qubit_io_binary::{
+    AsyncStringWriteExt,
+    StringWriteExt,
+};
 
 use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncOutput, assert_send, complete, poll_once,
+    ChunkedAsyncOutput,
+    assert_send,
+    complete,
+    poll_once,
 };
 
 #[allow(dead_code)]
@@ -101,8 +110,10 @@ fn async_string_write_reports_length_and_output_errors() {
 
     let oversized = "x".repeat(usize::from(u16::MAX) + 1);
     let mut output = ChunkedAsyncOutput::new();
-    let length_error =
-        complete(output.write_string_with_u16_len_async(&oversized, ByteOrder::BigEndian))
-            .expect_err("oversized u16 string should fail");
+    let length_error = complete(
+        output
+            .write_string_with_u16_len_async(&oversized, ByteOrder::BigEndian),
+    )
+    .expect_err("oversized u16 string should fail");
     assert_eq!(ErrorKind::InvalidInput, length_error.kind());
 }

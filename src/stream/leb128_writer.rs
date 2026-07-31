@@ -6,11 +6,25 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Result, SeekFrom};
+use std::io::{
+    Result,
+    SeekFrom,
+};
 
-use crate::util::{checked_u64_len, encode_infallible_unchecked, write_all};
-use qubit_codec_binary::{Leb128Codec, NonStrict};
-use qubit_io::{Output, Seekable};
+use crate::util::{
+    MIN_CODEC_BUFFER_CAPACITY,
+    checked_u64_len,
+    encode_infallible_unchecked,
+    write_all,
+};
+use qubit_codec_binary::{
+    Leb128Codec,
+    NonStrict,
+};
+use qubit_io::{
+    Output,
+    Seekable,
+};
 
 /// Writer wrapper for canonical LEB128 integers.
 ///
@@ -27,7 +41,7 @@ pub struct Leb128Writer<W> {
     /// Wrapped byte output.
     inner: W,
     /// Scratch storage for the largest LEB128 payload.
-    buffer: [u8; 19],
+    buffer: [u8; MIN_CODEC_BUFFER_CAPACITY],
 }
 
 impl<W> Leb128Writer<W> {
@@ -45,7 +59,7 @@ impl<W> Leb128Writer<W> {
     pub const fn new(inner: W) -> Self {
         Self {
             inner,
-            buffer: [0; 19],
+            buffer: [0; MIN_CODEC_BUFFER_CAPACITY],
         }
     }
 
@@ -105,7 +119,9 @@ macro_rules! impl_write_value {
 
             self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
                 value,
-                |bytes, value| unsafe { encode_infallible_unchecked::<Codec>(value, bytes, 0) },
+                |bytes, value| unsafe {
+                    encode_infallible_unchecked::<Codec>(value, bytes, 0)
+                },
             )
         }
     };
@@ -201,9 +217,13 @@ where
     /// Returns an output error, including a write-zero error when the output
     /// stops making progress.
     #[inline]
-    fn write_leb128<T, const N: usize, F>(&mut self, value: T, encode: F) -> Result<()>
+    fn write_leb128<T, const N: usize, F>(
+        &mut self,
+        value: T,
+        encode: F,
+    ) -> Result<()>
     where
-        F: FnOnce(&mut [u8; 19], T) -> usize,
+        F: FnOnce(&mut [u8; MIN_CODEC_BUFFER_CAPACITY], T) -> usize,
     {
         let len = encode(&mut self.buffer, value);
         write_all(&mut self.inner, &self.buffer[..len])

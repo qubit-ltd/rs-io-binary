@@ -6,14 +6,23 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{ErrorKind, Result};
+use std::io::{
+    ErrorKind,
+    Result,
+};
 use std::task::Poll;
 
 use qubit_io::AsyncOutput;
-use qubit_io_binary::{AsyncZigZagWriteExt, ZigZagWriteExt};
+use qubit_io_binary::{
+    AsyncZigZagWriteExt,
+    ZigZagWriteExt,
+};
 
 use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncOutput, assert_send, complete, poll_once,
+    ChunkedAsyncOutput,
+    assert_send,
+    complete,
+    poll_once,
 };
 
 #[allow(dead_code)]
@@ -65,8 +74,8 @@ fn dropping_zig_zag_write_future_retains_partial_output() {
 fn async_zig_zag_write_propagates_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
 
-    let error =
-        complete(output.write_zig_zag_i64_async(-42)).expect_err("scripted output should fail");
+    let error = complete(output.write_zig_zag_i64_async(-42))
+        .expect_err("scripted output should fail");
 
     assert_eq!(ErrorKind::BrokenPipe, error.kind());
 }

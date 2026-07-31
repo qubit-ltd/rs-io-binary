@@ -8,11 +8,17 @@
 use std::io::Result;
 
 use crate::util::read_utf8_payload as read_utf8_payload_impl;
-#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+#[cfg(not(any(
+    target_pointer_width = "32",
+    target_pointer_width = "64"
+)))]
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::{BinaryReadExt, Leb128ReadExt};
+use crate::{
+    BinaryReadExt,
+    Leb128ReadExt,
+};
 use qubit_codec::ByteOrder;
 use qubit_io::Input;
 
@@ -35,7 +41,11 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when `len` exceeds `max_len`, or
     /// [`std::io::ErrorKind::InvalidData`] when the payload is not valid
     /// UTF-8.
-    fn read_utf8_payload(&mut self, len: usize, max_len: usize) -> Result<String>;
+    fn read_utf8_payload(
+        &mut self,
+        len: usize,
+        max_len: usize,
+    ) -> Result<String>;
 
     /// Reads a UTF-8 string with an unsigned LEB128 byte-length prefix.
     ///
@@ -82,7 +92,10 @@ pub trait StringReadExt: Input<Item = u8> {
     /// the encoded length exceeds `max_len`, or
     /// [`std::io::ErrorKind::InvalidData`] when the payload is not valid
     /// UTF-8.
-    fn read_utf8_string_uleb_strict(&mut self, max_len: usize) -> Result<String>;
+    fn read_utf8_string_uleb_strict(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String>;
 
     /// Reads a UTF-8 string with an unsigned LEB128 `u64` byte-length prefix.
     ///
@@ -128,7 +141,10 @@ pub trait StringReadExt: Input<Item = u8> {
     /// malformed or non-canonical, when the encoded `u64` length does not
     /// fit the local `usize`, when the encoded length exceeds `max_len`, or
     /// when the payload is not valid UTF-8.
-    fn read_utf8_string_uleb_u64_strict(&mut self, max_len: usize) -> Result<String>;
+    fn read_utf8_string_uleb_u64_strict(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String>;
 
     /// Reads a UTF-8 string with a runtime-order `u16` byte-length prefix.
     ///
@@ -147,8 +163,11 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_string_with_u16_len(&mut self, byte_order: ByteOrder, max_len: usize)
-    -> Result<String>;
+    fn read_string_with_u16_len(
+        &mut self,
+        byte_order: ByteOrder,
+        max_len: usize,
+    ) -> Result<String>;
 
     /// Reads a UTF-8 string with a big-endian `u16` byte-length prefix.
     ///
@@ -166,7 +185,8 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_string_with_u16_len_be(&mut self, max_len: usize) -> Result<String>;
+    fn read_string_with_u16_len_be(&mut self, max_len: usize)
+    -> Result<String>;
 
     /// Reads a UTF-8 string with a little-endian `u16` byte-length prefix.
     ///
@@ -184,7 +204,8 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_string_with_u16_len_le(&mut self, max_len: usize) -> Result<String>;
+    fn read_string_with_u16_len_le(&mut self, max_len: usize)
+    -> Result<String>;
 
     /// Reads a UTF-8 string with a runtime-order `u32` byte-length prefix.
     ///
@@ -203,8 +224,11 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_string_with_u32_len(&mut self, byte_order: ByteOrder, max_len: usize)
-    -> Result<String>;
+    fn read_string_with_u32_len(
+        &mut self,
+        byte_order: ByteOrder,
+        max_len: usize,
+    ) -> Result<String>;
 
     /// Reads a UTF-8 string with a big-endian `u32` byte-length prefix.
     ///
@@ -222,7 +246,8 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_string_with_u32_len_be(&mut self, max_len: usize) -> Result<String>;
+    fn read_string_with_u32_len_be(&mut self, max_len: usize)
+    -> Result<String>;
 
     /// Reads a UTF-8 string with a little-endian `u32` byte-length prefix.
     ///
@@ -240,7 +265,8 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_string_with_u32_len_le(&mut self, max_len: usize) -> Result<String>;
+    fn read_string_with_u32_len_le(&mut self, max_len: usize)
+    -> Result<String>;
 }
 
 impl<T> StringReadExt for T
@@ -248,7 +274,11 @@ where
     T: Input<Item = u8> + ?Sized,
 {
     #[inline]
-    fn read_utf8_payload(&mut self, len: usize, max_len: usize) -> Result<String> {
+    fn read_utf8_payload(
+        &mut self,
+        len: usize,
+        max_len: usize,
+    ) -> Result<String> {
         read_utf8_payload_impl(self, len, max_len)
     }
 
@@ -259,7 +289,10 @@ where
     }
 
     #[inline]
-    fn read_utf8_string_uleb_strict(&mut self, max_len: usize) -> Result<String> {
+    fn read_utf8_string_uleb_strict(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String> {
         let len = self.read_uleb_usize_strict()?;
         read_utf8_payload_impl(self, len, max_len)
     }
@@ -275,7 +308,10 @@ where
     }
 
     #[inline]
-    fn read_utf8_string_uleb_u64_strict(&mut self, max_len: usize) -> Result<String> {
+    fn read_utf8_string_uleb_u64_strict(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String> {
         let len = self.read_uleb_u64_strict()?;
         #[cfg(target_pointer_width = "64")]
         let len = len as usize;
@@ -295,13 +331,19 @@ where
     }
 
     #[inline]
-    fn read_string_with_u16_len_be(&mut self, max_len: usize) -> Result<String> {
+    fn read_string_with_u16_len_be(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String> {
         let len = self.read_u16_be()? as usize;
         read_utf8_payload_impl(self, len, max_len)
     }
 
     #[inline]
-    fn read_string_with_u16_len_le(&mut self, max_len: usize) -> Result<String> {
+    fn read_string_with_u16_len_le(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String> {
         let len = self.read_u16_le()? as usize;
         read_utf8_payload_impl(self, len, max_len)
     }
@@ -315,27 +357,42 @@ where
         let len = self.read_u32(byte_order)?;
         #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
         let len = len as usize;
-        #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+        #[cfg(not(any(
+            target_pointer_width = "32",
+            target_pointer_width = "64"
+        )))]
         let len = usize_from_u32_len(len)?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
     #[inline]
-    fn read_string_with_u32_len_be(&mut self, max_len: usize) -> Result<String> {
+    fn read_string_with_u32_len_be(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String> {
         let len = self.read_u32_be()?;
         #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
         let len = len as usize;
-        #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+        #[cfg(not(any(
+            target_pointer_width = "32",
+            target_pointer_width = "64"
+        )))]
         let len = usize_from_u32_len(len)?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
     #[inline]
-    fn read_string_with_u32_len_le(&mut self, max_len: usize) -> Result<String> {
+    fn read_string_with_u32_len_le(
+        &mut self,
+        max_len: usize,
+    ) -> Result<String> {
         let len = self.read_u32_le()?;
         #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
         let len = len as usize;
-        #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+        #[cfg(not(any(
+            target_pointer_width = "32",
+            target_pointer_width = "64"
+        )))]
         let len = usize_from_u32_len(len)?;
         read_utf8_payload_impl(self, len, max_len)
     }

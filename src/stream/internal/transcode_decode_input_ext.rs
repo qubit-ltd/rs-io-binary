@@ -5,9 +5,15 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{Error, Result};
+use std::io::{
+    Error,
+    Result,
+};
 
-use qubit_codec::{Codec, TranscodeDecodeInput};
+use qubit_codec::{
+    Codec,
+    TranscodeDecodeInput,
+};
 use qubit_io::Input;
 
 use super::stream_codec_decode_error::StreamCodecDecodeError;

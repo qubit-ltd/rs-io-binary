@@ -14,11 +14,17 @@ use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
 
 use crate::util::read_utf8_payload_async;
-#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+#[cfg(not(any(
+    target_pointer_width = "32",
+    target_pointer_width = "64"
+)))]
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::{AsyncBinaryReadExt, AsyncLeb128ReadExt};
+use crate::{
+    AsyncBinaryReadExt,
+    AsyncLeb128ReadExt,
+};
 
 /// Future-based length-prefixed UTF-8 reads.
 ///
@@ -333,9 +339,15 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     {
         async move {
             let len = self.read_u32_async(byte_order).await?;
-            #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+            #[cfg(any(
+                target_pointer_width = "32",
+                target_pointer_width = "64"
+            ))]
             let len = len as usize;
-            #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+            #[cfg(not(any(
+                target_pointer_width = "32",
+                target_pointer_width = "64"
+            )))]
             let len = usize_from_u32_len(len)?;
             read_utf8_payload_async(self, len, max_len).await
         }
@@ -370,9 +382,15 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     {
         async move {
             let len = self.read_u32_be_async().await?;
-            #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+            #[cfg(any(
+                target_pointer_width = "32",
+                target_pointer_width = "64"
+            ))]
             let len = len as usize;
-            #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+            #[cfg(not(any(
+                target_pointer_width = "32",
+                target_pointer_width = "64"
+            )))]
             let len = usize_from_u32_len(len)?;
             read_utf8_payload_async(self, len, max_len).await
         }
@@ -407,9 +425,15 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     {
         async move {
             let len = self.read_u32_le_async().await?;
-            #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
+            #[cfg(any(
+                target_pointer_width = "32",
+                target_pointer_width = "64"
+            ))]
             let len = len as usize;
-            #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
+            #[cfg(not(any(
+                target_pointer_width = "32",
+                target_pointer_width = "64"
+            )))]
             let len = usize_from_u32_len(len)?;
             read_utf8_payload_async(self, len, max_len).await
         }

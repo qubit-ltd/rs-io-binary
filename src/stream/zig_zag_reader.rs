@@ -7,11 +7,25 @@
 // =============================================================================
 
 use core::marker::PhantomData;
-use std::io::{Result, SeekFrom};
+use std::io::{
+    Result,
+    SeekFrom,
+};
 
-use crate::util::read_leb128_from_reader;
-use qubit_codec_binary::{Leb128DecodePolicy, NonStrict, Strict, ZigZagCodec};
-use qubit_io::{Input, Seekable};
+use crate::util::{
+    MIN_CODEC_BUFFER_CAPACITY,
+    read_leb128_from_reader,
+};
+use qubit_codec_binary::{
+    Leb128DecodePolicy,
+    NonStrict,
+    Strict,
+    ZigZagCodec,
+};
+use qubit_io::{
+    Input,
+    Seekable,
+};
 
 /// Reader wrapper for ZigZag + unsigned LEB128 integers.
 ///
@@ -29,7 +43,7 @@ pub struct ZigZagReader<R, P = NonStrict> {
     /// Wrapped byte input.
     inner: R,
     /// Scratch storage for the largest encoded ZigZag payload.
-    buffer: [u8; 19],
+    buffer: [u8; MIN_CODEC_BUFFER_CAPACITY],
     /// Associates the selected decoding policy without storing a value.
     marker: PhantomData<fn() -> P>,
 }
@@ -52,7 +66,7 @@ where
     pub const fn new(inner: R) -> Self {
         Self {
             inner,
-            buffer: [0; 19],
+            buffer: [0; MIN_CODEC_BUFFER_CAPACITY],
             marker: PhantomData,
         }
     }
@@ -136,8 +150,18 @@ macro_rules! impl_for_policy {
             impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
             impl_read_value!($policy, read_i32, i32, "Reads a ZigZag `i32`.");
             impl_read_value!($policy, read_i64, i64, "Reads a ZigZag `i64`.");
-            impl_read_value!($policy, read_i128, i128, "Reads a ZigZag `i128`.");
-            impl_read_value!($policy, read_isize, isize, "Reads a ZigZag `isize`.");
+            impl_read_value!(
+                $policy,
+                read_i128,
+                i128,
+                "Reads a ZigZag `i128`."
+            );
+            impl_read_value!(
+                $policy,
+                read_isize,
+                isize,
+                "Reads a ZigZag `isize`."
+            );
         }
     };
 }

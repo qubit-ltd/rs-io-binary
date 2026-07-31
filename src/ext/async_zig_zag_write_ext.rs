@@ -10,10 +10,16 @@
 use core::future::Future;
 use std::io::Result;
 
-use qubit_codec_binary::{NonStrict, ZigZagCodec};
+use qubit_codec_binary::{
+    NonStrict,
+    ZigZagCodec,
+};
 use qubit_io::AsyncOutput;
 
-use crate::util::{encode_infallible_unchecked, write_all_async};
+use crate::util::{
+    encode_infallible_unchecked,
+    write_all_async,
+};
 
 macro_rules! zig_zag_write_method {
     ($doc:literal, $name:ident, $ty:ty) => {
@@ -38,16 +44,22 @@ macro_rules! zig_zag_write_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already written to the output."]
         #[inline(always)]
-        fn $name(&mut self, value: $ty) -> impl Future<Output = Result<()>> + Send + '_
+        fn $name(
+            &mut self,
+            value: $ty,
+        ) -> impl Future<Output = Result<()>> + Send + '_
         where
             Self: Send + Unpin,
         {
             async move {
-                let mut bytes = [0_u8; ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
+                let mut bytes =
+                    [0_u8; ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
                 type Codec = ZigZagCodec<$ty, NonStrict>;
                 // SAFETY: The local buffer has the codec's maximum payload
                 // size.
-                let len = unsafe { encode_infallible_unchecked::<Codec>(value, &mut bytes, 0) };
+                let len = unsafe {
+                    encode_infallible_unchecked::<Codec>(value, &mut bytes, 0)
+                };
                 write_all_async(self, &bytes[..len]).await
             }
         }

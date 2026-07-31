@@ -10,10 +10,16 @@ use std::io::ErrorKind;
 use std::task::Poll;
 
 use qubit_io::AsyncInput;
-use qubit_io_binary::{AsyncLeb128ReadExt, Leb128WriteExt};
+use qubit_io_binary::{
+    AsyncLeb128ReadExt,
+    Leb128WriteExt,
+};
 
 use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput, assert_send, complete, poll_once,
+    ChunkedAsyncInput,
+    assert_send,
+    complete,
+    poll_once,
 };
 
 #[allow(dead_code)]
@@ -99,7 +105,7 @@ fn async_leb128_read_reports_invalid_and_truncated_payloads() {
     assert_eq!(ErrorKind::InvalidData, invalid.kind());
 
     let mut input = ChunkedAsyncInput::new(vec![0x80]);
-    let truncated =
-        complete(input.read_uleb_u128_async()).expect_err("truncated payload should fail");
+    let truncated = complete(input.read_uleb_u128_async())
+        .expect_err("truncated payload should fail");
     assert_eq!(ErrorKind::UnexpectedEof, truncated.kind());
 }

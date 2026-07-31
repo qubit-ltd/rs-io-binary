@@ -17,7 +17,10 @@ use std::io::{
 
 use libfuzzer_sys::fuzz_target;
 use qubit_codec::LittleEndian;
-use qubit_codec_binary::{NonStrict, Strict};
+use qubit_codec_binary::{
+    NonStrict,
+    Strict,
+};
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryReader,
@@ -88,11 +91,15 @@ fn fuzz_strict_leb128(payload: &[u8], chunk_size: usize) {
     bytes[..count].copy_from_slice(&payload[..count]);
     let value = u64::from_le_bytes(bytes);
     let mut encoded = Vec::new();
-    encoded.write_uleb_u64(value).expect("LEB128 value should encode");
+    encoded
+        .write_uleb_u64(value)
+        .expect("LEB128 value should encode");
 
     let mut extension = ChunkedReader::new(&encoded, chunk_size);
     let extension_result = extension.read_uleb_u64_strict();
-    let mut wrapper = Leb128Reader::<_, Strict>::new(ChunkedReader::new(&encoded, chunk_size));
+    let mut wrapper = Leb128Reader::<_, Strict>::new(ChunkedReader::new(
+        &encoded, chunk_size,
+    ));
     let wrapper_result = wrapper.read_u64();
     let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(
         ChunkedReader::new(&encoded, chunk_size),
@@ -101,8 +108,14 @@ fn fuzz_strict_leb128(payload: &[u8], chunk_size: usize) {
     let buffered_result = buffered.read_u64();
 
     assert_eq!(Ok(value), result_signature(&extension_result));
-    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
-    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
 }
 
 /// Checks fixed-length UTF-8 string framing through all synchronous readers.
@@ -115,9 +128,14 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
 
     let mut extension = ChunkedReader::new(&encoded, chunk_size);
     let extension_result = extension
-        .read_string_with_u16_len(qubit_codec::ByteOrder::LittleEndian, MAX_FUZZ_INPUT_LEN)
+        .read_string_with_u16_len(
+            qubit_codec::ByteOrder::LittleEndian,
+            MAX_FUZZ_INPUT_LEN,
+        )
         .map(|text| text.into_bytes());
-    let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
+    let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(
+        &encoded, chunk_size,
+    ));
     let wrapper_result = wrapper
         .read_string_with_u16_len(MAX_FUZZ_INPUT_LEN)
         .map(|text| text.into_bytes());
@@ -129,7 +147,10 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
         .read_string_with_u16_len(MAX_FUZZ_INPUT_LEN)
         .map(|text| text.into_bytes());
 
-    assert_eq!(Ok(value.as_bytes().to_vec()), string_result_signature(&extension_result));
+    assert_eq!(
+        Ok(value.as_bytes().to_vec()),
+        string_result_signature(&extension_result)
+    );
     assert_eq!(
         string_result_signature(&extension_result),
         string_result_signature(&wrapper_result)
@@ -216,7 +237,9 @@ where
 }
 
 /// Converts owned string-read outcomes into assertion-friendly signatures.
-fn string_result_signature(result: &io::Result<Vec<u8>>) -> Result<Vec<u8>, ErrorKind> {
+fn string_result_signature(
+    result: &io::Result<Vec<u8>>,
+) -> Result<Vec<u8>, ErrorKind> {
     match result {
         Ok(value) => Ok(value.clone()),
         Err(error) => Err(error.kind()),

@@ -7,12 +7,26 @@
 // =============================================================================
 
 use std::future::Future;
-use std::io::{Error, ErrorKind, Result};
+use std::io::{
+    Error,
+    ErrorKind,
+    Result,
+};
 use std::pin::Pin;
-use std::sync::{Arc, Mutex};
-use std::task::{Context, Poll, Waker};
+use std::sync::{
+    Arc,
+    Mutex,
+};
+use std::task::{
+    Context,
+    Poll,
+    Waker,
+};
 
-use qubit_io::{AsyncInput, AsyncOutput};
+use qubit_io::{
+    AsyncInput,
+    AsyncOutput,
+};
 
 pub(crate) struct ChunkedAsyncInput {
     bytes: Vec<u8>,
@@ -117,7 +131,10 @@ impl AsyncOutput for ChunkedAsyncOutput {
         count: usize,
     ) -> Poll<Result<usize>> {
         if let Some(kind) = self.error {
-            return Poll::Ready(Err(Error::new(kind, "scripted write failure")));
+            return Poll::Ready(Err(Error::new(
+                kind,
+                "scripted write failure",
+            )));
         }
         if self.pending {
             self.pending = false;
@@ -133,7 +150,10 @@ impl AsyncOutput for ChunkedAsyncOutput {
         Poll::Ready(Ok(written))
     }
 
-    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<()>> {
+    fn poll_flush(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<Result<()>> {
         Poll::Ready(Ok(()))
     }
 }

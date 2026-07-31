@@ -5,9 +5,16 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{Error, ErrorKind, Write};
+use std::io::{
+    Error,
+    ErrorKind,
+    Write,
+};
 
-use qubit_io::{Output, Seekable};
+use qubit_io::{
+    Output,
+    Seekable,
+};
 use qubit_io_binary::Leb128Writer;
 
 struct FailingWriter;
@@ -91,12 +98,15 @@ fn test_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
 
 #[test]
 fn test_leb128_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer = qubit_io_binary::Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer =
+        qubit_io_binary::Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
 
     Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through Leb128Writer should succeed");
-    Output::write_fully(&mut writer, b"xy").expect("writing through Leb128Writer should succeed");
-    Output::flush(&mut writer).expect("flushing through Leb128Writer should succeed");
+    Output::write_fully(&mut writer, b"xy")
+        .expect("writing through Leb128Writer should succeed");
+    Output::flush(&mut writer)
+        .expect("flushing through Leb128Writer should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

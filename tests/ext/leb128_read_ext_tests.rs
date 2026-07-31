@@ -6,10 +6,16 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{Cursor, ErrorKind};
+use std::io::{
+    Cursor,
+    ErrorKind,
+};
 
 use qubit_codec_binary::Leb128DecodeError;
-use qubit_io_binary::{Leb128ReadExt, Leb128WriteExt};
+use qubit_io_binary::{
+    Leb128ReadExt,
+    Leb128WriteExt,
+};
 
 #[test]
 fn test_leb128_read_ext_reads_all_unsigned_methods() {

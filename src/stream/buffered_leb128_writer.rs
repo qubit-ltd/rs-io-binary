@@ -8,13 +8,27 @@
 
 use std::{
     collections::TryReserveError,
-    io::{Result, SeekFrom},
+    io::{
+        Result,
+        SeekFrom,
+    },
 };
 
-use crate::util::{MIN_CODEC_BUFFER_CAPACITY, checked_u64_len, write_all};
+use crate::util::{
+    MIN_CODEC_BUFFER_CAPACITY,
+    checked_u64_len,
+    write_all,
+};
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{Leb128Codec, NonStrict};
-use qubit_io::{Buffer, Output, Seekable};
+use qubit_codec_binary::{
+    Leb128Codec,
+    NonStrict,
+};
+use qubit_io::{
+    Buffer,
+    Output,
+    Seekable,
+};
 
 use super::internal::TranscodeEncodeOutputExt;
 
