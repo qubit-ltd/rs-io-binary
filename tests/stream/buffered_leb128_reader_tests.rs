@@ -191,7 +191,9 @@ fn test_buffered_leb128_reader_accessors_raw_seek_and_string() {
     assert_eq!(0, reader.inner().position());
     assert_eq!(
         "abc",
-        reader.read_utf8_string_usize(3).expect("string should be read")
+        reader
+            .read_utf8_string_usize(3)
+            .expect("string should be read")
     );
     assert_eq!(
         4,

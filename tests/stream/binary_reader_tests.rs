@@ -75,7 +75,10 @@ fn test_binary_reader_supports_native_endian() {
     let mut reader = BinaryReader::<_, NativeEndian>::new(Cursor::new(
         0x1234_5678_u32.to_ne_bytes().to_vec(),
     ));
-    assert_eq!(0x1234_5678, reader.read_u32().expect("native value should read"));
+    assert_eq!(
+        0x1234_5678,
+        reader.read_u32().expect("native value should read")
+    );
 }
 
 #[test]
