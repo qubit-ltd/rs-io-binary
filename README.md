@@ -110,6 +110,25 @@ a maximum payload length to bound allocation. For persistent formats, prefer
 fixed-width length fields or `u64` LEB128 lengths over target-width `usize`
 helpers.
 
+## Mixed Binary Stream Benchmark
+
+On the development machine, the Criterion quick run below used a deterministic
+random mix of `u8`, `i32`, `u64`, and multibyte UTF-8 strings (131,072 fields
+per iteration). Treat these values as a comparison of buffering strategies, not
+as portable performance guarantees.
+
+| Scenario | Time | Throughput | Relative to raw extension |
+| --- | ---: | ---: | ---: |
+| Write: raw extension | 61.2 ms | 2.14 M fields/s | 1.0× |
+| Write: extension + `BufWriter` | 3.51 ms | 37.37 M fields/s | 17.5× |
+| Write: `BufferedBinaryWriter` | 3.11 ms | 42.19 M fields/s | 19.7× |
+| Read: raw extension | 44.7 ms | 2.94 M fields/s | 1.0× |
+| Read: extension + `BufReader` | 3.56 ms | 36.83 M fields/s | 12.5× |
+| Read: `BufferedBinaryReader` | 3.24 ms | 40.46 M fields/s | 13.8× |
+
+The buffered wrappers were about 13% faster for writes and 10% faster for reads
+than the corresponding externally buffered extension paths in this run.
+
 ## Boundaries and Further Reading
 
 - `qubit-codec-binary` owns buffer-level binary algorithms.

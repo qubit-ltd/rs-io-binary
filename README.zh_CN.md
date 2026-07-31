@@ -103,6 +103,24 @@ Strict LEB128 方法会拒绝非 canonical 编码。字符串读取方法要求�
 payload 长度，以限制内存分配。持久化格式应优先使用固定宽度长度字段或
 `u64` LEB128 长度，而不是依赖目标平台宽度的 `usize` helper。
 
+## 混合二进制流基准
+
+下表是开发机器上的 Criterion quick 运行结果。工作负载每轮包含 131,072 个按确定性
+随机序列选择的 `u8`、`i32`、`u64` 和多字节 UTF-8 字符串字段。它用于比较缓冲策略，
+不构成可移植的性能承诺。
+
+| 场景 | 时间 | 吞吐量 | 相对裸 extension |
+| --- | ---: | ---: | ---: |
+| 写入：裸 extension | 61.2 ms | 2.14 M fields/s | 1.0× |
+| 写入：extension + `BufWriter` | 3.51 ms | 37.37 M fields/s | 17.5× |
+| 写入：`BufferedBinaryWriter` | 3.11 ms | 42.19 M fields/s | 19.7× |
+| 读取：裸 extension | 44.7 ms | 2.94 M fields/s | 1.0× |
+| 读取：extension + `BufReader` | 3.56 ms | 36.83 M fields/s | 12.5× |
+| 读取：`BufferedBinaryReader` | 3.24 ms | 40.46 M fields/s | 13.8× |
+
+本次运行中，buffered wrapper 相比对应的外部缓冲 extension 路径，写入约快 13%，
+读取约快 10%。
+
 ## 边界与延伸阅读
 
 - `qubit-codec-binary` 负责缓冲区级二进制算法；
