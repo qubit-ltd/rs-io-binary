@@ -20,26 +20,27 @@ use std::{
 use qubit_codec::ByteOrder;
 use qubit_io_binary::StringWriteExt;
 
-#[cfg(all(unix, target_pointer_width = "64", target_os = "macos"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64", target_os = "macos"))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x1000;
 
 #[cfg(all(
+    not(miri),
     unix,
     target_pointer_width = "64",
     any(target_os = "android", target_os = "linux")
 ))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x20;
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 const MAP_PRIVATE_FLAG: i32 = 0x02;
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 const PROT_READ_FLAG: i32 = 0x01;
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 const MAP_FAILED: *mut c_void = -1_isize as *mut c_void;
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 unsafe extern "C" {
     fn mmap(
         addr: *mut c_void,
@@ -52,13 +53,13 @@ unsafe extern "C" {
     fn munmap(addr: *mut c_void, len: usize) -> i32;
 }
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 struct MappedBytes {
     ptr: *mut c_void,
     len: usize,
 }
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 impl MappedBytes {
     fn new_zeroed(len: usize) -> Self {
         // SAFETY: The mapping is anonymous, private, read-only, and requests no
@@ -91,7 +92,7 @@ impl MappedBytes {
     }
 }
 
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 impl Drop for MappedBytes {
     fn drop(&mut self) {
         // SAFETY: `ptr` and `len` come from a successful `mmap` call in
@@ -121,7 +122,7 @@ fn test_string_write_ext_writes_all_length_prefix_kinds() {
         .write_utf8_payload("raw")
         .expect("payload should be written");
     output
-        .write_utf8_string_uleb("hi")
+        .write_utf8_string_uleb_usize("hi")
         .expect("ULEB string should be written");
     output
         .write_utf8_string_uleb_u64("u6")
@@ -202,7 +203,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     assert_eq!(
         ErrorKind::Other,
         writer
-            .write_utf8_string_uleb("hi")
+            .write_utf8_string_uleb_usize("hi")
             .expect_err("writer error should be returned")
             .kind()
     );
@@ -272,6 +273,7 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
 }
 
 #[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 #[test]
 fn test_string_write_ext_reports_u32_length_overflow() {
     let value = MappedBytes::new_zeroed(u32::MAX as usize + 1);

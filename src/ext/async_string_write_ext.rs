@@ -84,7 +84,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_uleb_async<'a>(
+    fn write_utf8_string_uleb_usize_async<'a>(
         &'a mut self,
         value: &'a str,
     ) -> impl Future<Output = Result<()>> + Send + 'a

@@ -99,7 +99,7 @@ fn variable_length_read_extensions_accept_input_without_std_read() {
 
     assert_eq!(300, input.read_uleb_u16().unwrap());
     assert_eq!(-1, input.read_zig_zag_i16().unwrap());
-    assert_eq!("hi", input.read_utf8_string_uleb(2).unwrap());
+    assert_eq!("hi", input.read_utf8_string_uleb_usize(2).unwrap());
 }
 
 #[test]
@@ -108,7 +108,7 @@ fn variable_length_write_extensions_accept_output_without_std_write() {
 
     output.write_uleb_u16(300).unwrap();
     output.write_zig_zag_i16(-1).unwrap();
-    output.write_utf8_string_uleb("hi").unwrap();
+    output.write_utf8_string_uleb_usize("hi").unwrap();
 
     assert_eq!(vec![0xac, 0x02, 0x01, 0x02, b'h', b'i'], output.bytes);
 }

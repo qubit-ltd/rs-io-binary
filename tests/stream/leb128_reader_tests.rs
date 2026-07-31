@@ -134,7 +134,7 @@ fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
     >::new(std::io::Cursor::new(bytes));
 
     let text = reader
-        .read_utf8_string(3)
+        .read_utf8_string_usize(3)
         .expect("reading a length-prefixed UTF-8 string should succeed");
 
     assert_eq!(text, "hé");
@@ -161,7 +161,7 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
         Leb128Reader::<_, Strict>::new(Cursor::new(vec![3, b'a', b'b', b'c']));
 
     let text = reader
-        .read_utf8_string(3)
+        .read_utf8_string_usize(3)
         .expect("strict length-prefixed UTF-8 string should succeed");
 
     assert_eq!("abc", text);
@@ -179,7 +179,7 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
     assert_eq!(
         ErrorKind::InvalidData,
         reader
-            .read_utf8_string(3)
+            .read_utf8_string_usize(3)
             .expect_err("non-canonical strict string length should fail")
             .kind()
     );
