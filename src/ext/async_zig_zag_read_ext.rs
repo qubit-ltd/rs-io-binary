@@ -43,7 +43,7 @@ macro_rules! zig_zag_read_method {
         {
             async move {
                 read_leb128_payload_async::<
-                    { ZigZagCodec::<$ty, $policy>::MAX_UNITS_PER_VALUE },
+                    { ZigZagCodec::<$ty, $policy>::MAX_DECODE_UNITS_PER_VALUE },
                     ZigZagCodec<$ty, $policy>,
                     _,
                 >(self)

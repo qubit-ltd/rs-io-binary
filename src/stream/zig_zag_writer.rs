@@ -116,7 +116,7 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
-            self.write_zig_zag::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
+            self.write_zig_zag::<$ty, { Codec::MAX_ENCODE_UNITS_PER_VALUE }, _>(
                 value,
                 |bytes, value| unsafe {
                     encode_infallible_unchecked::<Codec>(value, bytes, 0)

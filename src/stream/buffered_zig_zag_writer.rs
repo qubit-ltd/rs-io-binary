@@ -134,13 +134,11 @@ where
         self.output.inner()
     }
 
-    /// Returns mutable access to the underlying writer.
+    /// Provides access to the underlying writer.
     ///
     /// Direct writes through the returned writer bypass pending bytes in this
     /// wrapper and can reorder the physical byte stream. Flush this wrapper
     /// before using the returned writer directly.
-    ///
-    /// # Returns
     ///
     /// Returns the underlying writer and every encoded byte still pending.
     ///

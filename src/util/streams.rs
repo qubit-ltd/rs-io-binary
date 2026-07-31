@@ -39,8 +39,13 @@ const U32_LENGTH_OVERFLOW: &str =
 const U64_LENGTH_OVERFLOW: &str =
     "string length exceeds maximum encodable u64 length";
 /// Minimum capacity required by the largest scalar codec payload.
-pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize =
-    Leb128Codec::<u128, NonStrict>::MAX_UNITS_PER_VALUE;
+pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = {
+    const ENCODE: usize =
+        Leb128Codec::<u128, NonStrict>::MAX_ENCODE_UNITS_PER_VALUE;
+    const DECODE: usize =
+        Leb128Codec::<u128, NonStrict>::MAX_DECODE_UNITS_PER_VALUE;
+    if ENCODE > DECODE { ENCODE } else { DECODE }
+};
 
 /// Writes every byte in `input` to a Qubit output.
 ///
@@ -89,7 +94,7 @@ where
 /// The caller must guarantee that `index` is a valid start position in `input`
 /// and that the available input makes `C` return a complete decoded value.
 /// Current callers satisfy this with a fixed-width codec and at least
-/// `C::MAX_UNITS_PER_VALUE` readable bytes.
+/// `C::MAX_DECODE_UNITS_PER_VALUE` readable bytes.
 ///
 /// # Panics
 ///
@@ -135,7 +140,8 @@ where
 /// # Safety
 ///
 /// The caller must guarantee that `index` is a valid start position in
-/// `output` and that `C::MAX_UNITS_PER_VALUE` bytes can be written from it.
+/// `output` and that `C::MAX_ENCODE_UNITS_PER_VALUE` bytes can be written from
+/// it.
 #[inline(always)]
 pub(crate) unsafe fn encode_infallible_unchecked<C>(
     value: C::Value,
