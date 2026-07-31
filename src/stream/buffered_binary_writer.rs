@@ -27,6 +27,7 @@ use qubit_codec::{
     ByteOrder,
     ByteOrderSpec,
     LittleEndian,
+    NativeEndian,
 };
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::{
@@ -299,6 +300,7 @@ macro_rules! impl_for_order {
 
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
+impl_for_order!(NativeEndian);
 
 impl<W, O> Output for BufferedBinaryWriter<W, O>
 where

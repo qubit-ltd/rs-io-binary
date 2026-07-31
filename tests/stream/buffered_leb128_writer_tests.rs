@@ -107,7 +107,7 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_and_string() {
 
     assert_eq!(0, writer.inner().position());
     writer
-        .write_utf8_string("abc")
+        .write_utf8_string_usize("abc")
         .expect("string should be buffered");
     assert_eq!(1, writer.write(&[9]).expect("raw byte should be buffered"));
     writer
@@ -192,7 +192,7 @@ fn test_buffered_leb128_writer_defers_utf8_string_flush_error() {
         .write_fully(&[1; 18])
         .expect("initial bytes should be buffered");
     writer
-        .write_utf8_string("a")
+        .write_utf8_string_usize("a")
         .expect("length-prefixed string should grow the persistent buffer");
     let error = writer
         .flush()

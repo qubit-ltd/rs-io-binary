@@ -158,14 +158,12 @@ where
         self.input.inner()
     }
 
-    /// Returns mutable access to the underlying reader.
+    /// Provides access to the underlying reader.
     ///
     /// Direct reads from the returned reader bypass unread bytes already held
     /// by this wrapper and can desynchronize subsequent buffered reads. Use
     /// [`Self::into_parts`] when ownership and unread bytes must be recovered
     /// together.
-    ///
-    /// # Returns
     ///
     /// Consumes this wrapper and preserves its unread buffered bytes.
     ///
@@ -301,7 +299,7 @@ macro_rules! impl_for_policy {
             /// Returns an input or allocation error, or an invalid-data error
             /// for a malformed or excessive length or invalid UTF-8.
             #[inline]
-            pub fn read_utf8_string(
+            pub fn read_utf8_string_usize(
                 &mut self,
                 max_len: usize,
             ) -> Result<String> {
@@ -312,7 +310,7 @@ macro_rules! impl_for_policy {
             /// Reads a UTF-8 string prefixed by an unsigned LEB128 `u64` byte
             /// length.
             ///
-            /// Prefer this method over [`Self::read_utf8_string`] for
+            /// Prefer this method over [`Self::read_utf8_string_usize`] for
             /// persistent files and cross-platform protocols because the
             /// length field is independent of the current Rust target's
             /// pointer width.

@@ -117,7 +117,7 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = Leb128Codec<$ty, NonStrict>;
 
-            self.write_leb128::<$ty, { Codec::MAX_UNITS_PER_VALUE }, _>(
+            self.write_leb128::<$ty, { Codec::MAX_ENCODE_UNITS_PER_VALUE }, _>(
                 value,
                 |bytes, value| unsafe {
                     encode_infallible_unchecked::<Codec>(value, bytes, 0)
@@ -162,7 +162,7 @@ where
     ///
     /// Returns an I/O error from the underlying writer.
     #[inline]
-    pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
+    pub fn write_utf8_string_usize(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
         let bytes = value.as_bytes();
         write_all(&mut self.inner, bytes)
@@ -170,7 +170,7 @@ where
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
     ///
-    /// Prefer this method over [`Self::write_utf8_string`] for persistent files
+    /// Prefer this method over [`Self::write_utf8_string_usize`] for persistent files
     /// and cross-platform protocols because the length field is independent of
     /// the current Rust target's pointer width.
     ///

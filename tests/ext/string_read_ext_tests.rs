@@ -28,7 +28,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hello",
         input
-            .read_utf8_string_uleb(8)
+            .read_utf8_string_uleb_usize(8)
             .expect("ULEB string should be read")
     );
 
@@ -52,7 +52,7 @@ fn test_string_read_ext_reads_all_length_prefix_kinds() {
     assert_eq!(
         "hello",
         input
-            .read_utf8_string_uleb_strict(8)
+            .read_utf8_string_uleb_usize_strict(8)
             .expect("strict ULEB string should be read")
     );
 
@@ -136,7 +136,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_uleb(2)
+            .read_utf8_string_uleb_usize(2)
             .expect_err("oversized ULEB string should fail")
             .kind()
     );
@@ -154,7 +154,7 @@ fn test_string_read_ext_reports_length_and_utf8_errors() {
     assert_eq!(
         ErrorKind::InvalidData,
         input
-            .read_utf8_string_uleb_strict(8)
+            .read_utf8_string_uleb_usize_strict(8)
             .expect_err("non-canonical ULEB length should fail")
             .kind()
     );
@@ -251,7 +251,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         input
-            .read_utf8_string_uleb(8)
+            .read_utf8_string_uleb_usize(8)
             .expect_err("truncated payload should fail")
             .kind()
     );
@@ -260,7 +260,7 @@ fn test_string_read_ext_returns_payload_read_error() {
     assert_eq!(
         ErrorKind::UnexpectedEof,
         reader
-            .read_utf8_string_uleb(8)
+            .read_utf8_string_uleb_usize(8)
             .expect_err("length read error should be returned")
             .kind()
     );

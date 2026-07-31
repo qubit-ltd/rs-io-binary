@@ -52,8 +52,8 @@ macro_rules! leb128_write_method {
             Self: Send + Unpin,
         {
             async move {
-                let mut bytes =
-                    [0_u8; Leb128Codec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
+                let mut bytes = [0_u8;
+                    Leb128Codec::<$ty, NonStrict>::MAX_ENCODE_UNITS_PER_VALUE];
                 type Codec = Leb128Codec<$ty, NonStrict>;
                 // SAFETY: The local buffer has the codec's maximum payload
                 // size.

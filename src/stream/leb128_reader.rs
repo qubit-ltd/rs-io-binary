@@ -139,10 +139,11 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = Leb128Codec<$ty, $policy>;
 
-            read_leb128_from_reader::<{ Codec::MAX_UNITS_PER_VALUE }, Codec, _>(
-                &mut self.inner,
-                &mut self.buffer,
-            )
+            read_leb128_from_reader::<
+                { Codec::MAX_DECODE_UNITS_PER_VALUE },
+                Codec,
+                _,
+            >(&mut self.inner, &mut self.buffer)
         }
     };
 }
@@ -247,7 +248,7 @@ macro_rules! impl_for_policy {
             /// exceeds `max_len`, or [`std::io::ErrorKind::InvalidData`]
             /// when the payload is not valid UTF-8.
             #[inline]
-            pub fn read_utf8_string(
+            pub fn read_utf8_string_usize(
                 &mut self,
                 max_len: usize,
             ) -> Result<String> {
@@ -258,7 +259,7 @@ macro_rules! impl_for_policy {
             /// Reads a UTF-8 string prefixed by an unsigned LEB128 `u64` byte
             /// length.
             ///
-            /// Prefer this method over [`Self::read_utf8_string`] for
+            /// Prefer this method over [`Self::read_utf8_string_usize`] for
             /// persistent files and cross-platform protocols because the
             /// length field is independent of the current Rust target's
             /// pointer width.

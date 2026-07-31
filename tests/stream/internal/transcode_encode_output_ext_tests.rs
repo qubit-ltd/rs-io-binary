@@ -74,7 +74,7 @@ fn test_transcode_encode_output_ext_writes_public_utf8_payload() {
     let mut writer = BufferedLeb128Writer::new(Vec::new());
 
     writer
-        .write_utf8_string("hello")
+        .write_utf8_string_usize("hello")
         .expect("UTF-8 string should encode");
     writer.flush().expect("encoded UTF-8 bytes should flush");
 
@@ -84,7 +84,7 @@ fn test_transcode_encode_output_ext_writes_public_utf8_payload() {
     assert_eq!(
         "hello",
         reader
-            .read_utf8_string(10)
+            .read_utf8_string_usize(10)
             .expect("UTF-8 string should decode"),
     );
 }

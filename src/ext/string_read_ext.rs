@@ -67,7 +67,7 @@ pub trait StringReadExt: Input<Item = u8> {
     /// [`std::io::ErrorKind::InvalidData`] when the encoded length exceeds
     /// `max_len`, or [`std::io::ErrorKind::InvalidData`] when the payload
     /// is not valid UTF-8.
-    fn read_utf8_string_uleb(&mut self, max_len: usize) -> Result<String>;
+    fn read_utf8_string_uleb_usize(&mut self, max_len: usize) -> Result<String>;
 
     /// Reads a UTF-8 string with a canonical unsigned LEB128 byte-length
     /// prefix.
@@ -92,14 +92,14 @@ pub trait StringReadExt: Input<Item = u8> {
     /// the encoded length exceeds `max_len`, or
     /// [`std::io::ErrorKind::InvalidData`] when the payload is not valid
     /// UTF-8.
-    fn read_utf8_string_uleb_strict(
+    fn read_utf8_string_uleb_usize_strict(
         &mut self,
         max_len: usize,
     ) -> Result<String>;
 
     /// Reads a UTF-8 string with an unsigned LEB128 `u64` byte-length prefix.
     ///
-    /// Prefer this method over [`Self::read_utf8_string_uleb`] for persistent
+    /// Prefer this method over [`Self::read_utf8_string_uleb_usize`] for persistent
     /// files and cross-platform protocols because the length field is
     /// independent of the current Rust target's pointer width.
     ///
@@ -122,7 +122,7 @@ pub trait StringReadExt: Input<Item = u8> {
     /// Reads a UTF-8 string with a canonical unsigned LEB128 `u64` byte-length
     /// prefix.
     ///
-    /// Prefer this method over [`Self::read_utf8_string_uleb_strict`] for
+    /// Prefer this method over [`Self::read_utf8_string_uleb_usize_strict`] for
     /// persistent files and cross-platform protocols because the length field
     /// is independent of the current Rust target's pointer width.
     ///
@@ -283,13 +283,13 @@ where
     }
 
     #[inline]
-    fn read_utf8_string_uleb(&mut self, max_len: usize) -> Result<String> {
+    fn read_utf8_string_uleb_usize(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_uleb_usize()?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
     #[inline]
-    fn read_utf8_string_uleb_strict(
+    fn read_utf8_string_uleb_usize_strict(
         &mut self,
         max_len: usize,
     ) -> Result<String> {

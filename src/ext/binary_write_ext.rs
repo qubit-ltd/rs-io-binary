@@ -23,7 +23,7 @@ use qubit_io::Output;
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
         write_binary::<
-            { BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE },
+            { BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE },
             _,
             _,
             _,

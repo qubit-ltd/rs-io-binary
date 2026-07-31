@@ -52,8 +52,8 @@ macro_rules! zig_zag_write_method {
             Self: Send + Unpin,
         {
             async move {
-                let mut bytes =
-                    [0_u8; ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE];
+                let mut bytes = [0_u8;
+                    ZigZagCodec::<$ty, NonStrict>::MAX_ENCODE_UNITS_PER_VALUE];
                 type Codec = ZigZagCodec<$ty, NonStrict>;
                 // SAFETY: The local buffer has the codec's maximum payload
                 // size.

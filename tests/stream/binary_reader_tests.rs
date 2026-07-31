@@ -14,6 +14,7 @@ use qubit_codec::{
     BigEndian,
     ByteOrder,
     LittleEndian,
+    NativeEndian,
 };
 use qubit_io::{
     Input,
@@ -67,6 +68,14 @@ fn push_le_values(output: &mut Vec<u8>) {
     output.extend_from_slice(b"hi");
     output.extend_from_slice(&2_u32.to_le_bytes());
     output.extend_from_slice(b"ok");
+}
+
+#[test]
+fn test_binary_reader_supports_native_endian() {
+    let mut reader = BinaryReader::<_, NativeEndian>::new(Cursor::new(
+        0x1234_5678_u32.to_ne_bytes().to_vec(),
+    ));
+    assert_eq!(0x1234_5678, reader.read_u32().expect("native value should read"));
 }
 
 #[test]

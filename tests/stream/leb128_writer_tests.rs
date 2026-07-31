@@ -79,7 +79,7 @@ fn test_leb128_writer_write_utf8_string_writes_length_prefixed_payload() {
     let mut writer = qubit_io_binary::Leb128Writer::new(Vec::new());
 
     writer
-        .write_utf8_string("hé")
+        .write_utf8_string_usize("hé")
         .expect("writing a length-prefixed UTF-8 string should succeed");
 
     assert_eq!(writer.into_inner(), vec![3, b'h', 0xC3, 0xA9]);

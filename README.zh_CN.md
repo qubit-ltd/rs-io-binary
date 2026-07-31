@@ -25,6 +25,8 @@
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
+qubit-codec = "0.11"
+qubit-io = "0.14"
 ```
 
 ## 快速开始：同步记录

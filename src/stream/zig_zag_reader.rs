@@ -132,10 +132,11 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = ZigZagCodec<$ty, $policy>;
 
-            read_leb128_from_reader::<{ Codec::MAX_UNITS_PER_VALUE }, Codec, _>(
-                &mut self.inner,
-                &mut self.buffer,
-            )
+            read_leb128_from_reader::<
+                { Codec::MAX_DECODE_UNITS_PER_VALUE },
+                Codec,
+                _,
+            >(&mut self.inner, &mut self.buffer)
         }
     };
 }

@@ -87,7 +87,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_uleb_async(
+    fn read_utf8_string_uleb_usize_async(
         &mut self,
         max_len: usize,
     ) -> impl Future<Output = Result<String>> + Send + '_
@@ -120,7 +120,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future retains
     /// any prefix or payload bytes already consumed.
     #[inline]
-    fn read_utf8_string_uleb_strict_async(
+    fn read_utf8_string_uleb_usize_strict_async(
         &mut self,
         max_len: usize,
     ) -> impl Future<Output = Result<String>> + Send + '_
