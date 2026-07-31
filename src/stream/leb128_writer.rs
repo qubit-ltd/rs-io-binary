@@ -170,9 +170,9 @@ where
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
     ///
-    /// Prefer this method over [`Self::write_utf8_string_usize`] for persistent files
-    /// and cross-platform protocols because the length field is independent of
-    /// the current Rust target's pointer width.
+    /// Prefer this method over [`Self::write_utf8_string_usize`] for persistent
+    /// files and cross-platform protocols because the length field is
+    /// independent of the current Rust target's pointer width.
     ///
     /// # Parameters
     ///
