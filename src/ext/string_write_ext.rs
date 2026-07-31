@@ -59,9 +59,9 @@ pub trait StringWriteExt: Output<Item = u8> {
 
     /// Writes a UTF-8 string with an unsigned LEB128 `u64` byte-length prefix.
     ///
-    /// Prefer this method over [`Self::write_utf8_string_uleb_usize`] for persistent
-    /// files and cross-platform protocols because the length field is
-    /// independent of the current Rust target's pointer width.
+    /// Prefer this method over [`Self::write_utf8_string_uleb_usize`] for
+    /// persistent files and cross-platform protocols because the length
+    /// field is independent of the current Rust target's pointer width.
     ///
     /// # Parameters
     ///
