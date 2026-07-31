@@ -14,12 +14,20 @@ use qubit_codec::{
     BigEndian,
     ByteOrder,
     LittleEndian,
+    NativeEndian,
 };
 use qubit_io::{
     Output,
     Seekable,
 };
 use qubit_io_binary::BinaryWriter;
+
+#[test]
+fn test_binary_writer_supports_native_endian() {
+    let mut writer = BinaryWriter::<_, NativeEndian>::new(Vec::new());
+    writer.write_u32(0x1234_5678).expect("native value should write");
+    assert_eq!(0x1234_5678_u32.to_ne_bytes(), writer.into_inner().as_slice());
+}
 
 #[test]
 fn test_binary_writer_writes_all_big_endian_methods() {

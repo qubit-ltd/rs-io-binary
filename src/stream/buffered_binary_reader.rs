@@ -29,6 +29,7 @@ use qubit_codec::{
     ByteOrder,
     ByteOrderSpec,
     LittleEndian,
+    NativeEndian,
     TranscodeDecodeInput,
 };
 use qubit_codec_binary::BinaryCodec;
@@ -304,6 +305,7 @@ macro_rules! impl_for_order {
 
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
+impl_for_order!(NativeEndian);
 
 impl<R, O> Input for BufferedBinaryReader<R, O>
 where

@@ -23,6 +23,7 @@ use qubit_codec::{
     ByteOrder,
     ByteOrderSpec,
     LittleEndian,
+    NativeEndian,
 };
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::{
@@ -137,7 +138,7 @@ macro_rules! impl_value_write {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = BinaryCodec<$ty, $order>;
 
-            const LEN: usize = Codec::MAX_UNITS_PER_VALUE;
+            const LEN: usize = Codec::MAX_ENCODE_UNITS_PER_VALUE;
             // SAFETY: `LEN` is declared by the codec and fits the fixed
             // internal buffer.
             unsafe {
@@ -274,6 +275,7 @@ macro_rules! impl_for_order {
 
 impl_for_order!(BigEndian);
 impl_for_order!(LittleEndian);
+impl_for_order!(NativeEndian);
 
 impl<W, O> Output for BinaryWriter<W, O>
 where
