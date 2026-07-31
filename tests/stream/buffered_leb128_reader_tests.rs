@@ -191,7 +191,7 @@ fn test_buffered_leb128_reader_accessors_raw_seek_and_string() {
     assert_eq!(0, reader.inner().position());
     assert_eq!(
         "abc",
-        reader.read_utf8_string(3).expect("string should be read")
+        reader.read_utf8_string_usize(3).expect("string should be read")
     );
     assert_eq!(
         4,
@@ -259,7 +259,7 @@ fn test_buffered_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
     assert_eq!(
         "abc",
         reader
-            .read_utf8_string(3)
+            .read_utf8_string_usize(3)
             .expect("strict length-prefixed UTF-8 string should be read")
     );
 
@@ -283,7 +283,7 @@ fn test_buffered_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
     assert_eq!(
         ErrorKind::InvalidData,
         reader
-            .read_utf8_string(3)
+            .read_utf8_string_usize(3)
             .expect_err("non-canonical strict string length should fail")
             .kind()
     );
@@ -504,7 +504,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<u8, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<u8, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -514,7 +514,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<u16, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<u16, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -524,7 +524,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<u32, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<u32, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -534,7 +534,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<u64, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<u64, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -544,7 +544,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<u128, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<u128, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -554,7 +554,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<usize, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<usize, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -564,7 +564,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<i8, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<i8, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -574,7 +574,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<i16, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<i16, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -584,7 +584,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<i32, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<i32, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -594,7 +594,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<i64, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<i64, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -604,7 +604,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<i128, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<i128, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -614,7 +614,7 @@ fn test_buffered_leb128_reader_reports_all_instantiated_error_paths() {
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        Leb128Codec::<isize, NonStrict>::MAX_UNITS_PER_VALUE
+        Leb128Codec::<isize, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,

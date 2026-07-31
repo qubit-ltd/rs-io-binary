@@ -34,8 +34,8 @@ where
 fn string_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();
     bytes.write_utf8_payload("payload").unwrap();
-    bytes.write_utf8_string_uleb("uleb").unwrap();
-    bytes.write_utf8_string_uleb("uleb-strict").unwrap();
+    bytes.write_utf8_string_uleb_usize("uleb").unwrap();
+    bytes.write_utf8_string_uleb_usize("uleb-strict").unwrap();
     bytes.write_utf8_string_uleb_u64("uleb-u64").unwrap();
     bytes.write_utf8_string_uleb_u64("uleb-u64-strict").unwrap();
     bytes
@@ -61,11 +61,11 @@ fn async_string_read_covers_every_length_prefix() {
     );
     assert_eq!(
         "uleb",
-        complete(input.read_utf8_string_uleb_async(32)).unwrap(),
+        complete(input.read_utf8_string_uleb_usize_async(32)).unwrap(),
     );
     assert_eq!(
         "uleb-strict",
-        complete(input.read_utf8_string_uleb_strict_async(32)).unwrap(),
+        complete(input.read_utf8_string_uleb_usize_strict_async(32)).unwrap(),
     );
     assert_eq!(
         "uleb-u64",

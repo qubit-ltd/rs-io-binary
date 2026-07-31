@@ -181,7 +181,7 @@ fn leb128_writers_accept_output_without_std_write() {
     let mut writer = Leb128Writer::new(QubitOutput::default());
     assert!(!Output::is_buffered(&writer));
     writer.write_u16(300).unwrap();
-    writer.write_utf8_string("a").unwrap();
+    writer.write_utf8_string_usize("a").unwrap();
     writer.write_utf8_string_u64("b").unwrap();
     assert_eq!(
         vec![0xac, 0x02, 1, b'a', 1, b'b'],

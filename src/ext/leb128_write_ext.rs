@@ -21,7 +21,7 @@ use qubit_io::Output;
 macro_rules! write_leb128_value {
     ($writer:expr, $value:expr, $ty:ty) => {
         write_leb128::<
-            { Leb128Codec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE },
+            { Leb128Codec::<$ty, NonStrict>::MAX_ENCODE_UNITS_PER_VALUE },
             _,
             _,
             _,

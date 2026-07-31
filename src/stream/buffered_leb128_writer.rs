@@ -138,13 +138,11 @@ where
         self.output.inner()
     }
 
-    /// Returns mutable access to the underlying writer.
+    /// Provides access to the underlying writer.
     ///
     /// Direct writes through the returned writer bypass pending bytes in this
     /// wrapper and can reorder the physical byte stream. Flush this wrapper
     /// before using the returned writer directly.
-    ///
-    /// # Returns
     ///
     /// Returns the underlying writer and every encoded byte still pending.
     ///
@@ -180,14 +178,14 @@ where
     ///
     /// Returns an output error encountered while making buffer space.
     #[inline]
-    pub fn write_utf8_string(&mut self, value: &str) -> Result<()> {
+    pub fn write_utf8_string_usize(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
         write_all(&mut self.output, value.as_bytes())
     }
 
     /// Writes a UTF-8 string prefixed by an unsigned LEB128 `u64` byte length.
     ///
-    /// Prefer this method over [`Self::write_utf8_string`] for persistent files
+    /// Prefer this method over [`Self::write_utf8_string_usize`] for persistent files
     /// and cross-platform protocols because the length field is independent of
     /// the current Rust target's pointer width.
     ///

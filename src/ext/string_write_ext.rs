@@ -55,11 +55,11 @@ pub trait StringWriteExt: Output<Item = u8> {
     /// # Errors
     ///
     /// Returns an I/O error from the underlying writer.
-    fn write_utf8_string_uleb(&mut self, value: &str) -> Result<()>;
+    fn write_utf8_string_uleb_usize(&mut self, value: &str) -> Result<()>;
 
     /// Writes a UTF-8 string with an unsigned LEB128 `u64` byte-length prefix.
     ///
-    /// Prefer this method over [`Self::write_utf8_string_uleb`] for persistent
+    /// Prefer this method over [`Self::write_utf8_string_uleb_usize`] for persistent
     /// files and cross-platform protocols because the length field is
     /// independent of the current Rust target's pointer width.
     ///
@@ -195,7 +195,7 @@ where
     }
 
     #[inline]
-    fn write_utf8_string_uleb(&mut self, value: &str) -> Result<()> {
+    fn write_utf8_string_uleb_usize(&mut self, value: &str) -> Result<()> {
         let bytes = value.as_bytes();
         self.write_uleb_usize(bytes.len())?;
         write_all(self, bytes)

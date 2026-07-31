@@ -21,7 +21,7 @@ use qubit_io::Output;
 macro_rules! write_zig_zag_value {
     ($writer:expr, $value:expr, $ty:ty) => {
         write_zig_zag::<
-            { ZigZagCodec::<$ty, NonStrict>::MAX_UNITS_PER_VALUE },
+            { ZigZagCodec::<$ty, NonStrict>::MAX_ENCODE_UNITS_PER_VALUE },
             _,
             _,
             _,

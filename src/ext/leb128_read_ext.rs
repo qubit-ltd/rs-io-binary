@@ -19,7 +19,7 @@ use qubit_io::Input;
 macro_rules! read_leb128_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
         read_leb128_payload::<
-            { Leb128Codec::<$ty, $policy>::MAX_UNITS_PER_VALUE },
+            { Leb128Codec::<$ty, $policy>::MAX_DECODE_UNITS_PER_VALUE },
             Leb128Codec<$ty, $policy>,
             _,
         >($reader)

@@ -214,7 +214,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i8, NonStrict>::MAX_UNITS_PER_VALUE
+        ZigZagCodec::<i8, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -223,7 +223,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i16, NonStrict>::MAX_UNITS_PER_VALUE
+        ZigZagCodec::<i16, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -232,7 +232,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i32, NonStrict>::MAX_UNITS_PER_VALUE
+        ZigZagCodec::<i32, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -241,7 +241,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i64, NonStrict>::MAX_UNITS_PER_VALUE
+        ZigZagCodec::<i64, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -250,7 +250,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<i128, NonStrict>::MAX_UNITS_PER_VALUE
+        ZigZagCodec::<i128, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
@@ -259,7 +259,7 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
         0x80u8;
-        ZigZagCodec::<isize, NonStrict>::MAX_UNITS_PER_VALUE
+        ZigZagCodec::<isize, NonStrict>::MAX_DECODE_UNITS_PER_VALUE
     ]));
     assert_eq!(
         ErrorKind::InvalidData,

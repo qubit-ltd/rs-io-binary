@@ -39,7 +39,7 @@ fn async_string_write_covers_every_length_prefix() {
     let mut output = ChunkedAsyncOutput::new();
     complete(async {
         output.write_utf8_payload_async("payload").await?;
-        output.write_utf8_string_uleb_async("uleb").await?;
+        output.write_utf8_string_uleb_usize_async("uleb").await?;
         output.write_utf8_string_uleb_u64_async("uleb-u64").await?;
         output
             .write_string_with_u16_len_async("u16-be", ByteOrder::BigEndian)
@@ -65,7 +65,7 @@ fn async_string_write_covers_every_length_prefix() {
 
     let mut expected = Vec::new();
     expected.write_utf8_payload("payload").unwrap();
-    expected.write_utf8_string_uleb("uleb").unwrap();
+    expected.write_utf8_string_uleb_usize("uleb").unwrap();
     expected.write_utf8_string_uleb_u64("uleb-u64").unwrap();
     expected
         .write_string_with_u16_len("u16-be", ByteOrder::BigEndian)
@@ -104,7 +104,7 @@ fn dropping_string_write_future_retains_partial_output() {
 #[test]
 fn async_string_write_reports_length_and_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
-    let output_error = complete(output.write_utf8_string_uleb_async("x"))
+    let output_error = complete(output.write_utf8_string_uleb_usize_async("x"))
         .expect_err("scripted output should fail");
     assert_eq!(ErrorKind::BrokenPipe, output_error.kind());
 

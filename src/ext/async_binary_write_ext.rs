@@ -26,7 +26,7 @@ use crate::util::{
 macro_rules! write_binary_value_async {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
         write_binary_async::<
-            { BinaryCodec::<$ty, $order>::MAX_UNITS_PER_VALUE },
+            { BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE },
             _,
             _,
             _,
