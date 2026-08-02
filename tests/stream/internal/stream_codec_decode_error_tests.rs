@@ -20,7 +20,7 @@ fn test_stream_codec_decode_error_maps_incomplete_to_unexpected_eof() {
         BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
 
     let error = reader
-        .read_u64()
+        .read_u64_non_strict()
         .expect_err("truncated LEB128 input should fail");
 
     assert_eq!(ErrorKind::UnexpectedEof, error.kind());
@@ -34,7 +34,7 @@ fn test_stream_codec_decode_error_maps_invalid_to_invalid_data() {
         ]));
 
     let error = reader
-        .read_u16()
+        .read_u16_non_strict()
         .expect_err("unterminated maximum-width input should fail");
 
     assert_eq!(ErrorKind::InvalidData, error.kind());

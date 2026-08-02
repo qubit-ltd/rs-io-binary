@@ -84,7 +84,7 @@ fn test_transcode_encode_output_ext_writes_public_utf8_payload() {
     assert_eq!(
         "hello",
         reader
-            .read_utf8_string_usize(10)
+        .read_utf8_string_usize_non_strict(10)
             .expect("UTF-8 string should decode"),
     );
 }

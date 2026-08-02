@@ -31,8 +31,10 @@ macro_rules! read_zig_zag_value {
 /// # Target-width integers
 ///
 /// `isize` methods use the current Rust target's pointer width. Prefer
-/// fixed-width integer methods such as [`Self::read_zig_zag_i64`] for
+/// fixed-width integer methods such as [`Self::read_zig_zag_i64_non_strict`] for
 /// persistent files and cross-platform protocols.
+/// Non-strict methods use the `_non_strict` suffix; canonical-only methods use
+/// the corresponding `_strict` suffix.
 pub trait ZigZagReadExt: Input<Item = u8> {
     /// Reads a non-strict ZigZag `i8`.
     ///
@@ -45,7 +47,7 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_zig_zag_i8(&mut self) -> Result<i8> {
+    fn read_zig_zag_i8_non_strict(&mut self) -> Result<i8> {
         read_zig_zag_value!(self, i8, NonStrict)
     }
 
@@ -75,7 +77,7 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_zig_zag_i16(&mut self) -> Result<i16> {
+    fn read_zig_zag_i16_non_strict(&mut self) -> Result<i16> {
         read_zig_zag_value!(self, i16, NonStrict)
     }
 
@@ -105,7 +107,7 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_zig_zag_i32(&mut self) -> Result<i32> {
+    fn read_zig_zag_i32_non_strict(&mut self) -> Result<i32> {
         read_zig_zag_value!(self, i32, NonStrict)
     }
 
@@ -135,7 +137,7 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_zig_zag_i64(&mut self) -> Result<i64> {
+    fn read_zig_zag_i64_non_strict(&mut self) -> Result<i64> {
         read_zig_zag_value!(self, i64, NonStrict)
     }
 
@@ -165,7 +167,7 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_zig_zag_i128(&mut self) -> Result<i128> {
+    fn read_zig_zag_i128_non_strict(&mut self) -> Result<i128> {
         read_zig_zag_value!(self, i128, NonStrict)
     }
 
@@ -195,7 +197,7 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_zig_zag_isize(&mut self) -> Result<isize> {
+    fn read_zig_zag_isize_non_strict(&mut self) -> Result<isize> {
         read_zig_zag_value!(self, isize, NonStrict)
     }
 

@@ -46,7 +46,7 @@ use qubit_io::{
 ///
 /// - `R`: Underlying byte input.
 /// - `P`: LEB128 canonicality policy.
-pub struct Leb128Reader<R, P = NonStrict> {
+pub struct Leb128Reader<R, P> {
     /// Wrapped byte input.
     inner: R,
     /// Scratch storage for the largest LEB128 payload.
@@ -149,93 +149,34 @@ macro_rules! impl_read_value {
 }
 
 macro_rules! impl_for_policy {
-    ($policy:ty) => {
+    (
+        $policy:ty,
+        $read_usize:ident,
+        $read_u64:ident,
+        $read_utf8_string_usize:ident,
+        $read_utf8_string_u64:ident,
+        {
+            $(($method:ident, $ty:ty, $doc:literal)),* $(,)?
+        }
+        $(,)?
+    ) => {
         impl<R> Leb128Reader<R, $policy>
         where
             R: Input<Item = u8>,
         {
-            impl_read_value!(
-                $policy,
-                read_u8,
-                u8,
-                "Reads an unsigned LEB128 `u8`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u16,
-                u16,
-                "Reads an unsigned LEB128 `u16`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u32,
-                u32,
-                "Reads an unsigned LEB128 `u32`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u64,
-                u64,
-                "Reads an unsigned LEB128 `u64`."
-            );
-            impl_read_value!(
-                $policy,
-                read_u128,
-                u128,
-                "Reads an unsigned LEB128 `u128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_usize,
-                usize,
-                "Reads an unsigned LEB128 `usize`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i8,
-                i8,
-                "Reads a signed LEB128 `i8`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i16,
-                i16,
-                "Reads a signed LEB128 `i16`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i32,
-                i32,
-                "Reads a signed LEB128 `i32`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i64,
-                i64,
-                "Reads a signed LEB128 `i64`."
-            );
-            impl_read_value!(
-                $policy,
-                read_i128,
-                i128,
-                "Reads a signed LEB128 `i128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_isize,
-                isize,
-                "Reads a signed LEB128 `isize`."
-            );
+            $(
+                impl_read_value!($policy, $method, $ty, $doc);
+            )*
 
             /// Reads a UTF-8 string prefixed by an unsigned LEB128 byte length.
             ///
-            /// The length prefix is decoded as `usize`, so this format is
+            /// The length prefix is decoded as usize, so this format is
             /// target-width dependent. Prefer a fixed-width length prefix for
             /// persistent files and cross-platform protocols.
             ///
             /// # Parameters
             ///
-            /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
+            /// - max_len: Maximum accepted UTF-8 payload length in bytes.
             ///
             /// # Returns
             ///
@@ -244,29 +185,27 @@ macro_rules! impl_for_policy {
             /// # Errors
             ///
             /// Returns an I/O error for length or payload reads,
-            /// [`std::io::ErrorKind::InvalidData`] when the encoded length
-            /// exceeds `max_len`, or [`std::io::ErrorKind::InvalidData`]
-            /// when the payload is not valid UTF-8.
+            /// InvalidData when the encoded length exceeds max_len, or
+            /// InvalidData when the payload is not valid UTF-8.
             #[inline]
-            pub fn read_utf8_string_usize(
+            pub fn $read_utf8_string_usize(
                 &mut self,
                 max_len: usize,
             ) -> Result<String> {
-                let len = self.read_usize()?;
+                let len = self.$read_usize()?;
                 read_utf8_payload(&mut self.inner, len, max_len)
             }
 
-            /// Reads a UTF-8 string prefixed by an unsigned LEB128 `u64` byte
+            /// Reads a UTF-8 string prefixed by an unsigned LEB128 u64 byte
             /// length.
             ///
-            /// Prefer this method over [`Self::read_utf8_string_usize`] for
-            /// persistent files and cross-platform protocols because the
-            /// length field is independent of the current Rust target's
-            /// pointer width.
+            /// Prefer this method over the usize variant for persistent files
+            /// and cross-platform protocols because the length field is
+            /// independent of the current Rust target's pointer width.
             ///
             /// # Parameters
             ///
-            /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
+            /// - max_len: Maximum accepted UTF-8 payload length in bytes.
             ///
             /// # Returns
             ///
@@ -278,11 +217,11 @@ macro_rules! impl_for_policy {
             /// invalid-data error for a malformed or excessive length or
             /// invalid UTF-8.
             #[inline]
-            pub fn read_utf8_string_u64(
+            pub fn $read_utf8_string_u64(
                 &mut self,
                 max_len: usize,
             ) -> Result<String> {
-                let len = self.read_u64()?;
+                let len = self.$read_u64()?;
                 #[cfg(target_pointer_width = "64")]
                 let len = len as usize;
                 #[cfg(not(target_pointer_width = "64"))]
@@ -293,9 +232,48 @@ macro_rules! impl_for_policy {
     };
 }
 
-impl_for_policy!(NonStrict);
-impl_for_policy!(Strict);
-
+impl_for_policy!(
+    NonStrict,
+    read_usize_non_strict,
+    read_u64_non_strict,
+    read_utf8_string_usize_non_strict,
+    read_utf8_string_u64_non_strict,
+    {
+        (read_u8_non_strict, u8, "Reads an unsigned LEB128 u8."),
+        (read_u16_non_strict, u16, "Reads an unsigned LEB128 u16."),
+        (read_u32_non_strict, u32, "Reads an unsigned LEB128 u32."),
+        (read_u64_non_strict, u64, "Reads an unsigned LEB128 u64."),
+        (read_u128_non_strict, u128, "Reads an unsigned LEB128 u128."),
+        (read_usize_non_strict, usize, "Reads an unsigned LEB128 usize."),
+        (read_i8_non_strict, i8, "Reads a signed LEB128 i8."),
+        (read_i16_non_strict, i16, "Reads a signed LEB128 i16."),
+        (read_i32_non_strict, i32, "Reads a signed LEB128 i32."),
+        (read_i64_non_strict, i64, "Reads a signed LEB128 i64."),
+        (read_i128_non_strict, i128, "Reads a signed LEB128 i128."),
+        (read_isize_non_strict, isize, "Reads a signed LEB128 isize."),
+    },
+);
+impl_for_policy!(
+    Strict,
+    read_usize,
+    read_u64,
+    read_utf8_string_usize,
+    read_utf8_string_u64,
+    {
+        (read_u8, u8, "Reads an unsigned LEB128 u8."),
+        (read_u16, u16, "Reads an unsigned LEB128 u16."),
+        (read_u32, u32, "Reads an unsigned LEB128 u32."),
+        (read_u64, u64, "Reads an unsigned LEB128 u64."),
+        (read_u128, u128, "Reads an unsigned LEB128 u128."),
+        (read_usize, usize, "Reads an unsigned LEB128 usize."),
+        (read_i8, i8, "Reads a signed LEB128 i8."),
+        (read_i16, i16, "Reads a signed LEB128 i16."),
+        (read_i32, i32, "Reads a signed LEB128 i32."),
+        (read_i64, i64, "Reads a signed LEB128 i64."),
+        (read_i128, i128, "Reads a signed LEB128 i128."),
+        (read_isize, isize, "Reads a signed LEB128 isize."),
+    },
+);
 impl<R, P> Input for Leb128Reader<R, P>
 where
     R: Input<Item = u8>,

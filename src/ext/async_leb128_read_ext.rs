@@ -71,7 +71,7 @@ macro_rules! leb128_read_method {
 pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `u8`.",
-        read_uleb_u8_async,
+        read_uleb_u8_non_strict_async,
         u8,
         NonStrict
     );
@@ -83,7 +83,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `u16`.",
-        read_uleb_u16_async,
+        read_uleb_u16_non_strict_async,
         u16,
         NonStrict
     );
@@ -95,7 +95,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `u32`.",
-        read_uleb_u32_async,
+        read_uleb_u32_non_strict_async,
         u32,
         NonStrict
     );
@@ -107,7 +107,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `u64`.",
-        read_uleb_u64_async,
+        read_uleb_u64_non_strict_async,
         u64,
         NonStrict
     );
@@ -119,7 +119,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `u128`.",
-        read_uleb_u128_async,
+        read_uleb_u128_non_strict_async,
         u128,
         NonStrict
     );
@@ -131,7 +131,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `usize`.",
-        read_uleb_usize_async,
+        read_uleb_usize_non_strict_async,
         usize,
         NonStrict
     );
@@ -143,7 +143,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `i8`.",
-        read_sleb_i8_async,
+        read_sleb_i8_non_strict_async,
         i8,
         NonStrict
     );
@@ -155,7 +155,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `i16`.",
-        read_sleb_i16_async,
+        read_sleb_i16_non_strict_async,
         i16,
         NonStrict
     );
@@ -167,7 +167,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `i32`.",
-        read_sleb_i32_async,
+        read_sleb_i32_non_strict_async,
         i32,
         NonStrict
     );
@@ -179,7 +179,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `i64`.",
-        read_sleb_i64_async,
+        read_sleb_i64_non_strict_async,
         i64,
         NonStrict
     );
@@ -191,7 +191,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `i128`.",
-        read_sleb_i128_async,
+        read_sleb_i128_non_strict_async,
         i128,
         NonStrict
     );
@@ -203,7 +203,7 @@ pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     );
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `isize`.",
-        read_sleb_isize_async,
+        read_sleb_isize_non_strict_async,
         isize,
         NonStrict
     );
