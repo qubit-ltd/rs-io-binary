@@ -51,7 +51,7 @@ bytes.write_uleb_u64(300)?;
 
 let mut input = Cursor::new(bytes);
 assert_eq!(0x0102_0304, input.read_u32(ByteOrder::BigEndian)?);
-assert_eq!(300, input.read_uleb_u64()?);
+assert_eq!(300, input.read_uleb_u64_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
 
@@ -96,6 +96,10 @@ where
 同步 typed wrapper 包括 `BinaryReader`、`BinaryWriter`、`Leb128Reader`、
 `Leb128Writer`、`ZigZagReader`、`ZigZagWriter` 及其 buffered 变体。它们以
 `Input` / `Output` 为泛型边界，并不是基于 `std::io::Read` / `Write` 定义。
+
+变长整数 reader 必须显式指定 `Strict` 或 `NonStrict` 策略类型。严格 reader
+使用 `read_u64` 等简短方法名；宽松 reader 使用明确的
+`read_u64_non_strict`（字符串方法同样如此）。
 
 缓冲 reader 可通过 `into_parts` 同时取回底层输入与尚未消费的预取字节；缓冲 writer
 可通过 `into_parts` 同时取回底层输出与尚未写出的字节。这些方法不执行 I/O：正常

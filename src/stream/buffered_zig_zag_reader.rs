@@ -52,7 +52,7 @@ use super::internal::TranscodeDecodeInputExt;
 ///
 /// - `R`: Underlying byte input.
 /// - `P`: LEB128 canonicality policy applied after ZigZag decoding.
-pub struct BufferedZigZagReader<R, P = NonStrict>
+pub struct BufferedZigZagReader<R, P>
 where
     R: Input<Item = u8>,
 {
@@ -197,34 +197,46 @@ macro_rules! impl_read_value {
 }
 
 macro_rules! impl_for_policy {
-    ($policy:ty) => {
+    (
+        $policy:ty,
+        {
+            $(($method:ident, $ty:ty, $doc:literal)),* $(,)?
+        }
+        $(,)?
+    ) => {
         impl<R> BufferedZigZagReader<R, $policy>
         where
             R: Input<Item = u8>,
         {
-            impl_read_value!($policy, read_i8, i8, "Reads a ZigZag `i8`.");
-            impl_read_value!($policy, read_i16, i16, "Reads a ZigZag `i16`.");
-            impl_read_value!($policy, read_i32, i32, "Reads a ZigZag `i32`.");
-            impl_read_value!($policy, read_i64, i64, "Reads a ZigZag `i64`.");
-            impl_read_value!(
-                $policy,
-                read_i128,
-                i128,
-                "Reads a ZigZag `i128`."
-            );
-            impl_read_value!(
-                $policy,
-                read_isize,
-                isize,
-                "Reads a ZigZag `isize`."
-            );
+            $(
+                impl_read_value!($policy, $method, $ty, $doc);
+            )*
         }
     };
 }
 
-impl_for_policy!(NonStrict);
-impl_for_policy!(Strict);
-
+impl_for_policy!(
+    NonStrict,
+    {
+        (read_i8_non_strict, i8, "Reads a ZigZag i8."),
+        (read_i16_non_strict, i16, "Reads a ZigZag i16."),
+        (read_i32_non_strict, i32, "Reads a ZigZag i32."),
+        (read_i64_non_strict, i64, "Reads a ZigZag i64."),
+        (read_i128_non_strict, i128, "Reads a ZigZag i128."),
+        (read_isize_non_strict, isize, "Reads a ZigZag isize."),
+    },
+);
+impl_for_policy!(
+    Strict,
+    {
+        (read_i8, i8, "Reads a ZigZag i8."),
+        (read_i16, i16, "Reads a ZigZag i16."),
+        (read_i32, i32, "Reads a ZigZag i32."),
+        (read_i64, i64, "Reads a ZigZag i64."),
+        (read_i128, i128, "Reads a ZigZag i128."),
+        (read_isize, isize, "Reads a ZigZag isize."),
+    },
+);
 impl<R, P> Input for BufferedZigZagReader<R, P>
 where
     R: Input<Item = u8>,

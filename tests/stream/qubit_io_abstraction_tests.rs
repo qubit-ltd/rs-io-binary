@@ -166,14 +166,14 @@ fn leb128_readers_accept_input_without_std_read() {
     let mut reader =
         Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
     assert!(!Input::is_buffered(&reader));
-    assert_eq!(300, reader.read_u16().unwrap());
+    assert_eq!(300, reader.read_u16_non_strict().unwrap());
 
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(QubitInput::new(vec![
             0xac, 0x02,
         ]));
     assert!(Input::is_buffered(&reader));
-    assert_eq!(300, reader.read_u16().unwrap());
+    assert_eq!(300, reader.read_u16_non_strict().unwrap());
 }
 
 #[test]
@@ -200,12 +200,12 @@ fn zig_zag_readers_accept_input_without_std_read() {
     let mut reader =
         ZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
     assert!(!Input::is_buffered(&reader));
-    assert_eq!(-1, reader.read_i16().unwrap());
+    assert_eq!(-1, reader.read_i16_non_strict().unwrap());
 
     let mut reader =
         BufferedZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
     assert!(Input::is_buffered(&reader));
-    assert_eq!(-1, reader.read_i16().unwrap());
+    assert_eq!(-1, reader.read_i16_non_strict().unwrap());
 }
 
 #[test]

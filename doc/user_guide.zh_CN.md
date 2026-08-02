@@ -63,10 +63,13 @@ bytes.write_utf8_string_uleb_u64("inventory")?;
 
 let mut input = Cursor::new(bytes);
 assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
-assert_eq!(300, input.read_uleb_u64()?);
+assert_eq!(300, input.read_uleb_u64_non_strict()?);
 assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
 # Ok::<(), std::io::Error>(())
 ```
+
+宽松 extension 方法刻意使用 `_non_strict` 后缀。需要规范 LEB128 编码时应使用对应的
+`_strict` 方法；typed reader 同样必须显式指定 `Strict` 或 `NonStrict` 策略类型。
 
 `max_len` 是输入校验边界：它限制返回 `String` 前可接受的 payload 长度。应根据文件
 格式或协议限制设置，而不要根据当前预期数据设置。

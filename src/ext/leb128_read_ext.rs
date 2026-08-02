@@ -31,8 +31,10 @@ macro_rules! read_leb128_value {
 /// # Target-width integers
 ///
 /// `usize` and `isize` methods use the current Rust target's pointer width.
-/// Prefer fixed-width integer methods such as [`Self::read_uleb_u64`] or
-/// [`Self::read_sleb_i64`] for persistent files and cross-platform protocols.
+/// Prefer fixed-width integer methods such as [`Self::read_uleb_u64_non_strict`] or
+/// [`Self::read_sleb_i64_non_strict`] for persistent files and cross-platform protocols.
+/// Non-strict methods use the `_non_strict` suffix; canonical-only methods use
+/// the corresponding `_strict` suffix.
 pub trait Leb128ReadExt: Input<Item = u8> {
     /// Reads a non-strict unsigned LEB128 `u8`.
     ///
@@ -45,7 +47,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_uleb_u8(&mut self) -> Result<u8> {
+    fn read_uleb_u8_non_strict(&mut self) -> Result<u8> {
         read_leb128_value!(self, u8, NonStrict)
     }
 
@@ -75,7 +77,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_uleb_u16(&mut self) -> Result<u16> {
+    fn read_uleb_u16_non_strict(&mut self) -> Result<u16> {
         read_leb128_value!(self, u16, NonStrict)
     }
 
@@ -105,7 +107,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_uleb_u32(&mut self) -> Result<u32> {
+    fn read_uleb_u32_non_strict(&mut self) -> Result<u32> {
         read_leb128_value!(self, u32, NonStrict)
     }
 
@@ -135,7 +137,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_uleb_u64(&mut self) -> Result<u64> {
+    fn read_uleb_u64_non_strict(&mut self) -> Result<u64> {
         read_leb128_value!(self, u64, NonStrict)
     }
 
@@ -165,7 +167,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_uleb_u128(&mut self) -> Result<u128> {
+    fn read_uleb_u128_non_strict(&mut self) -> Result<u128> {
         read_leb128_value!(self, u128, NonStrict)
     }
 
@@ -195,7 +197,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_uleb_usize(&mut self) -> Result<usize> {
+    fn read_uleb_usize_non_strict(&mut self) -> Result<usize> {
         read_leb128_value!(self, usize, NonStrict)
     }
 
@@ -225,7 +227,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_sleb_i8(&mut self) -> Result<i8> {
+    fn read_sleb_i8_non_strict(&mut self) -> Result<i8> {
         read_leb128_value!(self, i8, NonStrict)
     }
 
@@ -255,7 +257,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_sleb_i16(&mut self) -> Result<i16> {
+    fn read_sleb_i16_non_strict(&mut self) -> Result<i16> {
         read_leb128_value!(self, i16, NonStrict)
     }
 
@@ -285,7 +287,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_sleb_i32(&mut self) -> Result<i32> {
+    fn read_sleb_i32_non_strict(&mut self) -> Result<i32> {
         read_leb128_value!(self, i32, NonStrict)
     }
 
@@ -315,7 +317,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_sleb_i64(&mut self) -> Result<i64> {
+    fn read_sleb_i64_non_strict(&mut self) -> Result<i64> {
         read_leb128_value!(self, i64, NonStrict)
     }
 
@@ -345,7 +347,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_sleb_i128(&mut self) -> Result<i128> {
+    fn read_sleb_i128_non_strict(&mut self) -> Result<i128> {
         read_leb128_value!(self, i128, NonStrict)
     }
 
@@ -375,7 +377,7 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     /// Returns an input error or an invalid-data error when the payload is
     /// malformed or violates the selected canonicality policy.
     #[inline(always)]
-    fn read_sleb_isize(&mut self) -> Result<isize> {
+    fn read_sleb_isize_non_strict(&mut self) -> Result<isize> {
         read_leb128_value!(self, isize, NonStrict)
     }
 

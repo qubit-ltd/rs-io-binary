@@ -95,7 +95,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
         Self: Send + Unpin,
     {
         async move {
-            let len = self.read_uleb_usize_async().await?;
+            let len = self.read_uleb_usize_non_strict_async().await?;
             read_utf8_payload_async(self, len, max_len).await
         }
     }
@@ -161,7 +161,7 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
         Self: Send + Unpin,
     {
         async move {
-            let len = self.read_uleb_u64_async().await?;
+            let len = self.read_uleb_u64_non_strict_async().await?;
             #[cfg(target_pointer_width = "64")]
             let len = len as usize;
             #[cfg(not(target_pointer_width = "64"))]

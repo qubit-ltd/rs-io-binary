@@ -97,8 +97,8 @@ fn binary_write_ext_accepts_output_without_std_write() {
 fn variable_length_read_extensions_accept_input_without_std_read() {
     let mut input = QubitInput::new(vec![0xac, 0x02, 0x01, 0x02, b'h', b'i']);
 
-    assert_eq!(300, input.read_uleb_u16().unwrap());
-    assert_eq!(-1, input.read_zig_zag_i16().unwrap());
+    assert_eq!(300, input.read_uleb_u16_non_strict().unwrap());
+    assert_eq!(-1, input.read_zig_zag_i16_non_strict().unwrap());
     assert_eq!("hi", input.read_utf8_string_uleb_usize(2).unwrap());
 }
 

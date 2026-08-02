@@ -66,7 +66,7 @@ fn test_transcode_decode_input_ext_maps_incomplete_public_decode() {
     );
 
     let error = reader
-        .read_i8()
+        .read_i8_non_strict()
         .expect_err("truncated LEB128 value should fail");
 
     assert_eq!(ErrorKind::UnexpectedEof, error.kind());
@@ -87,7 +87,7 @@ fn test_transcode_decode_input_ext_reads_public_utf8_payload() {
         1,
     );
     let decoded = reader
-        .read_utf8_string_usize(10)
+        .read_utf8_string_usize_non_strict(10)
         .expect("UTF-8 payload should decode");
 
     assert_eq!(value, decoded);

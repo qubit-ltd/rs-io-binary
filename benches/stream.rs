@@ -911,21 +911,21 @@ fn read_uleb_ext_file(path: &Path, fields: &[UlebField]) {
     for field in fields {
         match *field {
             UlebField::U8(_) => {
-                checksum ^= u128::from(reader.read_uleb_u8().unwrap())
+                checksum ^= u128::from(reader.read_uleb_u8_non_strict().unwrap())
             }
             UlebField::U16(_) => {
-                checksum ^= u128::from(reader.read_uleb_u16().unwrap())
+                checksum ^= u128::from(reader.read_uleb_u16_non_strict().unwrap())
             }
             UlebField::U32(_) => {
-                checksum ^= u128::from(reader.read_uleb_u32().unwrap())
+                checksum ^= u128::from(reader.read_uleb_u32_non_strict().unwrap())
             }
             UlebField::U64(_) => {
-                checksum ^= u128::from(reader.read_uleb_u64().unwrap())
+                checksum ^= u128::from(reader.read_uleb_u64_non_strict().unwrap())
             }
             UlebField::Usize(_) => {
-                checksum ^= reader.read_uleb_usize().unwrap() as u128
+                checksum ^= reader.read_uleb_usize_non_strict().unwrap() as u128
             }
-            UlebField::U128(_) => checksum ^= reader.read_uleb_u128().unwrap(),
+            UlebField::U128(_) => checksum ^= reader.read_uleb_u128_non_strict().unwrap(),
         }
     }
 
@@ -986,21 +986,21 @@ fn read_uleb_wrapper_file(path: &Path, fields: &[UlebField]) {
     for field in fields {
         match *field {
             UlebField::U8(_) => {
-                checksum ^= u128::from(reader.read_u8().unwrap())
+                checksum ^= u128::from(reader.read_u8_non_strict().unwrap())
             }
             UlebField::U16(_) => {
-                checksum ^= u128::from(reader.read_u16().unwrap())
+                checksum ^= u128::from(reader.read_u16_non_strict().unwrap())
             }
             UlebField::U32(_) => {
-                checksum ^= u128::from(reader.read_u32().unwrap())
+                checksum ^= u128::from(reader.read_u32_non_strict().unwrap())
             }
             UlebField::U64(_) => {
-                checksum ^= u128::from(reader.read_u64().unwrap())
+                checksum ^= u128::from(reader.read_u64_non_strict().unwrap())
             }
             UlebField::Usize(_) => {
-                checksum ^= reader.read_usize().unwrap() as u128
+                checksum ^= reader.read_usize_non_strict().unwrap() as u128
             }
-            UlebField::U128(_) => checksum ^= reader.read_u128().unwrap(),
+            UlebField::U128(_) => checksum ^= reader.read_u128_non_strict().unwrap(),
         }
     }
 
@@ -1017,21 +1017,21 @@ fn read_uleb_buffered_file(path: &Path, fields: &[UlebField]) {
     for field in fields {
         match *field {
             UlebField::U8(_) => {
-                checksum ^= u128::from(reader.read_u8().unwrap())
+                checksum ^= u128::from(reader.read_u8_non_strict().unwrap())
             }
             UlebField::U16(_) => {
-                checksum ^= u128::from(reader.read_u16().unwrap())
+                checksum ^= u128::from(reader.read_u16_non_strict().unwrap())
             }
             UlebField::U32(_) => {
-                checksum ^= u128::from(reader.read_u32().unwrap())
+                checksum ^= u128::from(reader.read_u32_non_strict().unwrap())
             }
             UlebField::U64(_) => {
-                checksum ^= u128::from(reader.read_u64().unwrap())
+                checksum ^= u128::from(reader.read_u64_non_strict().unwrap())
             }
             UlebField::Usize(_) => {
-                checksum ^= reader.read_usize().unwrap() as u128
+                checksum ^= reader.read_usize_non_strict().unwrap() as u128
             }
-            UlebField::U128(_) => checksum ^= reader.read_u128().unwrap(),
+            UlebField::U128(_) => checksum ^= reader.read_u128_non_strict().unwrap(),
         }
     }
 
@@ -1149,22 +1149,22 @@ fn read_zigzag_ext_file(path: &Path, fields: &[ZigZagField]) {
     for field in fields {
         match *field {
             ZigZagField::I8(_) => {
-                checksum ^= i128::from(reader.read_zig_zag_i8().unwrap())
+                checksum ^= i128::from(reader.read_zig_zag_i8_non_strict().unwrap())
             }
             ZigZagField::I16(_) => {
-                checksum ^= i128::from(reader.read_zig_zag_i16().unwrap())
+                checksum ^= i128::from(reader.read_zig_zag_i16_non_strict().unwrap())
             }
             ZigZagField::I32(_) => {
-                checksum ^= i128::from(reader.read_zig_zag_i32().unwrap())
+                checksum ^= i128::from(reader.read_zig_zag_i32_non_strict().unwrap())
             }
             ZigZagField::I64(_) => {
-                checksum ^= i128::from(reader.read_zig_zag_i64().unwrap())
+                checksum ^= i128::from(reader.read_zig_zag_i64_non_strict().unwrap())
             }
             ZigZagField::Isize(_) => {
-                checksum ^= reader.read_zig_zag_isize().unwrap() as i128
+                checksum ^= reader.read_zig_zag_isize_non_strict().unwrap() as i128
             }
             ZigZagField::I128(_) => {
-                checksum ^= reader.read_zig_zag_i128().unwrap()
+                checksum ^= reader.read_zig_zag_i128_non_strict().unwrap()
             }
         }
     }
@@ -1219,21 +1219,21 @@ fn read_zigzag_wrapper_file(path: &Path, fields: &[ZigZagField]) {
     for field in fields {
         match *field {
             ZigZagField::I8(_) => {
-                checksum ^= i128::from(reader.read_i8().unwrap())
+                checksum ^= i128::from(reader.read_i8_non_strict().unwrap())
             }
             ZigZagField::I16(_) => {
-                checksum ^= i128::from(reader.read_i16().unwrap())
+                checksum ^= i128::from(reader.read_i16_non_strict().unwrap())
             }
             ZigZagField::I32(_) => {
-                checksum ^= i128::from(reader.read_i32().unwrap())
+                checksum ^= i128::from(reader.read_i32_non_strict().unwrap())
             }
             ZigZagField::I64(_) => {
-                checksum ^= i128::from(reader.read_i64().unwrap())
+                checksum ^= i128::from(reader.read_i64_non_strict().unwrap())
             }
             ZigZagField::Isize(_) => {
-                checksum ^= reader.read_isize().unwrap() as i128
+                checksum ^= reader.read_isize_non_strict().unwrap() as i128
             }
-            ZigZagField::I128(_) => checksum ^= reader.read_i128().unwrap(),
+            ZigZagField::I128(_) => checksum ^= reader.read_i128_non_strict().unwrap(),
         }
     }
 
@@ -1250,21 +1250,21 @@ fn read_zigzag_buffered_file(path: &Path, fields: &[ZigZagField]) {
     for field in fields {
         match *field {
             ZigZagField::I8(_) => {
-                checksum ^= i128::from(reader.read_i8().unwrap())
+                checksum ^= i128::from(reader.read_i8_non_strict().unwrap())
             }
             ZigZagField::I16(_) => {
-                checksum ^= i128::from(reader.read_i16().unwrap())
+                checksum ^= i128::from(reader.read_i16_non_strict().unwrap())
             }
             ZigZagField::I32(_) => {
-                checksum ^= i128::from(reader.read_i32().unwrap())
+                checksum ^= i128::from(reader.read_i32_non_strict().unwrap())
             }
             ZigZagField::I64(_) => {
-                checksum ^= i128::from(reader.read_i64().unwrap())
+                checksum ^= i128::from(reader.read_i64_non_strict().unwrap())
             }
             ZigZagField::Isize(_) => {
-                checksum ^= reader.read_isize().unwrap() as i128
+                checksum ^= reader.read_isize_non_strict().unwrap() as i128
             }
-            ZigZagField::I128(_) => checksum ^= reader.read_i128().unwrap(),
+            ZigZagField::I128(_) => checksum ^= reader.read_i128_non_strict().unwrap(),
         }
     }
 

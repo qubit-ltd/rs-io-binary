@@ -67,10 +67,15 @@ bytes.write_utf8_string_uleb_u64("inventory")?;
 
 let mut input = Cursor::new(bytes);
 assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
-assert_eq!(300, input.read_uleb_u64()?);
+assert_eq!(300, input.read_uleb_u64_non_strict()?);
 assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
 # Ok::<(), std::io::Error>(())
 ```
+
+The non-strict extension methods are intentionally named with a
+`_non_strict` suffix. Use the corresponding `_strict` methods when canonical
+LEB128 encodings are required; typed readers likewise require an explicit
+`Strict` or `NonStrict` policy type.
 
 The `max_len` argument is an input-validation boundary: it limits the payload
 length accepted before allocating the returned `String`. Pick it from the file
