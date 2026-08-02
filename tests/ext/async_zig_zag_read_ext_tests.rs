@@ -27,7 +27,7 @@ fn assert_zig_zag_read_future_is_send<T>(input: &mut T)
 where
     T: AsyncInput<Item = u8> + Send + Unpin + ?Sized,
 {
-    assert_send(input.read_zig_zag_i64_async());
+    assert_send(input.read_zig_zag_i64_non_strict_async());
 }
 
 fn zig_zag_fixture() -> Vec<u8> {
@@ -49,14 +49,14 @@ fn async_zig_zag_read_covers_supported_integer_widths() {
         -100,
         complete(input.read_zig_zag_i8_strict_async()).unwrap(),
     );
-    assert_eq!(-20_000, complete(input.read_zig_zag_i16_async()).unwrap(),);
+    assert_eq!(-20_000, complete(input.read_zig_zag_i16_non_strict_async()).unwrap(),);
     assert_eq!(
         -2_000_000,
         complete(input.read_zig_zag_i32_strict_async()).unwrap(),
     );
     assert_eq!(
         -20_000_000_000,
-        complete(input.read_zig_zag_i64_async()).unwrap(),
+        complete(input.read_zig_zag_i64_non_strict_async()).unwrap(),
     );
     assert_eq!(
         i128::MIN,
@@ -64,7 +64,7 @@ fn async_zig_zag_read_covers_supported_integer_widths() {
     );
     assert_eq!(
         isize::MIN,
-        complete(input.read_zig_zag_isize_async()).unwrap(),
+        complete(input.read_zig_zag_isize_non_strict_async()).unwrap(),
     );
 }
 
@@ -75,7 +75,7 @@ fn dropping_zig_zag_read_future_retains_consumed_input() {
     let mut input = ChunkedAsyncInput::starts_ready(bytes);
 
     assert!(matches!(
-        poll_once(input.read_zig_zag_i128_async()),
+        poll_once(input.read_zig_zag_i128_non_strict_async()),
         Poll::Pending,
     ));
 
@@ -85,12 +85,12 @@ fn dropping_zig_zag_read_future_retains_consumed_input() {
 #[test]
 fn async_zig_zag_read_reports_invalid_and_truncated_payloads() {
     let mut input = ChunkedAsyncInput::new(vec![0x80; 19]);
-    let invalid = complete(input.read_zig_zag_i128_async())
+    let invalid = complete(input.read_zig_zag_i128_non_strict_async())
         .expect_err("unterminated maximum payload should fail");
     assert_eq!(ErrorKind::InvalidData, invalid.kind());
 
     let mut input = ChunkedAsyncInput::new(vec![0x80]);
-    let truncated = complete(input.read_zig_zag_i128_async())
+    let truncated = complete(input.read_zig_zag_i128_non_strict_async())
         .expect_err("truncated payload should fail");
     assert_eq!(ErrorKind::UnexpectedEof, truncated.kind());
 }

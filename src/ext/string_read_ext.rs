@@ -288,7 +288,7 @@ where
         &mut self,
         max_len: usize,
     ) -> Result<String> {
-        let len = self.read_uleb_usize()?;
+        let len = self.read_uleb_usize_non_strict()?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
@@ -303,7 +303,7 @@ where
 
     #[inline]
     fn read_utf8_string_uleb_u64(&mut self, max_len: usize) -> Result<String> {
-        let len = self.read_uleb_u64()?;
+        let len = self.read_uleb_u64_non_strict()?;
         #[cfg(target_pointer_width = "64")]
         let len = len as usize;
         #[cfg(not(target_pointer_width = "64"))]

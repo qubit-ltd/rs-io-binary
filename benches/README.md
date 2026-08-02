@@ -45,7 +45,7 @@
 - `ext_*`：使用 `BinaryReadExt` / `BinaryWriteExt`、`Leb128ReadExt` / `Leb128WriteExt`、`ZigZagReadExt` / `ZigZagWriteExt`。
 - `std_native_*`：仅在 `prod_binary_pipeline` 中出现，使用标准库 `BufReader<File>` / `BufWriter<File>` 加 `read_exact()` / `write_all()` 和基础类型字节序转换。
 - `std_manual_*`：仅在 `prod_varints` 与 `prod_signed_varints` 中出现，使用标准库 `BufReader<File>` / `BufWriter<File>` 加手写安全 LEB128 / ZigZag 协议实现。
-- `wrapper_*`：使用 `BinaryReader` / `BinaryWriter`、`Leb128Reader` / `Leb128Writer`、`ZigZagReader` / `ZigZagWriter`。
+- `wrapper_*`：使用 `BinaryReader` / `BinaryWriter`、`Leb128Reader` / `Leb128Writer`、`ZigZagReader` / `ZigZagWriter`；reader 显式选择 `Strict` 或 `NonStrict`，宽松路径调用带 `_non_strict` 后缀的方法。
 - `buffered_*`：使用自带大缓冲区并直接在缓冲区上调用 codec unsafe 方法的 buffered reader/writer。
 
 结果解读时应比较同一 group 下相同方向的 `ext_*` 与 `wrapper_*`，例如：

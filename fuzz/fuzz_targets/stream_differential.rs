@@ -164,20 +164,20 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
 /// Compares unsigned LEB128 extension and wrapper readers across short reads.
 fn fuzz_leb128(payload: &[u8], chunk_size: usize) {
     let mut extension = ChunkedReader::new(payload, chunk_size);
-    let extension_result = extension.read_uleb_u64();
+    let extension_result = extension.read_uleb_u64_non_strict();
     let extension_position = extension.position();
 
     let mut wrapper = Leb128Reader::<_, NonStrict>::new(ChunkedReader::new(
         payload, chunk_size,
     ));
-    let wrapper_result = wrapper.read_u64();
+    let wrapper_result = wrapper.read_u64_non_strict();
     let wrapper_position = wrapper.into_inner().position();
 
     let mut buffered = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
         ChunkedReader::new(payload, chunk_size),
         16,
     );
-    let buffered_result = buffered.read_u64();
+    let buffered_result = buffered.read_u64_non_strict();
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
@@ -196,20 +196,20 @@ fn fuzz_leb128(payload: &[u8], chunk_size: usize) {
 /// Compares ZigZag extension and wrapper readers across short reads.
 fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     let mut extension = ChunkedReader::new(payload, chunk_size);
-    let extension_result = extension.read_zig_zag_i64();
+    let extension_result = extension.read_zig_zag_i64_non_strict();
     let extension_position = extension.position();
 
     let mut wrapper = ZigZagReader::<_, NonStrict>::new(ChunkedReader::new(
         payload, chunk_size,
     ));
-    let wrapper_result = wrapper.read_i64();
+    let wrapper_result = wrapper.read_i64_non_strict();
     let wrapper_position = wrapper.into_inner().position();
 
     let mut buffered = BufferedZigZagReader::<_, NonStrict>::with_capacity(
         ChunkedReader::new(payload, chunk_size),
         16,
     );
-    let buffered_result = buffered.read_i64();
+    let buffered_result = buffered.read_i64_non_strict();
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 

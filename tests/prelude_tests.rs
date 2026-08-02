@@ -45,13 +45,13 @@ fn test_prelude_imports_binary_extension_traits() {
     assert_eq!(
         300,
         input
-            .read_uleb_u16()
+            .read_uleb_u16_non_strict()
             .expect("Leb128ReadExt should be in prelude")
     );
     assert_eq!(
         -42,
         input
-            .read_zig_zag_i16()
+            .read_zig_zag_i16_non_strict()
             .expect("ZigZagReadExt should be in prelude")
     );
 }

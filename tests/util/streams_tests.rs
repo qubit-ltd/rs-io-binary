@@ -25,7 +25,7 @@ fn test_read_leb128_payload_round_trips_maximum_u128_width() {
     assert_eq!(19, bytes.len());
 
     let decoded = Cursor::new(bytes)
-        .read_uleb_u128()
+        .read_uleb_u128_non_strict()
         .expect("maximum-width u128 should decode");
 
     assert_eq!(u128::MAX, decoded);
@@ -36,7 +36,7 @@ fn test_read_leb128_payload_rejects_unterminated_maximum_width() {
     let mut reader = Cursor::new(vec![0x80; 19]);
 
     let error = reader
-        .read_uleb_u128()
+        .read_uleb_u128_non_strict()
         .expect_err("unterminated maximum-width payload should fail");
 
     assert_eq!(ErrorKind::InvalidData, error.kind());
@@ -47,7 +47,7 @@ fn test_read_leb128_payload_maps_incomplete_input_to_unexpected_eof() {
     let mut reader = Cursor::new(vec![0x80]);
 
     let error = reader
-        .read_uleb_u16()
+        .read_uleb_u16_non_strict()
         .expect_err("truncated payload should fail");
 
     assert_eq!(ErrorKind::UnexpectedEof, error.kind());

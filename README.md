@@ -53,7 +53,7 @@ bytes.write_uleb_u64(300)?;
 
 let mut input = Cursor::new(bytes);
 assert_eq!(0x0102_0304, input.read_u32(ByteOrder::BigEndian)?);
-assert_eq!(300, input.read_uleb_u64()?);
+assert_eq!(300, input.read_uleb_u64_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
 
@@ -100,6 +100,10 @@ Synchronous typed wrappers include `BinaryReader`, `BinaryWriter`,
 `Leb128Reader`, `Leb128Writer`, `ZigZagReader`, and `ZigZagWriter`, together
 with buffered variants. They are generic over `Input` and `Output`; they are not
 defined in terms of `std::io::Read` and `std::io::Write`.
+
+Varint readers require an explicit `Strict` or `NonStrict` policy type. Strict
+readers keep the short method names such as `read_u64`; permissive readers use
+the explicit `read_u64_non_strict` (and corresponding string) methods.
 
 Buffered readers provide `into_parts` to recover the wrapped input together
 with unread prefetched bytes. Buffered writers provide `into_parts` to recover

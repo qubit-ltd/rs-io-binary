@@ -64,7 +64,7 @@ macro_rules! zig_zag_read_method {
 pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `i8`.",
-        read_zig_zag_i8_async,
+        read_zig_zag_i8_non_strict_async,
         i8,
         NonStrict
     );
@@ -76,7 +76,7 @@ pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     );
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `i16`.",
-        read_zig_zag_i16_async,
+        read_zig_zag_i16_non_strict_async,
         i16,
         NonStrict
     );
@@ -88,7 +88,7 @@ pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     );
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `i32`.",
-        read_zig_zag_i32_async,
+        read_zig_zag_i32_non_strict_async,
         i32,
         NonStrict
     );
@@ -100,7 +100,7 @@ pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     );
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `i64`.",
-        read_zig_zag_i64_async,
+        read_zig_zag_i64_non_strict_async,
         i64,
         NonStrict
     );
@@ -112,7 +112,7 @@ pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     );
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `i128`.",
-        read_zig_zag_i128_async,
+        read_zig_zag_i128_non_strict_async,
         i128,
         NonStrict
     );
@@ -124,7 +124,7 @@ pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     );
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `isize`.",
-        read_zig_zag_isize_async,
+        read_zig_zag_isize_non_strict_async,
         isize,
         NonStrict
     );
