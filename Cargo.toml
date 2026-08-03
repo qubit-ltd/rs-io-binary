@@ -36,7 +36,7 @@ miri = true
 sanitizers = ["address"]
 
 [dependencies]
-qubit-codec = { path = "../rs-codec", version = "0.11", features = ["io"] }
+qubit-codec = { path = "../rs-codec", version = "0.10", features = ["io"] }
 qubit-codec-binary = { path = "../rs-codec-binary", version = "0.3.0" }
 qubit-io = "0.14"
 
@@ -45,7 +45,7 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(miri)'] }
 
 [dev-dependencies]
 criterion = { version = "0.8", default-features = false }
-qubit-codec = { path = "../rs-codec", version = "0.11", features = ["io"] }
+qubit-codec = { path = "../rs-codec", version = "0.10", features = ["io"] }
 tempfile = "3.27"
 
 [[bench]]
