@@ -34,7 +34,7 @@ typed reader/writer。它们的 buffered 变体会保留未读或未写字节，
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.11"
+qubit-codec = "0.10"
 qubit-io = "0.14"
 ```
 
