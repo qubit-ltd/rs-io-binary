@@ -9,6 +9,8 @@
   - `prod_mixed_binary_pipeline`：混合固定宽度整数和 UTF-8 字符串的记录流。
   - `prod_varints`：随机类型字段流的无符号 LEB128 编解码。
   - `prod_signed_varints`：随机类型字段流的 ZigZag 编解码。
+  - `async_binary_pipeline`：运行时无关的异步 `u64` 读写，以及与
+    `qubit-io` 异步 buffer 组合后的对比。
 - 已移除 UTF-8 文本读写基准。
 - `micro_binary_pipeline` 使用 32,768 个 `u64` 值、每次最多读写 7 字节的
   合成内存流；它不使用 `Cursor`，并以 16 字节内部缓冲强制覆盖 buffer 边界。
@@ -33,6 +35,8 @@
   - `std_manual_*` 使用 `BufWriter<File>` / `BufReader<File>`，并在 benchmark 内部手写安全的 LEB128 / ZigZag 编解码，不调用本 crate 的 codec，也不使用 unchecked slice 优化。
   - `wrapper_*` 使用 `BinaryReader/Writer`、`Leb128Reader/Writer`、`ZigZagReader/Writer` 包装 `BufReader<File>` / `BufWriter<File>`。
   - `buffered_*` 使用 `BufferedBinaryReader/Writer`、`BufferedLeb128Reader/Writer`、`BufferedZigZagReader/Writer` 直接包装 `File`，由 wrapper 内部维护 8 KiB 缓冲区。
+- `async_binary_pipeline` 使用确定性的 ready `AsyncInput`/`AsyncOutput`，每次
+  最多传输 3 个字节，比较异步 extension trait 与 `qubit-io` 异步 buffer 的组合。
 - 每组基准设置 `warm_up_time = 2s`、`measurement_time = 8s`、`sample_size = 12`。
 - 每个大组必须在独立的 `cargo bench` 进程中执行，避免前一个大组的长时间
   文件 IO、分支预测和 CPU 调度状态污染后续大组结果。`benches/stream.rs`
