@@ -27,10 +27,11 @@ The core API does not depend on Tokio, `futures-io`, or another executor.
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.11"
-qubit-codec-binary = "0.3"
-qubit-io = "0.14"
 ```
+
+The quick start below needs only `qubit-io-binary`. Add `qubit-codec` or
+`qubit-codec-binary` when importing their byte-order or decode-policy types,
+and add `qubit-io` when writing generic `Input` or `Output` bounds.
 
 ## Quick Start: a Synchronous Record
 
@@ -40,7 +41,6 @@ implement the `qubit-io` abstractions through adapters.
 ```rust
 use std::io::Cursor;
 
-use qubit_codec::ByteOrder;
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryWriteExt,
@@ -49,11 +49,11 @@ use qubit_io_binary::{
 };
 
 let mut bytes = Vec::new();
-bytes.write_u32(0x0102_0304, ByteOrder::BigEndian)?;
+bytes.write_u32_le(0x0102_0304)?;
 bytes.write_uleb_u64(300)?;
 
 let mut input = Cursor::new(bytes);
-assert_eq!(0x0102_0304, input.read_u32(ByteOrder::BigEndian)?);
+assert_eq!(0x0102_0304, input.read_u32_le()?);
 assert_eq!(300, input.read_uleb_u64_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
