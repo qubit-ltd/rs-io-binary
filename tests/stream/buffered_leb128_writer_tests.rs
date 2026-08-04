@@ -213,3 +213,29 @@ fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_pref
     writer.flush().expect("writer should flush");
     assert_eq!(vec![3, b'h', 0xC3, 0xA9], writer.inner().clone());
 }
+
+#[test]
+fn test_buffered_leb128_writer_reports_string_prefix_and_capacity_errors() {
+    let value = "x".repeat(300);
+    let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 19);
+    writer
+        .write_fully(&[1; 18])
+        .expect("the buffer should accept the initial bytes");
+    let error = writer
+        .write_utf8_string_usize(&value)
+        .expect_err("usize prefix flush error should be returned");
+    assert_eq!(ErrorKind::Other, error.kind());
+
+    let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 19);
+    writer
+        .write_fully(&[1; 18])
+        .expect("the buffer should accept the initial bytes");
+    let error = writer
+        .write_utf8_string_u64(&value)
+        .expect_err("u64 prefix flush error should be returned");
+    assert_eq!(ErrorKind::Other, error.kind());
+
+    let result =
+        BufferedLeb128Writer::try_with_capacity(Vec::<u8>::new(), usize::MAX);
+    assert!(result.is_err());
+}

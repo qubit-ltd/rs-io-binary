@@ -745,3 +745,46 @@ fn test_buffered_binary_writer_writes_strings_with_fixed_length_prefixes() {
         writer.inner().as_slice(),
     );
 }
+
+#[test]
+fn test_buffered_binary_writer_reports_string_length_and_prefix_errors() {
+    let oversized = "x".repeat(usize::from(u16::MAX) + 1);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(Vec::new());
+    let error = writer
+        .write_string_with_u16_len(&oversized)
+        .expect_err("oversized u16 string should fail");
+    assert_eq!(ErrorKind::InvalidInput, error.kind());
+
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        19,
+    );
+    writer
+        .write_fully(&[1; 18])
+        .expect("the buffer should accept the initial bytes");
+    let error = writer
+        .write_string_with_u16_len("x")
+        .expect_err("u16 prefix flush error should be returned");
+    assert_eq!(ErrorKind::Other, error.kind());
+
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        FailingWriter,
+        19,
+    );
+    writer
+        .write_fully(&[1; 18])
+        .expect("the buffer should accept the initial bytes");
+    let error = writer
+        .write_string_with_u32_len("x")
+        .expect_err("u32 prefix flush error should be returned");
+    assert_eq!(ErrorKind::Other, error.kind());
+}
+
+#[test]
+fn test_buffered_binary_writer_rejects_impossible_capacity() {
+    let result = BufferedBinaryWriter::<_, LittleEndian>::try_with_capacity(
+        Vec::<u8>::new(),
+        usize::MAX,
+    );
+    assert!(result.is_err());
+}
