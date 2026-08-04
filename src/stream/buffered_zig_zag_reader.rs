@@ -153,13 +153,6 @@ where
         self.input.inner()
     }
 
-    /// Provides access to the underlying reader.
-    ///
-    /// Direct reads from the returned reader bypass unread bytes already held
-    /// by this wrapper and can desynchronize subsequent buffered reads. Use
-    /// [`Self::into_parts`] when ownership and unread bytes must be recovered
-    /// together.
-    ///
     /// Consumes this wrapper and preserves its unread buffered bytes.
     ///
     /// # Returns
