@@ -6,6 +6,7 @@
   - `micro_binary_pipeline`：受控短读短写内存流上的固定宽度读写，用于隔离
     adapter、临时缓冲和内部 buffer 的成本。
   - `prod_binary_pipeline`：固定字段的二进制读写。
+  - `prod_mixed_binary_pipeline`：混合固定宽度整数和 UTF-8 字符串的记录流。
   - `prod_varints`：随机类型字段流的无符号 LEB128 编解码。
   - `prod_signed_varints`：随机类型字段流的 ZigZag 编解码。
 - 已移除 UTF-8 文本读写基准。

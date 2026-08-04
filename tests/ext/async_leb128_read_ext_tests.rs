@@ -52,7 +52,10 @@ fn async_leb128_read_covers_supported_integer_widths() {
     let mut input = ChunkedAsyncInput::new(leb128_fixture());
 
     assert_eq!(200, complete(input.read_uleb_u8_strict_async()).unwrap());
-    assert_eq!(30_000, complete(input.read_uleb_u16_non_strict_async()).unwrap(),);
+    assert_eq!(
+        30_000,
+        complete(input.read_uleb_u16_non_strict_async()).unwrap(),
+    );
     assert_eq!(
         3_000_000,
         complete(input.read_uleb_u32_strict_async()).unwrap(),
@@ -65,9 +68,15 @@ fn async_leb128_read_covers_supported_integer_widths() {
         u128::MAX,
         complete(input.read_uleb_u128_strict_async()).unwrap(),
     );
-    assert_eq!(usize::MAX, complete(input.read_uleb_usize_non_strict_async()).unwrap(),);
+    assert_eq!(
+        usize::MAX,
+        complete(input.read_uleb_usize_non_strict_async()).unwrap(),
+    );
     assert_eq!(-100, complete(input.read_sleb_i8_strict_async()).unwrap(),);
-    assert_eq!(-20_000, complete(input.read_sleb_i16_non_strict_async()).unwrap(),);
+    assert_eq!(
+        -20_000,
+        complete(input.read_sleb_i16_non_strict_async()).unwrap(),
+    );
     assert_eq!(
         -2_000_000,
         complete(input.read_sleb_i32_strict_async()).unwrap(),
@@ -80,7 +89,10 @@ fn async_leb128_read_covers_supported_integer_widths() {
         i128::MIN,
         complete(input.read_sleb_i128_strict_async()).unwrap(),
     );
-    assert_eq!(isize::MIN, complete(input.read_sleb_isize_non_strict_async()).unwrap(),);
+    assert_eq!(
+        isize::MIN,
+        complete(input.read_sleb_isize_non_strict_async()).unwrap(),
+    );
 }
 
 #[test]

@@ -27,7 +27,8 @@ The core API does not depend on Tokio, `futures-io`, or another executor.
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.10"
+qubit-codec = "0.11"
+qubit-codec-binary = "0.3"
 qubit-io = "0.14"
 ```
 
@@ -118,21 +119,23 @@ helpers.
 
 ## Mixed Binary Stream Benchmark
 
-On the development machine, the Criterion quick run below used a deterministic
-random mix of `u8`, `i32`, `u64`, and multibyte UTF-8 strings (131,072 fields
-per iteration). Treat these values as a comparison of buffering strategies, not
-as portable performance guarantees.
+The 2026-08-04 Criterion run below used a deterministic random mix of `u8`,
+`i32`, `u64`, and multibyte UTF-8 strings (131,072 fields per iteration). The
+full command and environment are recorded in
+[`benches/results/2026-08-04-mixed-binary-pipeline.md`](benches/results/2026-08-04-mixed-binary-pipeline.md).
+Treat these values as a comparison of buffering strategies, not as portable
+performance guarantees.
 
 | Scenario | Time | Throughput | Relative to raw extension |
 | --- | ---: | ---: | ---: |
-| Write: raw extension | 61.2 ms | 2.14 M fields/s | 1.0× |
-| Write: extension + `BufWriter` | 3.51 ms | 37.37 M fields/s | 17.5× |
-| Write: `BufferedBinaryWriter` | 3.11 ms | 42.19 M fields/s | 19.7× |
-| Read: raw extension | 44.7 ms | 2.94 M fields/s | 1.0× |
-| Read: extension + `BufReader` | 3.56 ms | 36.83 M fields/s | 12.5× |
-| Read: `BufferedBinaryReader` | 3.24 ms | 40.46 M fields/s | 13.8× |
+| Write: raw extension | 65.19 ms | 2.01 M fields/s | 1.0× |
+| Write: extension + `BufWriter` | 4.04 ms | 32.44 M fields/s | 16.1× |
+| Write: `BufferedBinaryWriter` | 3.70 ms | 35.40 M fields/s | 17.6× |
+| Read: raw extension | 46.80 ms | 2.80 M fields/s | 1.0× |
+| Read: extension + `BufReader` | 3.64 ms | 36.01 M fields/s | 12.9× |
+| Read: `BufferedBinaryReader` | 3.46 ms | 37.90 M fields/s | 13.5× |
 
-The buffered wrappers were about 13% faster for writes and 10% faster for reads
+The buffered wrappers were about 9% faster for writes and 5% faster for reads
 than the corresponding externally buffered extension paths in this run.
 
 ## Boundaries and Further Reading

@@ -199,13 +199,13 @@ where
                 source: Some(source),
                 ..
             } => source,
-            qubit_codec::DecodeFailure::Incomplete { required_total, .. } => {
-                Leb128DecodeError::incomplete(
-                    index,
-                    required_total,
-                    input.len().saturating_sub(index),
-                )
-            }
+            qubit_codec::DecodeFailure::Incomplete {
+                required_total, ..
+            } => Leb128DecodeError::incomplete(
+                index,
+                required_total,
+                input.len().saturating_sub(index),
+            ),
         }
     })
 }

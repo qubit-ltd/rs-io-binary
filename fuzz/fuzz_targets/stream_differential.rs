@@ -13,6 +13,7 @@ use std::io::{
     Cursor,
     ErrorKind,
     Read,
+    Write,
 };
 
 use libfuzzer_sys::fuzz_target;
@@ -24,7 +25,10 @@ use qubit_codec_binary::{
 use qubit_io_binary::{
     BinaryReadExt,
     BinaryReader,
+    BinaryWriteExt,
+    BinaryWriter,
     BufferedBinaryReader,
+    BufferedBinaryWriter,
     BufferedLeb128Reader,
     BufferedZigZagReader,
     Leb128ReadExt,
@@ -46,11 +50,80 @@ fuzz_target!(|data: &[u8]| {
     let payload = data.get(1..).unwrap_or_default();
 
     fuzz_fixed_width(payload, chunk_size);
+    fuzz_binary_writers(payload, chunk_size);
     fuzz_leb128(payload, chunk_size);
     fuzz_strict_leb128(payload, chunk_size);
     fuzz_zig_zag(payload, chunk_size);
     fuzz_string(payload, chunk_size);
 });
+
+/// Compares fixed-width writers across short writes and injected failures.
+fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
+    let mut bytes = [0_u8; 8];
+    let count = payload.len().min(bytes.len());
+    bytes[..count].copy_from_slice(&payload[..count]);
+    let value = u64::from_le_bytes(bytes);
+
+    let mut extension = ScriptedWriter::new(chunk_size, None);
+    let extension_result = extension.write_u64_le(value);
+    let extension_bytes = extension.into_bytes();
+
+    let mut wrapper = BinaryWriter::<_, LittleEndian>::new(
+        ScriptedWriter::new(chunk_size, None),
+    );
+    let wrapper_result = wrapper.write_u64(value);
+    let wrapper_bytes = wrapper.into_inner().into_bytes();
+
+    let mut buffered = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        ScriptedWriter::new(chunk_size, None),
+        16,
+    );
+    let buffered_result = buffered
+        .write_u64(value)
+        .and_then(|()| qubit_io::Output::flush(&mut buffered));
+    let (buffered_inner, pending) = buffered.into_parts();
+    let buffered_bytes = buffered_inner.into_bytes();
+
+    assert!(pending.is_empty());
+    assert_eq!(Ok(()), result_signature(&extension_result));
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
+    assert_eq!(extension_bytes, wrapper_bytes);
+    assert_eq!(extension_bytes, buffered_bytes);
+
+    let failure_limit =
+        usize::from(payload.first().copied().unwrap_or_default() % 8);
+    let mut extension = ScriptedWriter::new(chunk_size, Some(failure_limit));
+    let extension_result = extension.write_u64_le(value);
+
+    let mut wrapper = BinaryWriter::<_, LittleEndian>::new(
+        ScriptedWriter::new(chunk_size, Some(failure_limit)),
+    );
+    let wrapper_result = wrapper.write_u64(value);
+
+    let mut buffered = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
+        ScriptedWriter::new(chunk_size, Some(failure_limit)),
+        16,
+    );
+    let buffered_result = buffered
+        .write_u64(value)
+        .and_then(|()| qubit_io::Output::flush(&mut buffered));
+
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
+}
 
 /// Compares fixed-width extension and wrapper readers across short reads.
 fn fuzz_fixed_width(payload: &[u8], chunk_size: usize) {
@@ -272,5 +345,54 @@ impl Read for ChunkedReader<'_> {
     fn read(&mut self, output: &mut [u8]) -> io::Result<usize> {
         let count = output.len().min(self.chunk_size);
         self.inner.read(&mut output[..count])
+    }
+}
+
+/// A writer that bounds each write and can fail after a byte budget.
+struct ScriptedWriter {
+    bytes: Vec<u8>,
+    chunk_size: usize,
+    remaining: Option<usize>,
+}
+
+impl ScriptedWriter {
+    /// Creates a short-write writer with an optional failure budget.
+    fn new(chunk_size: usize, failure_limit: Option<usize>) -> Self {
+        Self {
+            bytes: Vec::new(),
+            chunk_size,
+            remaining: failure_limit,
+        }
+    }
+
+    /// Returns bytes accepted by this writer.
+    fn into_bytes(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+impl Write for ScriptedWriter {
+    /// Accepts at most `chunk_size` bytes, then optionally fails at the budget.
+    fn write(&mut self, input: &[u8]) -> io::Result<usize> {
+        let requested = input.len().min(self.chunk_size);
+        let count = self
+            .remaining
+            .map_or(requested, |remaining| requested.min(remaining));
+        if count == 0 && !input.is_empty() {
+            return Err(io::Error::new(
+                ErrorKind::Other,
+                "scripted writer failure",
+            ));
+        }
+        self.bytes.extend_from_slice(&input[..count]);
+        if let Some(remaining) = &mut self.remaining {
+            *remaining -= count;
+        }
+        Ok(count)
+    }
+
+    /// Reports success because failures are injected by `write`.
+    fn flush(&mut self) -> io::Result<()> {
+        Ok(())
     }
 }

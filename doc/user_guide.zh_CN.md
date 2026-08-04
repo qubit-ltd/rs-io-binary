@@ -34,7 +34,8 @@ typed reader/writer。它们的 buffered 变体会保留未读或未写字节，
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.10"
+qubit-codec = "0.11"
+qubit-codec-binary = "0.3"
 qubit-io = "0.14"
 ```
 
@@ -94,6 +95,21 @@ let bytes = writer.into_inner();
 
 let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
 assert_eq!(0x1234, reader.read_u16()?);
+# Ok::<(), std::io::Error>(())
+```
+
+LEB128 reader 会把 canonicality 策略放在类型参数中。构造 typed reader 时，
+请从 `qubit-codec-binary` 直接导入策略类型：
+
+```rust
+use std::io::Cursor;
+
+use qubit_codec_binary::NonStrict;
+use qubit_io_binary::Leb128Reader;
+
+let mut reader =
+    Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0xac, 0x02]));
+assert_eq!(300, reader.read_u16_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
 

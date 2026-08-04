@@ -36,20 +36,39 @@ fn test_leb128_read_ext_reads_all_unsigned_methods() {
         .expect("usize should be encoded");
 
     let mut input = Cursor::new(bytes.clone());
-    assert_eq!(u8::MAX, input.read_uleb_u8_non_strict().expect("u8 should be read"));
-    assert_eq!(300, input.read_uleb_u16_non_strict().expect("u16 should be read"));
-    assert_eq!(0x1f600, input.read_uleb_u32_non_strict().expect("u32 should be read"));
+    assert_eq!(
+        u8::MAX,
+        input.read_uleb_u8_non_strict().expect("u8 should be read")
+    );
+    assert_eq!(
+        300,
+        input
+            .read_uleb_u16_non_strict()
+            .expect("u16 should be read")
+    );
+    assert_eq!(
+        0x1f600,
+        input
+            .read_uleb_u32_non_strict()
+            .expect("u32 should be read")
+    );
     assert_eq!(
         0x0102_0304_0506_0708,
-        input.read_uleb_u64_non_strict().expect("u64 should be read")
+        input
+            .read_uleb_u64_non_strict()
+            .expect("u64 should be read")
     );
     assert_eq!(
         0x0102_0304_0506_0708_1112_1314_1516_1718,
-        input.read_uleb_u128_non_strict().expect("u128 should be read")
+        input
+            .read_uleb_u128_non_strict()
+            .expect("u128 should be read")
     );
     assert_eq!(
         usize::MAX,
-        input.read_uleb_usize_non_strict().expect("usize should be read")
+        input
+            .read_uleb_usize_non_strict()
+            .expect("usize should be read")
     );
 
     let mut input = Cursor::new(bytes);
@@ -110,20 +129,39 @@ fn test_leb128_read_ext_reads_all_signed_methods() {
         .expect("isize should be encoded");
 
     let mut input = Cursor::new(bytes.clone());
-    assert_eq!(i8::MIN, input.read_sleb_i8_non_strict().expect("i8 should be read"));
-    assert_eq!(-300, input.read_sleb_i16_non_strict().expect("i16 should be read"));
-    assert_eq!(-0x1f600, input.read_sleb_i32_non_strict().expect("i32 should be read"));
+    assert_eq!(
+        i8::MIN,
+        input.read_sleb_i8_non_strict().expect("i8 should be read")
+    );
+    assert_eq!(
+        -300,
+        input
+            .read_sleb_i16_non_strict()
+            .expect("i16 should be read")
+    );
+    assert_eq!(
+        -0x1f600,
+        input
+            .read_sleb_i32_non_strict()
+            .expect("i32 should be read")
+    );
     assert_eq!(
         -0x0102_0304_0506_0708,
-        input.read_sleb_i64_non_strict().expect("i64 should be read")
+        input
+            .read_sleb_i64_non_strict()
+            .expect("i64 should be read")
     );
     assert_eq!(
         -0x0102_0304_0506_0708_1112_1314_1516_1718,
-        input.read_sleb_i128_non_strict().expect("i128 should be read")
+        input
+            .read_sleb_i128_non_strict()
+            .expect("i128 should be read")
     );
     assert_eq!(
         isize::MIN,
-        input.read_sleb_isize_non_strict().expect("isize should be read")
+        input
+            .read_sleb_isize_non_strict()
+            .expect("isize should be read")
     );
 
     let mut input = Cursor::new(bytes);
