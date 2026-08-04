@@ -116,4 +116,77 @@ fn async_string_write_reports_length_and_output_errors() {
     )
     .expect_err("oversized u16 string should fail");
     assert_eq!(ErrorKind::InvalidInput, length_error.kind());
+
+    let mut output = ChunkedAsyncOutput::new();
+    assert_eq!(
+        ErrorKind::InvalidInput,
+        complete(output.write_string_with_u16_len_be_async(&oversized))
+            .expect_err("oversized big-endian u16 string should fail")
+            .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::new();
+    assert_eq!(
+        ErrorKind::InvalidInput,
+        complete(output.write_string_with_u16_len_le_async(&oversized))
+            .expect_err("oversized little-endian u16 string should fail")
+            .kind(),
+    );
+
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(output.write_utf8_string_uleb_u64_async("x"))
+            .expect_err("u64 prefix write error should be returned")
+            .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(
+            output.write_string_with_u16_len_async("x", ByteOrder::BigEndian)
+        )
+        .expect_err("runtime u16 prefix write error should be returned")
+        .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(output.write_string_with_u16_len_be_async("x"))
+            .expect_err("big-endian u16 prefix write error should be returned")
+            .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(output.write_string_with_u16_len_le_async("x"))
+            .expect_err(
+                "little-endian u16 prefix write error should be returned"
+            )
+            .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(
+            output.write_string_with_u32_len_async("x", ByteOrder::BigEndian)
+        )
+        .expect_err("runtime u32 prefix write error should be returned")
+        .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(output.write_string_with_u32_len_be_async("x"))
+            .expect_err("big-endian u32 prefix write error should be returned")
+            .kind(),
+    );
+    let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
+    assert_eq!(
+        ErrorKind::BrokenPipe,
+        complete(output.write_string_with_u32_len_le_async("x"))
+            .expect_err(
+                "little-endian u32 prefix write error should be returned"
+            )
+            .kind(),
+    );
 }

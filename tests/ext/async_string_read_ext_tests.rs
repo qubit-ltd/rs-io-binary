@@ -135,4 +135,90 @@ fn async_string_read_reports_prefix_payload_and_utf8_errors() {
     let utf8_error = complete(input.read_utf8_payload_async(1, 1))
         .expect_err("invalid UTF-8 should fail");
     assert_eq!(ErrorKind::InvalidData, utf8_error.kind());
+
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_utf8_string_uleb_usize_async(8))
+            .expect_err("missing usize LEB128 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_utf8_string_uleb_usize_strict_async(8))
+            .expect_err("missing strict usize LEB128 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_utf8_string_uleb_u64_async(8))
+            .expect_err("missing u64 LEB128 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_utf8_string_uleb_u64_strict_async(8))
+            .expect_err("missing strict u64 LEB128 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_string_with_u16_len_async(ByteOrder::BigEndian, 8))
+            .expect_err("missing runtime u16 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_string_with_u16_len_be_async(8))
+            .expect_err("missing big-endian u16 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_string_with_u16_len_le_async(8))
+            .expect_err("missing little-endian u16 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_string_with_u32_len_async(ByteOrder::BigEndian, 8))
+            .expect_err("missing runtime u32 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_string_with_u32_len_be_async(8))
+            .expect_err("missing big-endian u32 prefix should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_string_with_u32_len_le_async(8))
+            .expect_err("missing little-endian u32 prefix should fail")
+            .kind(),
+    );
+
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(input.read_utf8_payload_async(1, 1))
+            .expect_err("missing payload should fail")
+            .kind(),
+    );
+    let mut input = ChunkedAsyncInput::new(Vec::new());
+    assert_eq!(
+        ErrorKind::OutOfMemory,
+        complete(input.read_utf8_payload_async(usize::MAX, usize::MAX))
+            .expect_err("impossible payload allocation should fail")
+            .kind(),
+    );
 }
