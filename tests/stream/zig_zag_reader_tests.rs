@@ -44,15 +44,37 @@ fn test_zig_zag_reader_reads_all_methods() {
     let mut reader =
         ZigZagReader::<_, NonStrict>::new(Cursor::new(writer.into_inner()));
     assert!(!reader.is_strict());
-    assert_eq!(0, reader.read_i8_non_strict().expect("single-byte i8 should be read"));
-    assert_eq!(i8::MIN, reader.read_i8_non_strict().expect("i8 should be read"));
-    assert_eq!(-300, reader.read_i16_non_strict().expect("i16 should be read"));
-    assert_eq!(-0x1f600, reader.read_i32_non_strict().expect("i32 should be read"));
-    assert_eq!(i64::MIN, reader.read_i64_non_strict().expect("i64 should be read"));
-    assert_eq!(i128::MIN, reader.read_i128_non_strict().expect("i128 should be read"));
+    assert_eq!(
+        0,
+        reader
+            .read_i8_non_strict()
+            .expect("single-byte i8 should be read")
+    );
+    assert_eq!(
+        i8::MIN,
+        reader.read_i8_non_strict().expect("i8 should be read")
+    );
+    assert_eq!(
+        -300,
+        reader.read_i16_non_strict().expect("i16 should be read")
+    );
+    assert_eq!(
+        -0x1f600,
+        reader.read_i32_non_strict().expect("i32 should be read")
+    );
+    assert_eq!(
+        i64::MIN,
+        reader.read_i64_non_strict().expect("i64 should be read")
+    );
+    assert_eq!(
+        i128::MIN,
+        reader.read_i128_non_strict().expect("i128 should be read")
+    );
     assert_eq!(
         isize::MIN,
-        reader.read_isize_non_strict().expect("isize should be read")
+        reader
+            .read_isize_non_strict()
+            .expect("isize should be read")
     );
 
     let mut writer = ZigZagWriter::new(Vec::new());
@@ -137,37 +159,55 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_i8_non_strict().expect_err("truncated i8").kind()
+        reader
+            .read_i8_non_strict()
+            .expect_err("truncated i8")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_i16_non_strict().expect_err("truncated i16").kind()
+        reader
+            .read_i16_non_strict()
+            .expect_err("truncated i16")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_i32_non_strict().expect_err("truncated i32").kind()
+        reader
+            .read_i32_non_strict()
+            .expect_err("truncated i32")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_i64_non_strict().expect_err("truncated i64").kind()
+        reader
+            .read_i64_non_strict()
+            .expect_err("truncated i64")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_i128_non_strict().expect_err("truncated i128").kind()
+        reader
+            .read_i128_non_strict()
+            .expect_err("truncated i128")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0x80]));
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        reader.read_isize_non_strict().expect_err("truncated isize").kind()
+        reader
+            .read_isize_non_strict()
+            .expect_err("truncated isize")
+            .kind()
     );
 
     let mut reader =
@@ -218,7 +258,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_i8_non_strict().expect_err("unterminated i8").kind()
+        reader
+            .read_i8_non_strict()
+            .expect_err("unterminated i8")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
@@ -227,7 +270,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_i16_non_strict().expect_err("unterminated i16").kind()
+        reader
+            .read_i16_non_strict()
+            .expect_err("unterminated i16")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
@@ -236,7 +282,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_i32_non_strict().expect_err("unterminated i32").kind()
+        reader
+            .read_i32_non_strict()
+            .expect_err("unterminated i32")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
@@ -245,7 +294,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_i64_non_strict().expect_err("unterminated i64").kind()
+        reader
+            .read_i64_non_strict()
+            .expect_err("unterminated i64")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
@@ -254,7 +306,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_i128_non_strict().expect_err("unterminated i128").kind()
+        reader
+            .read_i128_non_strict()
+            .expect_err("unterminated i128")
+            .kind()
     );
 
     let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![
@@ -263,7 +318,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
     ]));
     assert_eq!(
         ErrorKind::InvalidData,
-        reader.read_isize_non_strict().expect_err("unterminated isize").kind()
+        reader
+            .read_isize_non_strict()
+            .expect_err("unterminated isize")
+            .kind()
     );
 }
 

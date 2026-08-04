@@ -31,8 +31,8 @@ macro_rules! read_zig_zag_value {
 /// # Target-width integers
 ///
 /// `isize` methods use the current Rust target's pointer width. Prefer
-/// fixed-width integer methods such as [`Self::read_zig_zag_i64_non_strict`] for
-/// persistent files and cross-platform protocols.
+/// fixed-width integer methods such as [`Self::read_zig_zag_i64_non_strict`]
+/// for persistent files and cross-platform protocols.
 /// Non-strict methods use the `_non_strict` suffix; canonical-only methods use
 /// the corresponding `_strict` suffix.
 pub trait ZigZagReadExt: Input<Item = u8> {

@@ -49,7 +49,10 @@ fn async_zig_zag_read_covers_supported_integer_widths() {
         -100,
         complete(input.read_zig_zag_i8_strict_async()).unwrap(),
     );
-    assert_eq!(-20_000, complete(input.read_zig_zag_i16_non_strict_async()).unwrap(),);
+    assert_eq!(
+        -20_000,
+        complete(input.read_zig_zag_i16_non_strict_async()).unwrap(),
+    );
     assert_eq!(
         -2_000_000,
         complete(input.read_zig_zag_i32_strict_async()).unwrap(),

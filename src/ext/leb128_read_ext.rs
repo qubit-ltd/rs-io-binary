@@ -31,10 +31,11 @@ macro_rules! read_leb128_value {
 /// # Target-width integers
 ///
 /// `usize` and `isize` methods use the current Rust target's pointer width.
-/// Prefer fixed-width integer methods such as [`Self::read_uleb_u64_non_strict`] or
-/// [`Self::read_sleb_i64_non_strict`] for persistent files and cross-platform protocols.
-/// Non-strict methods use the `_non_strict` suffix; canonical-only methods use
-/// the corresponding `_strict` suffix.
+/// Prefer fixed-width integer methods such as
+/// [`Self::read_uleb_u64_non_strict`] or [`Self::read_sleb_i64_non_strict`] for
+/// persistent files and cross-platform protocols. Non-strict methods use the
+/// `_non_strict` suffix; canonical-only methods use the corresponding `_strict`
+/// suffix.
 pub trait Leb128ReadExt: Input<Item = u8> {
     /// Reads a non-strict unsigned LEB128 `u8`.
     ///
