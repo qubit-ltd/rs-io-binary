@@ -12,7 +12,6 @@ use std::io::{
 };
 use std::task::Poll;
 
-use qubit_io::AsyncOutput;
 use qubit_io_binary::{
     AsyncZigZagWriteExt,
     ZigZagWriteExt,
@@ -20,18 +19,9 @@ use qubit_io_binary::{
 
 use super::internal::async_io_test_support_tests::{
     ChunkedAsyncOutput,
-    assert_send,
     complete,
     poll_once,
 };
-
-#[allow(dead_code)]
-fn assert_zig_zag_write_future_is_send<T>(output: &mut T)
-where
-    T: AsyncOutput<Item = u8> + Send + Unpin + ?Sized,
-{
-    assert_send(output.write_zig_zag_i64_async(0));
-}
 
 #[test]
 fn async_zig_zag_write_covers_supported_integer_widths() {

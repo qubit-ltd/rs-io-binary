@@ -47,9 +47,9 @@ macro_rules! leb128_write_method {
         fn $name(
             &mut self,
             value: $ty,
-        ) -> impl Future<Output = Result<()>> + Send + '_
+        ) -> impl Future<Output = Result<()>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move {
                 let mut bytes = [0_u8;
@@ -67,8 +67,6 @@ macro_rules! leb128_write_method {
 }
 
 /// Future-based canonical LEB128 writes to runtime-neutral async outputs.
-///
-/// Every method returns a [`Send`] future when the output itself is [`Send`].
 ///
 /// # Cancellation safety
 ///

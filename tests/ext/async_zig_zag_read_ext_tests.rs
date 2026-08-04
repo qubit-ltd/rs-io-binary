@@ -9,7 +9,6 @@
 use std::io::ErrorKind;
 use std::task::Poll;
 
-use qubit_io::AsyncInput;
 use qubit_io_binary::{
     AsyncZigZagReadExt,
     ZigZagWriteExt,
@@ -17,18 +16,9 @@ use qubit_io_binary::{
 
 use super::internal::async_io_test_support_tests::{
     ChunkedAsyncInput,
-    assert_send,
     complete,
     poll_once,
 };
-
-#[allow(dead_code)]
-fn assert_zig_zag_read_future_is_send<T>(input: &mut T)
-where
-    T: AsyncInput<Item = u8> + Send + Unpin + ?Sized,
-{
-    assert_send(input.read_zig_zag_i64_non_strict_async());
-}
 
 fn zig_zag_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();

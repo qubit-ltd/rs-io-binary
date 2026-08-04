@@ -75,18 +75,18 @@ use qubit_io_binary::{
 
 async fn copy_header<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 where
-    I: AsyncInput<Item = u8> + Send + Unpin,
-    O: AsyncOutput<Item = u8> + Send + Unpin,
+    I: AsyncInput<Item = u8> + Unpin,
+    O: AsyncOutput<Item = u8> + Unpin,
 {
     let version = input.read_u32_le_async().await?;
     output.write_u32_le_async(version).await
 }
 ```
 
-All asynchronous extension methods return `Send` futures and therefore require
-the input or output to implement both `Send` and `Unpin`. These operations are
-not cancellation safe: dropping a pending read retains bytes already consumed,
-and dropping a pending write leaves any already-written prefix in the output.
+Asynchronous extension methods only require `Unpin`; they do not impose a
+runtime or `Send` requirement. These operations are not cancellation safe:
+dropping a pending read retains bytes already consumed, and dropping a pending
+write leaves any already-written prefix in the output.
 
 ## What It Provides
 

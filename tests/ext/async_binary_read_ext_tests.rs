@@ -7,6 +7,10 @@
 // =============================================================================
 
 use std::io::ErrorKind;
+use std::marker::PhantomData;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::task::Context;
 use std::task::Poll;
 
 use qubit_codec::ByteOrder;
@@ -18,17 +22,38 @@ use qubit_io_binary::{
 
 use super::internal::async_io_test_support_tests::{
     ChunkedAsyncInput,
-    assert_send,
     complete,
     poll_once,
 };
 
-#[allow(dead_code)]
-fn assert_binary_read_future_is_send<T>(input: &mut T)
-where
-    T: AsyncInput<Item = u8> + Send + Unpin + ?Sized,
-{
-    assert_send(input.read_u32_be_async());
+struct NonSendAsyncInput {
+    inner: ChunkedAsyncInput,
+    _not_send: PhantomData<Rc<()>>,
+}
+
+impl NonSendAsyncInput {
+    fn new(bytes: Vec<u8>) -> Self {
+        Self {
+            inner: ChunkedAsyncInput::starts_ready(bytes),
+            _not_send: PhantomData,
+        }
+    }
+}
+
+impl AsyncInput for NonSendAsyncInput {
+    type Item = u8;
+
+    unsafe fn poll_read_unchecked(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        output: &mut [u8],
+        index: usize,
+        count: usize,
+    ) -> std::task::Poll<std::io::Result<usize>> {
+        let this = self.get_mut();
+        // SAFETY: The caller upholds the indexed output range contract.
+        unsafe { Pin::new(&mut this.inner).poll_read_unchecked(cx, output, index, count) }
+    }
 }
 
 fn scalar_fixture() -> Vec<u8> {
@@ -78,6 +103,12 @@ fn scalar_fixture() -> Vec<u8> {
     bytes.write_f64_be(10.25).expect("f64 should encode");
     bytes.write_f64_le(-20.5).expect("f64 should encode");
     bytes
+}
+
+#[test]
+fn async_binary_read_accepts_non_send_input() {
+    let mut input = NonSendAsyncInput::new(vec![0x12, 0x34]);
+    assert_eq!(0x1234, complete(input.read_u16_be_async()).unwrap());
 }
 
 #[test]

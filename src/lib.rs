@@ -22,8 +22,8 @@
 //!
 //! ## Asynchronous extension traits
 //!
-//! Async extension methods return `Send` futures. Their inputs and outputs
-//! therefore need to be `Send` as well as `Unpin`:
+//! Async extension methods are runtime-neutral and only require `Unpin`
+//! inputs and outputs:
 //!
 //! ```
 //! use qubit_io::{
@@ -37,8 +37,8 @@
 //!
 //! async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 //! where
-//!     I: AsyncInput<Item = u8> + Send + Unpin,
-//!     O: AsyncOutput<Item = u8> + Send + Unpin,
+//!     I: AsyncInput<Item = u8> + Unpin,
+//!     O: AsyncOutput<Item = u8> + Unpin,
 //! {
 //!     let value = input.read_u32_be_async().await?;
 //!     output.write_u32_be_async(value).await

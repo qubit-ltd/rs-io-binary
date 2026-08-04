@@ -67,9 +67,9 @@ macro_rules! fixed_write_method {
         fn $name(
             &mut self,
             value: $ty,
-        ) -> impl Future<Output = Result<()>> + Send + '_
+        ) -> impl Future<Output = Result<()>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move { write_binary_value_async!(self, value, $ty, $order) }
         }
@@ -104,9 +104,9 @@ macro_rules! runtime_order_write_method {
             &mut self,
             value: $ty,
             byte_order: ByteOrder,
-        ) -> impl Future<Output = Result<()>> + Send + '_
+        ) -> impl Future<Output = Result<()>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move {
                 if use_big_endian(byte_order) {
@@ -140,8 +140,6 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Future-based fixed-width binary writes to runtime-neutral async outputs.
-///
-/// Every method returns a [`Send`] future when the output itself is [`Send`].
 ///
 /// # Cancellation safety
 ///

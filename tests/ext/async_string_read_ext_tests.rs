@@ -10,7 +10,6 @@ use std::io::ErrorKind;
 use std::task::Poll;
 
 use qubit_codec::ByteOrder;
-use qubit_io::AsyncInput;
 use qubit_io_binary::{
     AsyncStringReadExt,
     StringWriteExt,
@@ -18,18 +17,9 @@ use qubit_io_binary::{
 
 use super::internal::async_io_test_support_tests::{
     ChunkedAsyncInput,
-    assert_send,
     complete,
     poll_once,
 };
-
-#[allow(dead_code)]
-fn assert_string_read_future_is_send<T>(input: &mut T)
-where
-    T: AsyncInput<Item = u8> + Send + Unpin + ?Sized,
-{
-    assert_send(input.read_utf8_payload_async(0, 0));
-}
 
 fn string_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();

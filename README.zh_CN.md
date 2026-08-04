@@ -73,17 +73,17 @@ use qubit_io_binary::{
 
 async fn copy_header<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 where
-    I: AsyncInput<Item = u8> + Send + Unpin,
-    O: AsyncOutput<Item = u8> + Send + Unpin,
+    I: AsyncInput<Item = u8> + Unpin,
+    O: AsyncOutput<Item = u8> + Unpin,
 {
     let version = input.read_u32_le_async().await?;
     output.write_u32_le_async(version).await
 }
 ```
 
-所有异步扩展方法都返回 `Send` future，因此输入或输出必须同时实现 `Send`
-与 `Unpin`。这些操作不具备取消安全性：丢弃尚未完成的读取 future 会保留
-已经消费的字节，丢弃尚未完成的写入 future 会在输出中留下已经写入的前缀。
+异步扩展方法只要求 `Unpin`，不额外要求运行时或 `Send`。这些操作不具备取消
+安全性：丢弃尚未完成的读取 future 会保留已经消费的字节，丢弃尚未完成的写入
+future 会在输出中留下已经写入的前缀。
 
 ## 核心能力
 

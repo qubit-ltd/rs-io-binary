@@ -129,8 +129,8 @@ completion, and retain it if a flush fails so that it can be retried.
 
 ## Async Workflow
 
-Async counterparts add an `_async` suffix. Their futures are `Send`, so the
-stream must implement `Send + Unpin` in addition to the relevant async trait.
+Async counterparts add an `_async` suffix. They only require `Unpin` in addition
+to the relevant async trait and do not impose a runtime or `Send` requirement.
 
 ```rust
 use qubit_io::{AsyncInput, AsyncOutput};
@@ -138,8 +138,8 @@ use qubit_io_binary::{AsyncBinaryReadExt, AsyncBinaryWriteExt};
 
 async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 where
-    I: AsyncInput<Item = u8> + Send + Unpin,
-    O: AsyncOutput<Item = u8> + Send + Unpin,
+    I: AsyncInput<Item = u8> + Unpin,
+    O: AsyncOutput<Item = u8> + Unpin,
 {
     let marker = input.read_u32_be_async().await?;
     output.write_u32_be_async(marker).await

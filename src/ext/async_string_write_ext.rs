@@ -26,8 +26,6 @@ use crate::{
 
 /// Future-based length-prefixed UTF-8 writes.
 ///
-/// Every method returns a [`Send`] future when the output itself is [`Send`].
-///
 /// # Cancellation safety
 ///
 /// These writes are not cancellation safe. Dropping a pending future leaves
@@ -56,9 +54,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_utf8_payload_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move { write_all_async(self, value.as_bytes()).await }
     }
@@ -87,9 +85,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_utf8_string_uleb_usize_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             self.write_uleb_usize_async(value.len()).await?;
@@ -121,9 +119,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_utf8_string_uleb_u64_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u64_len(value.len())?;
@@ -158,9 +156,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
         &'a mut self,
         value: &'a str,
         byte_order: ByteOrder,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u16_len(value.len())?;
@@ -193,9 +191,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_string_with_u16_len_be_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u16_len(value.len())?;
@@ -228,9 +226,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_string_with_u16_len_le_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u16_len(value.len())?;
@@ -265,9 +263,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
         &'a mut self,
         value: &'a str,
         byte_order: ByteOrder,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u32_len(value.len())?;
@@ -300,9 +298,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_string_with_u32_len_be_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u32_len(value.len())?;
@@ -335,9 +333,9 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     fn write_string_with_u32_len_le_async<'a>(
         &'a mut self,
         value: &'a str,
-    ) -> impl Future<Output = Result<()>> + Send + 'a
+    ) -> impl Future<Output = Result<()>> + 'a
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = checked_u32_len(value.len())?;

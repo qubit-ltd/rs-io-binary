@@ -48,9 +48,9 @@ macro_rules! leb128_read_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already consumed from the input."]
         #[inline(always)]
-        fn $name(&mut self) -> impl Future<Output = Result<$ty>> + Send + '_
+        fn $name(&mut self) -> impl Future<Output = Result<$ty>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move { read_leb128_value_async!(self, $ty, $policy) }
         }
@@ -61,8 +61,6 @@ macro_rules! leb128_read_method {
 ///
 /// Target-width `usize` and `isize` formats remain platform dependent. Use
 /// fixed-width methods for persistent files and cross-platform protocols.
-///
-/// Every method returns a [`Send`] future when the input itself is [`Send`].
 ///
 /// # Cancellation safety
 ///

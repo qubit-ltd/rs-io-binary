@@ -37,9 +37,9 @@ macro_rules! zig_zag_read_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already consumed from the input."]
         #[inline(always)]
-        fn $name(&mut self) -> impl Future<Output = Result<$ty>> + Send + '_
+        fn $name(&mut self) -> impl Future<Output = Result<$ty>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move {
                 read_leb128_payload_async::<
@@ -54,8 +54,6 @@ macro_rules! zig_zag_read_method {
 }
 
 /// Future-based ZigZag plus unsigned-LEB128 reads.
-///
-/// Every method returns a [`Send`] future when the input itself is [`Send`].
 ///
 /// # Cancellation safety
 ///

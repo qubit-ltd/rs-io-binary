@@ -119,8 +119,8 @@ assert_eq!(300, reader.read_u16_non_strict()?);
 
 ## 异步流程
 
-异步 API 在方法名后加 `_async`。其 future 是 `Send`，因此流除实现相应异步 trait 外，
-还必须实现 `Send + Unpin`。
+异步 API 在方法名后加 `_async`。除实现相应异步 trait 外，流只需实现 `Unpin`，
+不额外要求运行时或 `Send`。
 
 ```rust
 use qubit_io::{AsyncInput, AsyncOutput};
@@ -128,8 +128,8 @@ use qubit_io_binary::{AsyncBinaryReadExt, AsyncBinaryWriteExt};
 
 async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
 where
-    I: AsyncInput<Item = u8> + Send + Unpin,
-    O: AsyncOutput<Item = u8> + Send + Unpin,
+    I: AsyncInput<Item = u8> + Unpin,
+    O: AsyncOutput<Item = u8> + Unpin,
 {
     let marker = input.read_u32_be_async().await?;
     output.write_u32_be_async(marker).await

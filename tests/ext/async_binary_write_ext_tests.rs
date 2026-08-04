@@ -10,6 +10,10 @@ use std::io::{
     ErrorKind,
     Result,
 };
+use std::marker::PhantomData;
+use std::pin::Pin;
+use std::rc::Rc;
+use std::task::Context;
 use std::task::Poll;
 
 use qubit_codec::ByteOrder;
@@ -21,17 +25,53 @@ use qubit_io_binary::{
 
 use super::internal::async_io_test_support_tests::{
     ChunkedAsyncOutput,
-    assert_send,
     complete,
     poll_once,
 };
 
-#[allow(dead_code)]
-fn assert_binary_write_future_is_send<T>(output: &mut T)
-where
-    T: AsyncOutput<Item = u8> + Send + Unpin + ?Sized,
-{
-    assert_send(output.write_u32_be_async(0));
+struct NonSendAsyncOutput {
+    inner: ChunkedAsyncOutput,
+    _not_send: PhantomData<Rc<()>>,
+}
+
+impl NonSendAsyncOutput {
+    fn new() -> Self {
+        Self {
+            inner: ChunkedAsyncOutput::starts_ready(),
+            _not_send: PhantomData,
+        }
+    }
+}
+
+impl AsyncOutput for NonSendAsyncOutput {
+    type Item = u8;
+
+    unsafe fn poll_write_unchecked(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> std::task::Poll<std::io::Result<usize>> {
+        let this = self.get_mut();
+        // SAFETY: The caller upholds the indexed input range contract.
+        unsafe { Pin::new(&mut this.inner).poll_write_unchecked(cx, input, index, count) }
+    }
+
+    fn poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> std::task::Poll<std::io::Result<()>> {
+        let this = self.get_mut();
+        Pin::new(&mut this.inner).poll_flush(cx)
+    }
+}
+
+#[test]
+fn async_binary_write_accepts_non_send_output() {
+    let mut output = NonSendAsyncOutput::new();
+    complete(output.write_u16_be_async(0x1234)).expect("value should write");
+    assert_eq!(vec![0x12, 0x34], output.inner.bytes());
 }
 
 #[test]

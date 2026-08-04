@@ -47,9 +47,9 @@ macro_rules! zig_zag_write_method {
         fn $name(
             &mut self,
             value: $ty,
-        ) -> impl Future<Output = Result<()>> + Send + '_
+        ) -> impl Future<Output = Result<()>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move {
                 let mut bytes = [0_u8;
@@ -67,8 +67,6 @@ macro_rules! zig_zag_write_method {
 }
 
 /// Future-based ZigZag plus unsigned-LEB128 writes.
-///
-/// Every method returns a [`Send`] future when the output itself is [`Send`].
 ///
 /// # Cancellation safety
 ///

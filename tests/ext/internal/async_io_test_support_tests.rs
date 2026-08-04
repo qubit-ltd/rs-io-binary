@@ -180,5 +180,3 @@ where
     let mut future = std::pin::pin!(future);
     future.as_mut().poll(&mut context)
 }
-
-pub(crate) fn assert_send<T: Send>(_: T) {}

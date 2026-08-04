@@ -57,9 +57,9 @@ macro_rules! fixed_read_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already consumed from the input."]
         #[inline(always)]
-        fn $name(&mut self) -> impl Future<Output = Result<$ty>> + Send + '_
+        fn $name(&mut self) -> impl Future<Output = Result<$ty>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move { read_binary_value_async!(self, $ty, $order) }
         }
@@ -91,9 +91,9 @@ macro_rules! runtime_order_read_method {
         fn $name(
             &mut self,
             byte_order: ByteOrder,
-        ) -> impl Future<Output = Result<$ty>> + Send + '_
+        ) -> impl Future<Output = Result<$ty>> + '_
         where
-            Self: Send + Unpin,
+            Self: Unpin,
         {
             async move {
                 if use_big_endian(byte_order) {
@@ -127,8 +127,6 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Future-based fixed-width binary reads from runtime-neutral async inputs.
-///
-/// Every method returns a [`Send`] future when the input itself is [`Send`].
 ///
 /// # Cancellation safety
 ///

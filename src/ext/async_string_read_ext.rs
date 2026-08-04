@@ -28,8 +28,6 @@ use crate::{
 
 /// Future-based length-prefixed UTF-8 reads.
 ///
-/// Every method returns a [`Send`] future when the input itself is [`Send`].
-///
 /// # Cancellation safety
 ///
 /// These reads are not cancellation safe. Dropping a pending future leaves
@@ -60,9 +58,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
         &mut self,
         len: usize,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move { read_utf8_payload_async(self, len, max_len).await }
     }
@@ -90,9 +88,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_utf8_string_uleb_usize_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_uleb_usize_non_strict_async().await?;
@@ -123,9 +121,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_utf8_string_uleb_usize_strict_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_uleb_usize_strict_async().await?;
@@ -156,9 +154,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_utf8_string_uleb_u64_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_uleb_u64_non_strict_async().await?;
@@ -193,9 +191,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_utf8_string_uleb_u64_strict_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_uleb_u64_strict_async().await?;
@@ -232,9 +230,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
         &mut self,
         byte_order: ByteOrder,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = usize::from(self.read_u16_async(byte_order).await?);
@@ -265,9 +263,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_string_with_u16_len_be_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = usize::from(self.read_u16_be_async().await?);
@@ -298,9 +296,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_string_with_u16_len_le_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = usize::from(self.read_u16_le_async().await?);
@@ -333,9 +331,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
         &mut self,
         byte_order: ByteOrder,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_u32_async(byte_order).await?;
@@ -376,9 +374,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_string_with_u32_len_be_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_u32_be_async().await?;
@@ -419,9 +417,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     fn read_string_with_u32_len_le_async(
         &mut self,
         max_len: usize,
-    ) -> impl Future<Output = Result<String>> + Send + '_
+    ) -> impl Future<Output = Result<String>> + '_
     where
-        Self: Send + Unpin,
+        Self: Unpin,
     {
         async move {
             let len = self.read_u32_le_async().await?;
