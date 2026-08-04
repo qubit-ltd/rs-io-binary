@@ -17,12 +17,8 @@ include = [
     "/LICENSE",
     "/README.md",
     "/README.zh_CN.md",
-    "/RUST_CODING_STYLE.md",
-    "/RUST_CODING_STYLE.zh_CN.md",
- "/doc/**/user_guide*.md",
- "/benches/**",
-    "/examples/**",
-    "/resources/**",
+    "/doc/**/user_guide*.md",
+    "/benches/**",
     "/src/**",
     "/tests/**",
 ]
@@ -45,7 +41,6 @@ unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(miri)'] }
 
 [dev-dependencies]
 criterion = { version = "0.8", default-features = false }
-qubit-codec = { version = "0.11", features = ["io"] }
 tempfile = "3.27"
 
 [[bench]]

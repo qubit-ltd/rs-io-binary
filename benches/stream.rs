@@ -10,6 +10,7 @@ use std::fs::{
     self,
     File,
 };
+use std::future::Future;
 use std::hint::black_box;
 use std::io::{
     BufRead,
@@ -21,6 +22,12 @@ use std::io::{
 use std::path::{
     Path,
     PathBuf,
+};
+use std::pin::Pin;
+use std::task::{
+    Context,
+    Poll,
+    Waker,
 };
 use std::time::Duration;
 
@@ -36,7 +43,15 @@ use qubit_codec::{
     LittleEndian,
 };
 use qubit_codec_binary::NonStrict;
+use qubit_io::{
+    AsyncBufferedInput,
+    AsyncBufferedOutput,
+    AsyncInput,
+    AsyncOutput,
+};
 use qubit_io_binary::{
+    AsyncBinaryReadExt,
+    AsyncBinaryWriteExt,
     BinaryReadExt,
     BinaryReader,
     BinaryWriteExt,
@@ -66,13 +81,15 @@ const MICRO_VALUE_COUNT: usize = 32_768;
 const VARINT_COUNT: usize = 262_144;
 const VARINT_REPEAT: usize = 64;
 const MIXED_FIELD_COUNT: usize = 131_072;
+const ASYNC_VALUE_COUNT: usize = 8_192;
 const STREAM_BENCH_GROUP_ENV: &str = "QUBIT_IO_STREAM_BENCH_GROUP";
-const STREAM_BENCH_GROUP_NAMES: [&str; 5] = [
+const STREAM_BENCH_GROUP_NAMES: [&str; 6] = [
     "micro_binary_pipeline",
     "prod_binary_pipeline",
     "prod_mixed_binary_pipeline",
     "prod_varints",
     "prod_signed_varints",
+    "async_binary_pipeline",
 ];
 
 #[derive(Clone, Copy)]
@@ -82,6 +99,7 @@ enum StreamBenchGroup {
     MixedBinaryPipeline,
     Varints,
     SignedVarints,
+    AsyncBinaryPipeline,
 }
 
 fn selected_stream_bench_group() -> Option<StreamBenchGroup> {
@@ -97,6 +115,7 @@ fn selected_stream_bench_group() -> Option<StreamBenchGroup> {
         "prod_mixed_binary_pipeline" => StreamBenchGroup::MixedBinaryPipeline,
         "prod_varints" => StreamBenchGroup::Varints,
         "prod_signed_varints" => StreamBenchGroup::SignedVarints,
+        "async_binary_pipeline" => StreamBenchGroup::AsyncBinaryPipeline,
         _ => panic!(
             "{STREAM_BENCH_GROUP_ENV}={value:?} is unsupported; expected one of: {}",
             STREAM_BENCH_GROUP_NAMES.join(", ")
@@ -175,6 +194,105 @@ impl Write for ChunkedMemoryOutput {
 
     fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
+    }
+}
+
+struct ReadyAsyncInput {
+    bytes: Vec<u8>,
+    position: usize,
+    chunk_size: usize,
+}
+
+impl ReadyAsyncInput {
+    fn new(bytes: &[u8], chunk_size: usize) -> Self {
+        Self {
+            bytes: bytes.to_vec(),
+            position: 0,
+            chunk_size,
+        }
+    }
+}
+
+impl AsyncInput for ReadyAsyncInput {
+    type Item = u8;
+
+    unsafe fn poll_read_unchecked(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        output: &mut [u8],
+        index: usize,
+        count: usize,
+    ) -> Poll<std::io::Result<usize>> {
+        // SAFETY: The benchmark input has no self-referential fields and is
+        // never moved while pinned.
+        let this = unsafe { self.get_unchecked_mut() };
+        let remaining = this.bytes.len().saturating_sub(this.position);
+        let read = remaining.min(count).min(this.chunk_size);
+        if read == 0 {
+            return Poll::Ready(Ok(0));
+        }
+        output[index..index + read]
+            .copy_from_slice(&this.bytes[this.position..this.position + read]);
+        this.position += read;
+        Poll::Ready(Ok(read))
+    }
+}
+
+struct ReadyAsyncOutput {
+    bytes: Vec<u8>,
+    chunk_size: usize,
+}
+
+impl ReadyAsyncOutput {
+    const fn new(chunk_size: usize) -> Self {
+        Self {
+            bytes: Vec::new(),
+            chunk_size,
+        }
+    }
+
+    fn into_inner(self) -> Vec<u8> {
+        self.bytes
+    }
+}
+
+impl AsyncOutput for ReadyAsyncOutput {
+    type Item = u8;
+
+    unsafe fn poll_write_unchecked(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+        input: &[u8],
+        index: usize,
+        count: usize,
+    ) -> Poll<std::io::Result<usize>> {
+        // SAFETY: The benchmark output has no self-referential fields and is
+        // never moved while pinned.
+        let this = unsafe { self.get_unchecked_mut() };
+        let written = count.min(this.chunk_size);
+        this.bytes.extend_from_slice(&input[index..index + written]);
+        Poll::Ready(Ok(written))
+    }
+
+    fn poll_flush(
+        self: Pin<&mut Self>,
+        _cx: &mut Context<'_>,
+    ) -> Poll<std::io::Result<()>> {
+        Poll::Ready(Ok(()))
+    }
+}
+
+fn run_ready_async<F>(future: F) -> F::Output
+where
+    F: Future,
+{
+    let waker = Waker::noop();
+    let mut context = Context::from_waker(waker);
+    let mut future = std::pin::pin!(future);
+    loop {
+        if let Poll::Ready(output) = future.as_mut().poll(&mut context) {
+            return output;
+        }
     }
 }
 
@@ -1899,6 +2017,91 @@ fn bench_prod_mixed_binary_pipeline(c: &mut Criterion) {
     group.finish();
 }
 
+fn build_async_values() -> Vec<u64> {
+    (0..ASYNC_VALUE_COUNT)
+        .map(|index| (index as u64).wrapping_mul(0x9E37_79B9_7F4A_7C15))
+        .collect()
+}
+
+fn write_async_values_ext(values: &[u64]) -> std::io::Result<Vec<u8>> {
+    let mut output = ReadyAsyncOutput::new(3);
+    run_ready_async(async {
+        for &value in values {
+            output.write_u64_le_async(value).await?;
+        }
+        output.flush_async().await
+    })?;
+    Ok(output.into_inner())
+}
+
+fn write_async_values_buffered(values: &[u64]) -> std::io::Result<Vec<u8>> {
+    let mut output =
+        AsyncBufferedOutput::with_capacity(ReadyAsyncOutput::new(3), 8 * 1024);
+    run_ready_async(async {
+        for &value in values {
+            output.write_u64_le_async(value).await?;
+        }
+        output.flush_async().await
+    })?;
+    let (inner, pending) = output.into_parts();
+    debug_assert!(pending.readable().is_empty());
+    Ok(inner.into_inner())
+}
+
+fn read_async_values_ext(bytes: &[u8]) -> std::io::Result<u64> {
+    let mut input = ReadyAsyncInput::new(bytes, 3);
+    run_ready_async(async {
+        let mut checksum = 0_u64;
+        for _ in 0..ASYNC_VALUE_COUNT {
+            checksum ^= input.read_u64_le_async().await?;
+        }
+        Ok(checksum)
+    })
+}
+
+fn read_async_values_buffered(bytes: &[u8]) -> std::io::Result<u64> {
+    let mut input = AsyncBufferedInput::with_capacity(
+        ReadyAsyncInput::new(bytes, 3),
+        8 * 1024,
+    );
+    run_ready_async(async {
+        let mut checksum = 0_u64;
+        for _ in 0..ASYNC_VALUE_COUNT {
+            checksum ^= input.read_u64_le_async().await?;
+        }
+        Ok(checksum)
+    })
+}
+
+fn bench_async_binary_pipeline(c: &mut Criterion) {
+    let values = build_async_values();
+    let ext_bytes = write_async_values_ext(&values).unwrap();
+    let buffered_bytes = write_async_values_buffered(&values).unwrap();
+    let expected = values
+        .iter()
+        .copied()
+        .fold(0_u64, |checksum, value| checksum ^ value);
+    assert_eq!(ext_bytes, buffered_bytes);
+    assert_eq!(expected, read_async_values_ext(&ext_bytes).unwrap());
+    assert_eq!(expected, read_async_values_buffered(&ext_bytes).unwrap());
+
+    let mut group = c.benchmark_group("async_binary_pipeline");
+    group.throughput(Throughput::Elements(ASYNC_VALUE_COUNT as u64));
+    group.bench_function("ext_write_u64", |b| {
+        b.iter(|| write_async_values_ext(black_box(&values)).unwrap())
+    });
+    group.bench_function("buffered_write_u64", |b| {
+        b.iter(|| write_async_values_buffered(black_box(&values)).unwrap())
+    });
+    group.bench_function("ext_read_u64", |b| {
+        b.iter(|| black_box(read_async_values_ext(black_box(&ext_bytes))))
+    });
+    group.bench_function("buffered_read_u64", |b| {
+        b.iter(|| black_box(read_async_values_buffered(black_box(&ext_bytes))))
+    });
+    group.finish();
+}
+
 fn bench_selected_stream_group(c: &mut Criterion) {
     let Some(group) = selected_stream_bench_group() else {
         return;
@@ -1912,6 +2115,7 @@ fn bench_selected_stream_group(c: &mut Criterion) {
         }
         StreamBenchGroup::Varints => bench_prod_varints(c),
         StreamBenchGroup::SignedVarints => bench_prod_signed_varints(c),
+        StreamBenchGroup::AsyncBinaryPipeline => bench_async_binary_pipeline(c),
     }
 }
 
