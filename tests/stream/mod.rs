@@ -16,6 +16,7 @@ mod buffered_zig_zag_writer_tests;
 mod internal;
 mod leb128_reader_tests;
 mod leb128_writer_tests;
+mod methods_tests;
 mod qubit_io_abstraction_tests;
 mod zig_zag_reader_tests;
 mod zig_zag_writer_tests;
