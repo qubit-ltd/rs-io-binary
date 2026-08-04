@@ -39,23 +39,41 @@ fn test_zig_zag_read_ext_reads_all_methods() {
         .expect("isize should be encoded");
 
     let mut input = Cursor::new(bytes.clone());
-    assert_eq!(i8::MIN, input.read_zig_zag_i8_non_strict().expect("i8 should be read"));
-    assert_eq!(-300, input.read_zig_zag_i16_non_strict().expect("i16 should be read"));
+    assert_eq!(
+        i8::MIN,
+        input
+            .read_zig_zag_i8_non_strict()
+            .expect("i8 should be read")
+    );
+    assert_eq!(
+        -300,
+        input
+            .read_zig_zag_i16_non_strict()
+            .expect("i16 should be read")
+    );
     assert_eq!(
         -0x1f600,
-        input.read_zig_zag_i32_non_strict().expect("i32 should be read")
+        input
+            .read_zig_zag_i32_non_strict()
+            .expect("i32 should be read")
     );
     assert_eq!(
         i64::MIN,
-        input.read_zig_zag_i64_non_strict().expect("i64 should be read")
+        input
+            .read_zig_zag_i64_non_strict()
+            .expect("i64 should be read")
     );
     assert_eq!(
         i128::MIN,
-        input.read_zig_zag_i128_non_strict().expect("i128 should be read")
+        input
+            .read_zig_zag_i128_non_strict()
+            .expect("i128 should be read")
     );
     assert_eq!(
         isize::MIN,
-        input.read_zig_zag_isize_non_strict().expect("isize should be read")
+        input
+            .read_zig_zag_isize_non_strict()
+            .expect("isize should be read")
     );
 
     let mut input = Cursor::new(bytes);

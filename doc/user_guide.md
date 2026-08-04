@@ -38,7 +38,8 @@ successful result is the same values after a round trip.
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.10"
+qubit-codec = "0.11"
+qubit-codec-binary = "0.3"
 qubit-io = "0.14"
 ```
 
@@ -103,6 +104,21 @@ let bytes = writer.into_inner();
 
 let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
 assert_eq!(0x1234, reader.read_u16()?);
+# Ok::<(), std::io::Error>(())
+```
+
+LEB128 readers select their canonicality policy in the type parameter. Import
+the policy from `qubit-codec-binary` when constructing a typed reader:
+
+```rust
+use std::io::Cursor;
+
+use qubit_codec_binary::NonStrict;
+use qubit_io_binary::Leb128Reader;
+
+let mut reader =
+    Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0xac, 0x02]));
+assert_eq!(300, reader.read_u16_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
 

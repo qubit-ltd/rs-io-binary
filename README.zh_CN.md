@@ -25,7 +25,8 @@
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.10"
+qubit-codec = "0.11"
+qubit-codec-binary = "0.3"
 qubit-io = "0.14"
 ```
 
@@ -111,21 +112,22 @@ payload 长度，以限制内存分配。持久化格式应优先使用固定宽
 
 ## 混合二进制流基准
 
-下表是开发机器上的 Criterion quick 运行结果。工作负载每轮包含 131,072 个按确定性
-随机序列选择的 `u8`、`i32`、`u64` 和多字节 UTF-8 字符串字段。它用于比较缓冲策略，
-不构成可移植的性能承诺。
+下表是 2026-08-04 的 Criterion 运行结果。工作负载每轮包含 131,072 个按确定性随机
+序列选择的 `u8`、`i32`、`u64` 和多字节 UTF-8 字符串字段。完整命令和环境记录在
+[`benches/results/2026-08-04-mixed-binary-pipeline.md`](benches/results/2026-08-04-mixed-binary-pipeline.md)。
+它用于比较缓冲策略，不构成可移植的性能承诺。
 
 | 场景 | 时间 | 吞吐量 | 相对裸 extension |
 | --- | ---: | ---: | ---: |
-| 写入：裸 extension | 61.2 ms | 2.14 M fields/s | 1.0× |
-| 写入：extension + `BufWriter` | 3.51 ms | 37.37 M fields/s | 17.5× |
-| 写入：`BufferedBinaryWriter` | 3.11 ms | 42.19 M fields/s | 19.7× |
-| 读取：裸 extension | 44.7 ms | 2.94 M fields/s | 1.0× |
-| 读取：extension + `BufReader` | 3.56 ms | 36.83 M fields/s | 12.5× |
-| 读取：`BufferedBinaryReader` | 3.24 ms | 40.46 M fields/s | 13.8× |
+| 写入：裸 extension | 65.19 ms | 2.01 M fields/s | 1.0× |
+| 写入：extension + `BufWriter` | 4.04 ms | 32.44 M fields/s | 16.1× |
+| 写入：`BufferedBinaryWriter` | 3.70 ms | 35.40 M fields/s | 17.6× |
+| 读取：裸 extension | 46.80 ms | 2.80 M fields/s | 1.0× |
+| 读取：extension + `BufReader` | 3.64 ms | 36.01 M fields/s | 12.9× |
+| 读取：`BufferedBinaryReader` | 3.46 ms | 37.90 M fields/s | 13.5× |
 
-本次运行中，buffered wrapper 相比对应的外部缓冲 extension 路径，写入约快 13%，
-读取约快 10%。
+本次运行中，buffered wrapper 相比对应的外部缓冲 extension 路径，写入约快 9%，
+读取约快 5%。
 
 ## 边界与延伸阅读
 

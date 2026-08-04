@@ -80,9 +80,9 @@ dependencies = [
 
 [[package]]
 name = "qubit-codec"
-version = "0.10.0"
+version = "0.11.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a4bc36adafd80ce93a2ef35e8f6f5d84fed39ed4ff0ca068d0db8978abb0a2bf"
+checksum = "0ddc33cb9cc395ea5ece42bd4a1a8ac97f69737ff11e2836177e9315840a0c15"
 dependencies = [
  "qubit-io",
  "thiserror",
@@ -91,6 +91,8 @@ dependencies = [
 [[package]]
 name = "qubit-codec-binary"
 version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "844a62bb7e4ed3aff2cfae13968e4cbb2cee7b57122bc8539446449f9afb5d44"
 dependencies = [
  "qubit-codec",
  "qubit-io",
@@ -119,6 +121,7 @@ dependencies = [
  "libfuzzer-sys",
  "qubit-codec",
  "qubit-codec-binary",
+ "qubit-io",
  "qubit-io-binary",
 ]
 

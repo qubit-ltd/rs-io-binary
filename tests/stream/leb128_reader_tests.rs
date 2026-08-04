@@ -54,9 +54,18 @@ fn test_leb128_reader_reads_all_methods() {
     let mut reader =
         Leb128Reader::<_, NonStrict>::new(Cursor::new(writer.into_inner()));
     assert!(!reader.is_strict());
-    assert_eq!(u8::MAX, reader.read_u8_non_strict().expect("u8 should be read"));
-    assert_eq!(300, reader.read_u16_non_strict().expect("u16 should be read"));
-    assert_eq!(0x1f600, reader.read_u32_non_strict().expect("u32 should be read"));
+    assert_eq!(
+        u8::MAX,
+        reader.read_u8_non_strict().expect("u8 should be read")
+    );
+    assert_eq!(
+        300,
+        reader.read_u16_non_strict().expect("u16 should be read")
+    );
+    assert_eq!(
+        0x1f600,
+        reader.read_u32_non_strict().expect("u32 should be read")
+    );
     assert_eq!(
         0x0102_0304_0506_0708,
         reader.read_u64_non_strict().expect("u64 should be read")
@@ -67,11 +76,22 @@ fn test_leb128_reader_reads_all_methods() {
     );
     assert_eq!(
         usize::MAX,
-        reader.read_usize_non_strict().expect("usize should be read")
+        reader
+            .read_usize_non_strict()
+            .expect("usize should be read")
     );
-    assert_eq!(i8::MIN, reader.read_i8_non_strict().expect("i8 should be read"));
-    assert_eq!(-300, reader.read_i16_non_strict().expect("i16 should be read"));
-    assert_eq!(-0x1f600, reader.read_i32_non_strict().expect("i32 should be read"));
+    assert_eq!(
+        i8::MIN,
+        reader.read_i8_non_strict().expect("i8 should be read")
+    );
+    assert_eq!(
+        -300,
+        reader.read_i16_non_strict().expect("i16 should be read")
+    );
+    assert_eq!(
+        -0x1f600,
+        reader.read_i32_non_strict().expect("i32 should be read")
+    );
     assert_eq!(
         -0x0102_0304_0506_0708,
         reader.read_i64_non_strict().expect("i64 should be read")
@@ -82,7 +102,9 @@ fn test_leb128_reader_reads_all_methods() {
     );
     assert_eq!(
         isize::MIN,
-        reader.read_isize_non_strict().expect("isize should be read")
+        reader
+            .read_isize_non_strict()
+            .expect("isize should be read")
     );
 }
 
