@@ -55,6 +55,8 @@ fuzz_target!(|data: &[u8]| {
     fuzz_strict_leb128(payload, chunk_size);
     fuzz_zig_zag(payload, chunk_size);
     fuzz_string(payload, chunk_size);
+    fuzz_malformed_strict_leb128(payload, chunk_size);
+    fuzz_malformed_strings(payload, chunk_size);
 });
 
 /// Compares fixed-width writers across short writes and injected failures.
@@ -232,6 +234,112 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
         string_result_signature(&extension_result),
         string_result_signature(&buffered_result)
     );
+}
+
+/// Checks strict readers on non-canonical encodings and logical positions.
+fn fuzz_malformed_strict_leb128(payload: &[u8], chunk_size: usize) {
+    let width =
+        usize::from(payload.first().copied().unwrap_or_default() % 8) + 2;
+    let encoded = vec![0x80; width - 1]
+        .into_iter()
+        .chain(std::iter::once(0))
+        .collect::<Vec<_>>();
+
+    let mut extension = ChunkedReader::new(&encoded, chunk_size);
+    let extension_result = extension.read_uleb_u64_strict();
+    let extension_position = extension.position();
+
+    let mut wrapper = Leb128Reader::<_, Strict>::new(ChunkedReader::new(
+        &encoded, chunk_size,
+    ));
+    let wrapper_result = wrapper.read_u64();
+    let wrapper_position = wrapper.into_inner().position();
+
+    let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(
+        ChunkedReader::new(&encoded, chunk_size),
+        16,
+    );
+    let buffered_result = buffered.read_u64();
+    let (inner, unread) = buffered.into_parts();
+    let buffered_position = inner.position() - unread.available();
+
+    assert_eq!(
+        Err(ErrorKind::InvalidData),
+        result_signature(&extension_result)
+    );
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&wrapper_result)
+    );
+    assert_eq!(
+        result_signature(&extension_result),
+        result_signature(&buffered_result)
+    );
+    assert_eq!(extension_position, wrapper_position);
+    assert_eq!(extension_position, buffered_position);
+}
+
+/// Checks malformed, truncated, and oversized UTF-8 frames through all readers.
+fn fuzz_malformed_strings(payload: &[u8], chunk_size: usize) {
+    let truncated_len = payload.len().saturating_add(1).min(u16::MAX as usize);
+    let mut truncated = Vec::with_capacity(2 + payload.len());
+    truncated.extend_from_slice(&(truncated_len as u16).to_le_bytes());
+    truncated.extend_from_slice(payload);
+
+    let cases = [
+        (vec![1, 0, 0xff], 1, ErrorKind::InvalidData),
+        (truncated, MAX_FUZZ_INPUT_LEN, ErrorKind::UnexpectedEof),
+        (
+            u16::MAX.to_le_bytes().to_vec(),
+            MAX_FUZZ_INPUT_LEN,
+            ErrorKind::InvalidData,
+        ),
+    ];
+
+    for (encoded, max_len, expected_kind) in cases {
+        let mut extension = ChunkedReader::new(&encoded, chunk_size);
+        let extension_result = extension
+            .read_string_with_u16_len(
+                qubit_codec::ByteOrder::LittleEndian,
+                max_len,
+            )
+            .map(String::into_bytes);
+        let extension_position = extension.position();
+
+        let mut wrapper = BinaryReader::<_, LittleEndian>::new(
+            ChunkedReader::new(&encoded, chunk_size),
+        );
+        let wrapper_result = wrapper
+            .read_string_with_u16_len(max_len)
+            .map(String::into_bytes);
+        let wrapper_position = wrapper.into_inner().position();
+
+        let mut buffered =
+            BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+                ChunkedReader::new(&encoded, chunk_size),
+                16,
+            );
+        let buffered_result = buffered
+            .read_string_with_u16_len(max_len)
+            .map(String::into_bytes);
+        let (inner, unread) = buffered.into_parts();
+        let buffered_position = inner.position() - unread.available();
+
+        assert_eq!(
+            expected_kind,
+            extension_result.as_ref().unwrap_err().kind()
+        );
+        assert_eq!(
+            string_result_signature(&extension_result),
+            string_result_signature(&wrapper_result)
+        );
+        assert_eq!(
+            string_result_signature(&extension_result),
+            string_result_signature(&buffered_result)
+        );
+        assert_eq!(extension_position, wrapper_position);
+        assert_eq!(extension_position, buffered_position);
+    }
 }
 
 /// Compares unsigned LEB128 extension and wrapper readers across short reads.
