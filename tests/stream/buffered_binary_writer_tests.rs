@@ -20,10 +20,6 @@ use qubit_codec::{
     ByteOrder,
     LittleEndian,
 };
-use qubit_io::{
-    Output,
-    Seekable,
-};
 use qubit_io_binary::{
     BinaryWriteExt,
     BufferedBinaryWriter,

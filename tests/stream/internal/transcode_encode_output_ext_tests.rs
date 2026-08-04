@@ -13,10 +13,6 @@ use std::io::{
 
 use qubit_codec::LittleEndian;
 use qubit_codec_binary::NonStrict;
-use qubit_io::{
-    Output,
-    Seekable,
-};
 use qubit_io_binary::{
     BufferedBinaryWriter,
     BufferedLeb128Reader,

@@ -18,10 +18,6 @@ use qubit_codec_binary::{
     NonStrict,
     Strict,
 };
-use qubit_io::{
-    Input,
-    Seekable,
-};
 use qubit_io_binary::{
     BufferedLeb128Reader,
     Leb128WriteExt,

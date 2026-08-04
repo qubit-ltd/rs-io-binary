@@ -12,10 +12,6 @@ use std::io::{
     Write,
 };
 
-use qubit_io::{
-    Output,
-    Seekable,
-};
 use qubit_io_binary::{
     BufferedLeb128Writer,
     Leb128WriteExt,

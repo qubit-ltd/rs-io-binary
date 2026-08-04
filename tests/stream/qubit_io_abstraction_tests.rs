@@ -85,7 +85,7 @@ fn binary_reader_accepts_input_without_std_read() {
     let mut reader =
         BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
-    assert!(!Input::is_buffered(&reader));
+    assert!(!reader.is_buffered());
     assert_eq!(0x1234, reader.read_u16().unwrap());
 
     let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![
@@ -99,7 +99,7 @@ fn binary_reader_accepts_input_without_std_read() {
 fn binary_writer_accepts_output_without_std_write() {
     let mut writer = BinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
-    assert!(!Output::is_buffered(&writer));
+    assert!(!writer.is_buffered());
     writer.write_u16(0x1234).unwrap();
     writer.write_string_with_u16_len("a").unwrap();
     writer.write_string_with_u32_len("b").unwrap();
@@ -117,7 +117,7 @@ fn buffered_binary_reader_accepts_input_without_std_read() {
             0x12, 0x34,
         ]));
 
-    assert!(Input::is_buffered(&reader));
+    assert!(reader.is_buffered());
     assert_eq!(0x1234, reader.read_u16().unwrap());
 }
 
@@ -126,9 +126,9 @@ fn buffered_binary_writer_accepts_output_without_std_write() {
     let mut writer =
         BufferedBinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
-    assert!(Output::is_buffered(&writer));
+    assert!(writer.is_buffered());
     writer.write_u16(0x1234).unwrap();
-    Output::flush(&mut writer).unwrap();
+    writer.flush().unwrap();
 
     assert_eq!(vec![0x12, 0x34], writer.inner().bytes);
 }
@@ -165,21 +165,21 @@ fn buffered_wrappers_support_fallible_capacity_allocation() {
 fn leb128_readers_accept_input_without_std_read() {
     let mut reader =
         Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
-    assert!(!Input::is_buffered(&reader));
+    assert!(!reader.is_buffered());
     assert_eq!(300, reader.read_u16_non_strict().unwrap());
 
     let mut reader =
         BufferedLeb128Reader::<_, NonStrict>::new(QubitInput::new(vec![
             0xac, 0x02,
         ]));
-    assert!(Input::is_buffered(&reader));
+    assert!(reader.is_buffered());
     assert_eq!(300, reader.read_u16_non_strict().unwrap());
 }
 
 #[test]
 fn leb128_writers_accept_output_without_std_write() {
     let mut writer = Leb128Writer::new(QubitOutput::default());
-    assert!(!Output::is_buffered(&writer));
+    assert!(!writer.is_buffered());
     writer.write_u16(300).unwrap();
     writer.write_utf8_string_usize("a").unwrap();
     writer.write_utf8_string_u64("b").unwrap();
@@ -189,9 +189,9 @@ fn leb128_writers_accept_output_without_std_write() {
     );
 
     let mut writer = BufferedLeb128Writer::new(QubitOutput::default());
-    assert!(Output::is_buffered(&writer));
+    assert!(writer.is_buffered());
     writer.write_u16(300).unwrap();
-    Output::flush(&mut writer).unwrap();
+    writer.flush().unwrap();
     assert_eq!(vec![0xac, 0x02], writer.inner().bytes);
 }
 
@@ -199,25 +199,25 @@ fn leb128_writers_accept_output_without_std_write() {
 fn zig_zag_readers_accept_input_without_std_read() {
     let mut reader =
         ZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
-    assert!(!Input::is_buffered(&reader));
+    assert!(!reader.is_buffered());
     assert_eq!(-1, reader.read_i16_non_strict().unwrap());
 
     let mut reader =
         BufferedZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
-    assert!(Input::is_buffered(&reader));
+    assert!(reader.is_buffered());
     assert_eq!(-1, reader.read_i16_non_strict().unwrap());
 }
 
 #[test]
 fn zig_zag_writers_accept_output_without_std_write() {
     let mut writer = ZigZagWriter::new(QubitOutput::default());
-    assert!(!Output::is_buffered(&writer));
+    assert!(!writer.is_buffered());
     writer.write_i16(-1).unwrap();
     assert_eq!(vec![0x01], writer.into_inner().bytes);
 
     let mut writer = BufferedZigZagWriter::new(QubitOutput::default());
-    assert!(Output::is_buffered(&writer));
+    assert!(writer.is_buffered());
     writer.write_i16(-1).unwrap();
-    Output::flush(&mut writer).unwrap();
+    writer.flush().unwrap();
     assert_eq!(vec![0x01], writer.inner().bytes);
 }

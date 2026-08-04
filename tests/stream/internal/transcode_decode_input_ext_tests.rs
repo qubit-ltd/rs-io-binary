@@ -17,11 +17,6 @@ use qubit_codec::{
     LittleEndian,
 };
 use qubit_codec_binary::NonStrict;
-use qubit_io::{
-    Input,
-    Output,
-    Seekable,
-};
 use qubit_io_binary::{
     BufferedBinaryReader,
     BufferedLeb128Reader,

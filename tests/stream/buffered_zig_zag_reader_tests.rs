@@ -15,10 +15,6 @@ use qubit_codec_binary::{
     Strict,
     ZigZagCodec,
 };
-use qubit_io::{
-    Input,
-    Seekable,
-};
 use qubit_io_binary::{
     BufferedZigZagReader,
     ZigZagWriteExt,
