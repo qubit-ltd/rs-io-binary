@@ -11,7 +11,7 @@ use std::io::{
     ErrorKind,
     Write,
 };
-#[cfg(all(unix, target_pointer_width = "64"))]
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 use std::{
     ffi::c_void,
     ptr::null_mut,
