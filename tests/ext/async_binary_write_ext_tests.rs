@@ -55,7 +55,10 @@ impl AsyncOutput for NonSendAsyncOutput {
     ) -> std::task::Poll<std::io::Result<usize>> {
         let this = self.get_mut();
         // SAFETY: The caller upholds the indexed input range contract.
-        unsafe { Pin::new(&mut this.inner).poll_write_unchecked(cx, input, index, count) }
+        unsafe {
+            Pin::new(&mut this.inner)
+                .poll_write_unchecked(cx, input, index, count)
+        }
     }
 
     fn poll_flush(
