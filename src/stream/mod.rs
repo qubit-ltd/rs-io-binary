@@ -7,9 +7,16 @@
 // =============================================================================
 //! Reader and writer wrapper types for codec-oriented I/O.
 
-use std::io::{Result, SeekFrom};
+use std::io::{
+    Result,
+    SeekFrom,
+};
 
-use qubit_io::{Input, Output, Seekable};
+use qubit_io::{
+    Input,
+    Output,
+    Seekable,
+};
 
 mod binary_reader;
 mod binary_writer;

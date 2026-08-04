@@ -44,10 +44,7 @@ macro_rules! leb128_write_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already written to the output."]
         #[inline(always)]
-        fn $name(
-            &mut self,
-            value: $ty,
-        ) -> impl Future<Output = Result<()>> + '_
+        fn $name(&mut self, value: $ty) -> impl Future<Output = Result<()>> + '_
         where
             Self: Unpin,
         {
