@@ -9,17 +9,40 @@
 #![no_main]
 
 use std::future::Future;
-use std::io::{self, Cursor, ErrorKind};
+use std::io::{
+    self,
+    Cursor,
+    ErrorKind,
+};
 use std::pin::Pin;
-use std::task::{Context, Poll, Waker};
+use std::task::{
+    Context,
+    Poll,
+    Waker,
+};
 
 use libfuzzer_sys::fuzz_target;
-use qubit_io::{AsyncInput, AsyncOutput};
+use qubit_io::{
+    AsyncInput,
+    AsyncOutput,
+};
 use qubit_io_binary::{
-    AsyncBinaryReadExt, AsyncBinaryWriteExt, AsyncLeb128ReadExt, AsyncLeb128WriteExt,
-    AsyncStringReadExt, AsyncStringWriteExt, AsyncZigZagReadExt, AsyncZigZagWriteExt,
-    BinaryReadExt, BinaryWriteExt, Leb128ReadExt, Leb128WriteExt, StringReadExt, StringWriteExt,
-    ZigZagReadExt, ZigZagWriteExt,
+    AsyncBinaryReadExt,
+    AsyncBinaryWriteExt,
+    AsyncLeb128ReadExt,
+    AsyncLeb128WriteExt,
+    AsyncStringReadExt,
+    AsyncStringWriteExt,
+    AsyncZigZagReadExt,
+    AsyncZigZagWriteExt,
+    BinaryReadExt,
+    BinaryWriteExt,
+    Leb128ReadExt,
+    Leb128WriteExt,
+    StringReadExt,
+    StringWriteExt,
+    ZigZagReadExt,
+    ZigZagWriteExt,
 };
 
 /// Keeps each target invocation bounded before allocating test buffers.
@@ -28,7 +51,8 @@ const MAX_STRING_LEN: usize = MAX_FUZZ_INPUT_LEN * 4;
 
 fuzz_target!(|data: &[u8]| {
     let data = &data[..data.len().min(MAX_FUZZ_INPUT_LEN)];
-    let chunk_size = usize::from(data.first().copied().unwrap_or_default() % 8) + 1;
+    let chunk_size =
+        usize::from(data.first().copied().unwrap_or_default() % 8) + 1;
     let payload = data.get(1..).unwrap_or_default();
 
     fuzz_fixed_width(payload, chunk_size);
@@ -89,7 +113,8 @@ fn fuzz_leb128(payload: &[u8], chunk_size: usize) {
     let sync_result = sync_input.read_uleb_u64_strict();
     let sync_position = sync_input.position() as usize;
     let mut async_input = FuzzAsyncInput::new(expected, chunk_size);
-    let async_result = run_to_completion(async_input.read_uleb_u64_strict_async());
+    let async_result =
+        run_to_completion(async_input.read_uleb_u64_strict_async());
     assert_eq!(
         result_signature(&sync_result),
         result_signature(&async_result)
@@ -120,7 +145,8 @@ fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     let sync_result = sync_input.read_zig_zag_i64_strict();
     let sync_position = sync_input.position() as usize;
     let mut async_input = FuzzAsyncInput::new(expected, chunk_size);
-    let async_result = run_to_completion(async_input.read_zig_zag_i64_strict_async());
+    let async_result =
+        run_to_completion(async_input.read_zig_zag_i64_strict_async());
     assert_eq!(
         result_signature(&sync_result),
         result_signature(&async_result)
@@ -150,9 +176,10 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
         .map(|text| text.into_bytes());
     let sync_position = sync_input.position() as usize;
     let mut async_input = FuzzAsyncInput::new(expected, chunk_size);
-    let async_result =
-        run_to_completion(async_input.read_utf8_string_uleb_u64_strict_async(MAX_STRING_LEN))
-            .map(|text| text.into_bytes());
+    let async_result = run_to_completion(
+        async_input.read_utf8_string_uleb_u64_strict_async(MAX_STRING_LEN),
+    )
+    .map(|text| text.into_bytes());
     assert_eq!(
         string_signature(&sync_result),
         string_signature(&async_result)
@@ -179,9 +206,10 @@ fn fuzz_malformed_reads(payload: &[u8], chunk_size: usize) {
         .map(|text| text.into_bytes());
     let sync_position = sync_input.position() as usize;
     let mut async_input = FuzzAsyncInput::new(payload.to_vec(), chunk_size);
-    let async_result =
-        run_to_completion(async_input.read_utf8_string_uleb_u64_strict_async(MAX_STRING_LEN))
-            .map(|text| text.into_bytes());
+    let async_result = run_to_completion(
+        async_input.read_utf8_string_uleb_u64_strict_async(MAX_STRING_LEN),
+    )
+    .map(|text| text.into_bytes());
     assert_eq!(
         string_signature(&sync_result),
         string_signature(&async_result)
@@ -217,7 +245,9 @@ where
 }
 
 /// Converts string results into owned byte signatures for exact comparison.
-fn string_signature(result: &io::Result<Vec<u8>>) -> Result<Vec<u8>, ErrorKind> {
+fn string_signature(
+    result: &io::Result<Vec<u8>>,
+) -> Result<Vec<u8>, ErrorKind> {
     match result {
         Ok(value) => Ok(value.clone()),
         Err(error) => Err(error.kind()),
@@ -321,7 +351,10 @@ impl AsyncOutput for FuzzAsyncOutput {
     }
 
     /// Completes flushing after the same pending behavior as writes.
-    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> Poll<io::Result<()>> {
+    fn poll_flush(
+        self: Pin<&mut Self>,
+        cx: &mut Context<'_>,
+    ) -> Poll<io::Result<()>> {
         let this = self.get_mut();
         if this.pending {
             this.pending = false;
