@@ -21,3 +21,10 @@ path = "fuzz_targets/stream_differential.rs"
 test = false
 doc = false
 bench = false
+
+[[bin]]
+name = "async_differential"
+path = "fuzz_targets/async_differential.rs"
+test = false
+doc = false
+bench = false
