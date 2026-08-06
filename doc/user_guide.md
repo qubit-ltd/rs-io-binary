@@ -38,9 +38,9 @@ successful result is the same values after a round trip.
 ```toml
 [dependencies]
 qubit-io-binary = "0.3"
-qubit-codec = "0.11"
+qubit-codec = "0.12"
 qubit-codec-binary = "0.3"
-qubit-io = "0.14"
+qubit-io = "0.15"
 ```
 
 The examples use `Vec<u8>` and `Cursor`; standard-library byte sources and

@@ -7,7 +7,7 @@
 // =============================================================================
 mod async_streams;
 mod streams;
-pub(crate) use qubit_io::try_reserve_vec;
+pub(crate) use qubit_utils::try_reserve_vec;
 
 pub(crate) use async_streams::{
     read_exactly_async,
