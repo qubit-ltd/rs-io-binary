@@ -13,6 +13,7 @@ use std::hint::black_box;
 use std::io::BufRead;
 use std::io::BufReader;
 use std::io::BufWriter;
+use std::io::Cursor;
 use std::io::Read;
 use std::io::Write;
 use std::path::Path;
@@ -67,8 +68,9 @@ const VARINT_REPEAT: usize = 64;
 const MIXED_FIELD_COUNT: usize = 131_072;
 const ASYNC_VALUE_COUNT: usize = 8_192;
 const STREAM_BENCH_GROUP_ENV: &str = "QUBIT_IO_STREAM_BENCH_GROUP";
-const STREAM_BENCH_GROUP_NAMES: [&str; 6] = [
+const STREAM_BENCH_GROUP_NAMES: [&str; 7] = [
     "micro_binary_pipeline",
+    "memory_mixed_binary_pipeline",
     "prod_binary_pipeline",
     "prod_mixed_binary_pipeline",
     "prod_varints",
@@ -79,6 +81,7 @@ const STREAM_BENCH_GROUP_NAMES: [&str; 6] = [
 #[derive(Clone, Copy)]
 enum StreamBenchGroup {
     MicroBinaryPipeline,
+    MemoryMixedBinaryPipeline,
     BinaryPipeline,
     MixedBinaryPipeline,
     Varints,
@@ -95,6 +98,9 @@ fn selected_stream_bench_group() -> Option<StreamBenchGroup> {
 
     Some(match value.as_str() {
         "micro_binary_pipeline" => StreamBenchGroup::MicroBinaryPipeline,
+        "memory_mixed_binary_pipeline" => {
+            StreamBenchGroup::MemoryMixedBinaryPipeline
+        }
         "prod_binary_pipeline" => StreamBenchGroup::BinaryPipeline,
         "prod_mixed_binary_pipeline" => StreamBenchGroup::MixedBinaryPipeline,
         "prod_varints" => StreamBenchGroup::Varints,
@@ -1968,6 +1974,109 @@ fn read_mixed_buffered(path: &Path, fields: &[MixedBinaryField]) -> u64 {
     digest
 }
 
+fn write_mixed_ext_memory(fields: &[MixedBinaryField]) -> Vec<u8> {
+    let mut output = Vec::new();
+    write_mixed_ext(&mut output, fields);
+    output
+}
+
+fn write_mixed_buffered_memory(fields: &[MixedBinaryField]) -> Vec<u8> {
+    let mut output = BufferedBinaryWriter::<_, LittleEndian>::new(Vec::new());
+    for field in fields {
+        match field {
+            MixedBinaryField::U8(value) => output.write_u8(*value).unwrap(),
+            MixedBinaryField::I32(value) => output.write_i32(*value).unwrap(),
+            MixedBinaryField::U64(value) => output.write_u64(*value).unwrap(),
+            MixedBinaryField::String(value) => {
+                output.write_string_with_u16_len(value).unwrap()
+            }
+        }
+    }
+    qubit_io::Output::flush(&mut output).unwrap();
+    let (bytes, pending) = output.into_parts();
+    assert!(pending.is_empty(), "flushed writer retained bytes");
+    bytes
+}
+
+fn read_mixed_ext_memory(bytes: &[u8], fields: &[MixedBinaryField]) -> u64 {
+    read_mixed_ext(Cursor::new(bytes), fields)
+}
+
+fn read_mixed_buffered_memory(
+    bytes: &[u8],
+    fields: &[MixedBinaryField],
+) -> u64 {
+    let mut input = BufferedBinaryReader::<_, LittleEndian>::new(
+        Cursor::new(bytes),
+    );
+    let mut digest = 0_u64;
+    for field in fields {
+        digest ^= match field {
+            MixedBinaryField::U8(_) => u64::from(input.read_u8().unwrap()),
+            MixedBinaryField::I32(_) => input.read_i32().unwrap() as u64,
+            MixedBinaryField::U64(_) => input.read_u64().unwrap(),
+            MixedBinaryField::String(_) => {
+                input.read_string_with_u16_len(1024).unwrap().len() as u64
+            }
+        };
+    }
+    digest
+}
+
+fn read_mixed_reusing_payload_memory(
+    bytes: &[u8],
+    fields: &[MixedBinaryField],
+) -> u64 {
+    read_mixed_reusing_payload(Cursor::new(bytes), fields)
+}
+
+fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
+    let fields = build_mixed_binary_fields();
+    let extension_bytes = write_mixed_ext_memory(&fields);
+    let buffered_bytes = write_mixed_buffered_memory(&fields);
+    assert_eq!(extension_bytes, buffered_bytes);
+    let expected = read_mixed_ext_memory(&extension_bytes, &fields);
+    assert_eq!(expected, read_mixed_buffered_memory(&buffered_bytes, &fields));
+    assert_eq!(
+        expected,
+        read_mixed_reusing_payload_memory(&buffered_bytes, &fields),
+    );
+
+    let mut group = c.benchmark_group("memory_mixed_binary_pipeline");
+    group.throughput(Throughput::Elements(MIXED_FIELD_COUNT as u64));
+    group.bench_function("extension_write", |b| {
+        b.iter(|| black_box(write_mixed_ext_memory(black_box(&fields))))
+    });
+    group.bench_function("buffered_write", |b| {
+        b.iter(|| black_box(write_mixed_buffered_memory(black_box(&fields))))
+    });
+    group.bench_function("extension_read", |b| {
+        b.iter(|| {
+            black_box(read_mixed_ext_memory(
+                black_box(&extension_bytes),
+                black_box(&fields),
+            ))
+        })
+    });
+    group.bench_function("buffered_read", |b| {
+        b.iter(|| {
+            black_box(read_mixed_buffered_memory(
+                black_box(&buffered_bytes),
+                black_box(&fields),
+            ))
+        })
+    });
+    group.bench_function("buffered_read_reuse", |b| {
+        b.iter(|| {
+            black_box(read_mixed_reusing_payload_memory(
+                black_box(&buffered_bytes),
+                black_box(&fields),
+            ))
+        })
+    });
+    group.finish();
+}
+
 fn bench_prod_mixed_binary_pipeline(c: &mut Criterion) {
     let fields = build_mixed_binary_fields();
     let files = BenchmarkFiles::new();
@@ -2137,6 +2246,9 @@ fn bench_selected_stream_group(c: &mut Criterion) {
 
     match group {
         StreamBenchGroup::MicroBinaryPipeline => bench_micro_binary_pipeline(c),
+        StreamBenchGroup::MemoryMixedBinaryPipeline => {
+            bench_memory_mixed_binary_pipeline(c)
+        }
         StreamBenchGroup::BinaryPipeline => bench_prod_binary_pipeline(c),
         StreamBenchGroup::MixedBinaryPipeline => {
             bench_prod_mixed_binary_pipeline(c)
