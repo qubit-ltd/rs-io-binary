@@ -2006,9 +2006,8 @@ fn read_mixed_buffered_memory(
     bytes: &[u8],
     fields: &[MixedBinaryField],
 ) -> u64 {
-    let mut input = BufferedBinaryReader::<_, LittleEndian>::new(
-        Cursor::new(bytes),
-    );
+    let mut input =
+        BufferedBinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
     let mut digest = 0_u64;
     for field in fields {
         digest ^= match field {
@@ -2036,7 +2035,10 @@ fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
     let buffered_bytes = write_mixed_buffered_memory(&fields);
     assert_eq!(extension_bytes, buffered_bytes);
     let expected = read_mixed_ext_memory(&extension_bytes, &fields);
-    assert_eq!(expected, read_mixed_buffered_memory(&buffered_bytes, &fields));
+    assert_eq!(
+        expected,
+        read_mixed_buffered_memory(&buffered_bytes, &fields)
+    );
     assert_eq!(
         expected,
         read_mixed_reusing_payload_memory(&buffered_bytes, &fields),
