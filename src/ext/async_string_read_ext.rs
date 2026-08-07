@@ -13,7 +13,6 @@ use std::io::Result;
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
 
-use crate::util::read_utf8_payload_async;
 #[cfg(not(any(
     target_pointer_width = "32",
     target_pointer_width = "64"
@@ -21,6 +20,10 @@ use crate::util::read_utf8_payload_async;
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
+use crate::util::{
+    read_utf8_payload_async,
+    read_utf8_payload_into_async,
+};
 use crate::{
     AsyncBinaryReadExt,
     AsyncLeb128ReadExt,
@@ -33,6 +36,45 @@ use crate::{
 /// These reads are not cancellation safe. Dropping a pending future leaves
 /// bytes already consumed from the prefix or payload consumed.
 pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
+    /// Asynchronously reads and validates a UTF-8 payload into reusable byte
+    /// storage.
+    ///
+    /// # Parameters
+    ///
+    /// - `bytes`: Reusable destination buffer. It is cleared before a permitted
+    ///   read and contains the received bytes when the read succeeds or when
+    ///   UTF-8 validation fails.
+    /// - `len`: Encoded payload length in bytes.
+    /// - `max_len`: Maximum accepted payload length in bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns a future that completes after `bytes` contains one valid UTF-8
+    /// payload.
+    ///
+    /// # Errors
+    ///
+    /// Returns an input or allocation error, or an invalid-data error when
+    /// `len` exceeds `max_len` or the payload is not valid UTF-8.
+    ///
+    /// # Cancellation safety
+    ///
+    /// This operation is not cancellation safe; dropping the future retains
+    /// bytes already consumed from the input and modifications already made
+    /// to `bytes`.
+    #[inline]
+    fn read_utf8_payload_into_async<'a>(
+        &'a mut self,
+        bytes: &'a mut Vec<u8>,
+        len: usize,
+        max_len: usize,
+    ) -> impl Future<Output = Result<()>> + 'a
+    where
+        Self: Unpin,
+    {
+        async move { read_utf8_payload_into_async(self, bytes, len, max_len).await }
+    }
+
     /// Asynchronously reads an already length-delimited UTF-8 payload.
     ///
     /// # Parameters

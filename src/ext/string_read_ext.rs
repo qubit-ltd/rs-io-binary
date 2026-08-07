@@ -5,9 +5,10 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+//! Extension methods for reading length-prefixed UTF-8 strings.
+
 use std::io::Result;
 
-use crate::util::read_utf8_payload as read_utf8_payload_impl;
 #[cfg(not(any(
     target_pointer_width = "32",
     target_pointer_width = "64"
@@ -15,6 +16,10 @@ use crate::util::read_utf8_payload as read_utf8_payload_impl;
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
+use crate::util::{
+    read_utf8_payload as read_utf8_payload_impl,
+    read_utf8_payload_into as read_utf8_payload_into_impl,
+};
 use crate::{
     BinaryReadExt,
     Leb128ReadExt,
@@ -23,7 +28,36 @@ use qubit_codec::ByteOrder;
 use qubit_io::Input;
 
 /// Extension methods for reading length-prefixed UTF-8 strings.
+///
+/// String-producing methods may return allocation failures as I/O errors in
+/// addition to input and validation errors described below.
 pub trait StringReadExt: Input<Item = u8> {
+    /// Reads and validates a UTF-8 payload into reusable byte storage.
+    ///
+    /// # Parameters
+    ///
+    /// - `bytes`: Reusable destination buffer. It is cleared before a permitted
+    ///   read and contains the received bytes when the read succeeds or when
+    ///   UTF-8 validation fails.
+    /// - `len`: UTF-8 payload length in bytes.
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
+    ///
+    /// # Returns
+    ///
+    /// Returns after `bytes` contains one valid UTF-8 payload.
+    ///
+    /// # Errors
+    ///
+    /// Returns an I/O error for payload reads or allocation failures, or
+    /// [`std::io::ErrorKind::InvalidData`] when `len` exceeds `max_len` or
+    /// the payload is not valid UTF-8.
+    fn read_utf8_payload_into(
+        &mut self,
+        bytes: &mut Vec<u8>,
+        len: usize,
+        max_len: usize,
+    ) -> Result<()>;
+
     /// Reads a UTF-8 payload with an already decoded byte length.
     ///
     /// # Parameters
@@ -274,6 +308,16 @@ impl<T> StringReadExt for T
 where
     T: Input<Item = u8> + ?Sized,
 {
+    #[inline]
+    fn read_utf8_payload_into(
+        &mut self,
+        bytes: &mut Vec<u8>,
+        len: usize,
+        max_len: usize,
+    ) -> Result<()> {
+        read_utf8_payload_into_impl(self, bytes, len, max_len)
+    }
+
     #[inline]
     fn read_utf8_payload(
         &mut self,
