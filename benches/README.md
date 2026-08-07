@@ -5,6 +5,8 @@
 - 基准只覆盖二进制整数路径：
   - `micro_binary_pipeline`：受控短读短写内存流上的固定宽度读写，用于隔离
     adapter、临时缓冲和内部 buffer 的成本。
+  - `memory_mixed_binary_pipeline`：不经过文件系统的混合固定宽度整数和 UTF-8
+    字符串记录流，用于隔离 adapter、缓冲和 payload 分配成本。
   - `prod_binary_pipeline`：固定字段的二进制读写。
   - `prod_mixed_binary_pipeline`：混合固定宽度整数和 UTF-8 字符串的记录流。
     该组同时测量每条记录分配 `String` 的默认读取路径，以及复用
@@ -16,6 +18,9 @@
 - 已移除 UTF-8 文本读写基准。
 - `micro_binary_pipeline` 使用 32,768 个 `u64` 值、每次最多读写 7 字节的
   合成内存流；它不使用 `Cursor`，并以 16 字节内部缓冲强制覆盖 buffer 边界。
+- `memory_mixed_binary_pipeline` 使用与 `prod_mixed_binary_pipeline` 相同的
+  131,072 条混合记录，但使用 `Cursor` 内存流，不把文件打开、关闭和 page cache
+  成本混入 adapter 对比。
 - 生产型输入规模采用大批量重复：
   - 单批记录数：`BINARY_BATCH = 1_048_576`
   - 单批 varint 字段数：`VARINT_COUNT = 262_144`
