@@ -35,7 +35,7 @@ sanitizers = ["address"]
 qubit-utils = "0.2"
 qubit-io = "0.15"
 qubit-codec = { version = "0.12", features = ["io"] }
-qubit-codec-binary = { path = "../rs-codec-binary", version = "0.3" }
+qubit-codec-binary = "0.4"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(miri)'] }
