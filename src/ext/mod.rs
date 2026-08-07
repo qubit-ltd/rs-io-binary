@@ -5,6 +5,8 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+//! Traits that add binary, string, and integer codec operations to streams.
+
 mod async_binary_read_ext;
 mod async_binary_write_ext;
 mod async_leb128_read_ext;

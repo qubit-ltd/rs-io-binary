@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Buffered writer for LEB128-encoded values.
+
 use std::{
     collections::TryReserveError,
     io::{

@@ -75,6 +75,23 @@ assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
 `max_len` 是输入校验边界：它限制返回 `String` 前可接受的 payload 长度。应根据文件
 格式或协议限制设置，而不要根据当前预期数据设置。
 
+连续读取很多字符串时，可以复用调用方提供的字节缓冲区，避免每个 payload 都重新分配：
+
+```rust
+use std::io::Cursor;
+
+use qubit_io_binary::StringReadExt;
+
+let mut input = Cursor::new(b"hello world".to_vec());
+let mut payload = Vec::with_capacity(32);
+input.read_utf8_payload_into(&mut payload, 11, 64)?;
+assert_eq!(payload, b"hello world");
+# Ok::<(), std::io::Error>(())
+```
+
+可复用接口只会在长度通过 `max_len` 校验后清空缓冲区；如果 UTF-8 无效，则保留已接收
+的字节，便于诊断。
+
 字节序固定时，使用 `_be` 和 `_le` 方法，例如 `write_i64_le(-42)`。`uleb` 方法处理
 无符号 LEB128，`sleb` 方法处理有符号 LEB128；ZigZag 将有符号值映射为无符号 LEB128
 payload，使零附近的正负值都保持紧凑。

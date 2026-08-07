@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Writer for LEB128-encoded values.
+
 use std::io::{
     Result,
     SeekFrom,

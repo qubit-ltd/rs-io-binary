@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Reader for LEB128-encoded values.
+
 use core::marker::PhantomData;
 use std::io::{
     Result,

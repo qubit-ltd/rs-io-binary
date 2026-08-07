@@ -5,6 +5,8 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+//! Internal helpers for encoding values through transcoding output adapters.
+
 use std::error::Error as StdError;
 use std::io::{
     self,
