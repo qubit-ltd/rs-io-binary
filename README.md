@@ -129,8 +129,18 @@ full command and environment are recorded in
 [`benches/results/2026-08-04-mixed-binary-pipeline.md`](benches/results/2026-08-04-mixed-binary-pipeline.md).
 The reusable payload-buffer comparison is recorded in
 [`benches/results/2026-08-07-string-buffer-reuse.md`](benches/results/2026-08-07-string-buffer-reuse.md).
+The in-memory mixed-pipeline comparison is recorded in
+[`benches/results/2026-08-07-memory-mixed-binary-pipeline.md`](benches/results/2026-08-07-memory-mixed-binary-pipeline.md).
 Treat these values as a comparison of buffering strategies, not as portable
 performance guarantees.
+
+The benchmark suite is split into layers: `micro_binary_pipeline` uses
+short-write in-memory streams, `memory_mixed_binary_pipeline` compares mixed
+records without filesystem effects, and the `prod_*` groups measure file-backed
+end-to-end pipelines. `async_binary_pipeline` separately measures the
+runtime-neutral asynchronous adapters. Set `QUBIT_IO_STREAM_BENCH_GROUP` to run
+one group at a time; this keeps adapter cost, buffering cost, and filesystem
+cost distinguishable.
 
 | Scenario | Time | Throughput | Relative to raw extension |
 | --- | ---: | ---: | ---: |

@@ -110,12 +110,26 @@ Strict LEB128 方法会拒绝非 canonical 编码。字符串读取方法要求�
 payload 长度，以限制内存分配。持久化格式应优先使用固定宽度长度字段或
 `u64` LEB128 长度，而不是依赖目标平台宽度的 `usize` helper。
 
+连续读取很多字符串时，可以调用 `read_utf8_payload_into`（或对应的异步方法）并复用
+调用方提供的 `Vec<u8>`，避免每条记录重新分配 payload 缓冲区。如果 UTF-8 校验失败，
+该缓冲区会保留已收到的字节，便于诊断。
+
 ## 混合二进制流基准
 
 下表是 2026-08-04 的 Criterion 运行结果。工作负载每轮包含 131,072 个按确定性随机
 序列选择的 `u8`、`i32`、`u64` 和多字节 UTF-8 字符串字段。完整命令和环境记录在
 [`benches/results/2026-08-04-mixed-binary-pipeline.md`](benches/results/2026-08-04-mixed-binary-pipeline.md)。
+可复用 payload 缓冲区的对比记录在
+[`benches/results/2026-08-07-string-buffer-reuse.md`](benches/results/2026-08-07-string-buffer-reuse.md)。
+内存混合流水线的对比记录在
+[`benches/results/2026-08-07-memory-mixed-binary-pipeline.md`](benches/results/2026-08-07-memory-mixed-binary-pipeline.md)。
 它用于比较缓冲策略，不构成可移植的性能承诺。
+
+benchmark 套件分为多个层次：`micro_binary_pipeline` 使用会产生短写的内存流，
+`memory_mixed_binary_pipeline` 在不引入文件系统影响的情况下比较混合记录，
+`prod_*` 系列测量基于文件的端到端流水线，`async_binary_pipeline` 则单独测量
+运行时无关的异步 adapter。设置 `QUBIT_IO_STREAM_BENCH_GROUP` 可一次运行一个分组，
+从而区分 adapter、缓冲和文件系统的成本。
 
 | 场景 | 时间 | 吞吐量 | 相对裸 extension |
 | --- | ---: | ---: | ---: |
