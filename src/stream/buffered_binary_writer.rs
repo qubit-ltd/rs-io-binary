@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Buffered writer for fixed-width binary values.
+
 use core::marker::PhantomData;
 use std::{
     collections::TryReserveError,

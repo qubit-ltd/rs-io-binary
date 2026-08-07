@@ -7,7 +7,11 @@
 // =============================================================================
 //! Shared asynchronous byte-stream codec drivers.
 
-use std::io::Result;
+use std::io::{
+    Error,
+    ErrorKind,
+    Result,
+};
 use std::pin::Pin;
 
 use qubit_codec::Codec;
@@ -179,12 +183,72 @@ pub(crate) async fn read_utf8_payload_async<R>(
 where
     R: AsyncInput<Item = u8> + Unpin + ?Sized,
 {
+    let mut bytes = Vec::new();
+    read_utf8_payload_bytes_async(reader, &mut bytes, len, max_len).await?;
+    String::from_utf8(bytes).map_err(invalid_utf8_error)
+}
+
+/// Reads and validates a UTF-8 payload into reusable caller-owned storage.
+///
+/// # Type Parameters
+///
+/// - `R`: Runtime-neutral asynchronous byte input.
+///
+/// # Parameters
+///
+/// - `reader`: Source from which payload bytes are read.
+/// - `bytes`: Reusable destination buffer. It is cleared before a permitted
+///   read and contains the received bytes when the read succeeds or when UTF-8
+///   validation fails.
+/// - `len`: Encoded payload length in bytes.
+/// - `max_len`: Maximum accepted payload length in bytes.
+///
+/// # Returns
+///
+/// Returns after `bytes` contains one valid UTF-8 payload.
+///
+/// # Errors
+///
+/// Returns an input or allocation error, or an invalid-data error when `len`
+/// exceeds `max_len` or the payload is not valid UTF-8.
+///
+/// # Cancellation safety
+///
+/// This operation is not cancellation safe. Dropping it retains bytes already
+/// consumed from `reader` and modifications already made to `bytes`.
+pub(crate) async fn read_utf8_payload_into_async<R>(
+    reader: &mut R,
+    bytes: &mut Vec<u8>,
+    len: usize,
+    max_len: usize,
+) -> Result<()>
+where
+    R: AsyncInput<Item = u8> + Unpin + ?Sized,
+{
+    read_utf8_payload_bytes_async(reader, bytes, len, max_len).await?;
+    std::str::from_utf8(bytes)
+        .map(|_| ())
+        .map_err(|error| Error::new(ErrorKind::InvalidData, error))
+}
+
+/// Reads a bounded payload into a caller-owned byte buffer.
+///
+/// The helper performs length validation, fallible capacity reservation, and
+/// exact input transfer but leaves UTF-8 validation to its caller.
+async fn read_utf8_payload_bytes_async<R>(
+    reader: &mut R,
+    bytes: &mut Vec<u8>,
+    len: usize,
+    max_len: usize,
+) -> Result<()>
+where
+    R: AsyncInput<Item = u8> + Unpin + ?Sized,
+{
     if len > max_len {
         return Err(length_exceeded_error(len, max_len));
     }
-    let mut bytes = Vec::new();
-    try_reserve_vec(&mut bytes, len)?;
+    bytes.clear();
+    try_reserve_vec(bytes, len)?;
     bytes.resize(len, 0);
-    read_exactly_async(reader, &mut bytes).await?;
-    String::from_utf8(bytes).map_err(invalid_utf8_error)
+    read_exactly_async(reader, bytes).await
 }

@@ -5,6 +5,8 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+//! Extension methods for writing length-prefixed UTF-8 strings.
+
 use std::io::Result;
 
 use crate::util::{

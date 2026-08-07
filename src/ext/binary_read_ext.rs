@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Extension methods for decoding fixed-width binary values from byte streams.
+
 use std::io::Result;
 
 use crate::util::decode_infallible_unchecked;

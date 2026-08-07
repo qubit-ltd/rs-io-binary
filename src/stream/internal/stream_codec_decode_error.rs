@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Conversion helpers for codec decode failures exposed as I/O errors.
+
 use qubit_codec_binary::Leb128DecodeError;
 use std::error::Error as StdError;
 use std::io::ErrorKind;

@@ -82,6 +82,24 @@ The `max_len` argument is an input-validation boundary: it limits the payload
 length accepted before allocating the returned `String`. Pick it from the file
 format or protocol limit, rather than from currently expected data.
 
+When decoding many strings, reuse a caller-owned byte buffer to avoid a fresh
+allocation for every payload:
+
+```rust
+use std::io::Cursor;
+
+use qubit_io_binary::StringReadExt;
+
+let mut input = Cursor::new(b"hello world".to_vec());
+let mut payload = Vec::with_capacity(32);
+input.read_utf8_payload_into(&mut payload, 11, 64)?;
+assert_eq!(payload, b"hello world");
+# Ok::<(), std::io::Error>(())
+```
+
+The reusable API clears the buffer only after the length passes `max_len`; on
+an invalid UTF-8 error it retains the received bytes for diagnostics.
+
 For fixed byte order, use `_be` and `_le` methods. For example,
 `write_i64_le(-42)` writes a little-endian integer. `uleb` methods handle
 unsigned LEB128, `sleb` methods handle signed LEB128, and ZigZag combines a

@@ -42,6 +42,35 @@ fn string_fixture() -> Vec<u8> {
 }
 
 #[test]
+fn async_string_read_reuses_payload_buffer() {
+    let mut input = ChunkedAsyncInput::new(b"hello world".to_vec());
+    let mut payload = Vec::with_capacity(32);
+
+    complete(input.read_utf8_payload_into_async(&mut payload, 5, 32))
+        .expect("first payload should be read");
+    let allocation = payload.as_ptr();
+    assert_eq!(b"hello", payload.as_slice());
+
+    complete(input.read_utf8_payload_into_async(&mut payload, 6, 32))
+        .expect("second payload should be read");
+    assert_eq!(allocation, payload.as_ptr());
+    assert_eq!(b" world", payload.as_slice());
+
+    let error =
+        complete(input.read_utf8_payload_into_async(&mut payload, 1, 0))
+            .expect_err("payload over the configured limit should fail");
+    assert_eq!(ErrorKind::InvalidData, error.kind());
+    assert_eq!(b" world", payload.as_slice());
+
+    let mut input = ChunkedAsyncInput::new(vec![0xff]);
+    let error =
+        complete(input.read_utf8_payload_into_async(&mut payload, 1, 1))
+            .expect_err("invalid UTF-8 should fail");
+    assert_eq!(ErrorKind::InvalidData, error.kind());
+    assert_eq!([0xff], payload.as_slice());
+}
+
+#[test]
 fn async_string_read_covers_every_length_prefix() {
     let mut input = ChunkedAsyncInput::new(string_fixture());
 

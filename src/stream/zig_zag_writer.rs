@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Writer for ZigZag-encoded integer values.
+
 use std::io::{
     Result,
     SeekFrom,

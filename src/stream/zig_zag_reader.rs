@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Reader for ZigZag-encoded integer values.
+
 use core::marker::PhantomData;
 use std::io::{
     Result,
