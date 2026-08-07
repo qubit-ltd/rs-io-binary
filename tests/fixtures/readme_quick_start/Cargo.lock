@@ -44,7 +44,7 @@ dependencies = [
 
 [[package]]
 name = "qubit-io-binary"
-version = "0.3.0"
+version = "0.3.1"
 dependencies = [
  "qubit-codec",
  "qubit-codec-binary",
