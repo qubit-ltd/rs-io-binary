@@ -1,8 +1,6 @@
 {
   "threshold_exempt_files": {
     "qubit-io-binary": [
-      "src/stream/buffered_binary_writer.rs",
-      "src/util/async_streams.rs",
       "src/util/streams.rs"
     ]
   }
