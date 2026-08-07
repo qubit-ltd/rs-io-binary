@@ -9,35 +9,25 @@
 //! Buffered writer for fixed-width binary values.
 
 use core::marker::PhantomData;
-use std::{
-    collections::TryReserveError,
-    io::{
-        Result,
-        SeekFrom,
-    },
-};
+use std::collections::TryReserveError;
+use std::io::Result;
+use std::io::SeekFrom;
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u16_len,
-    checked_u32_len,
-    write_all,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::ByteOrderSpec;
+use qubit_codec::LittleEndian;
+use qubit_codec::NativeEndian;
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    ByteOrderSpec,
-    LittleEndian,
-    NativeEndian,
-};
 use qubit_codec_binary::BinaryCodec;
-use qubit_io::{
-    Buffer,
-    Output,
-    Seekable,
-};
+use qubit_io::Buffer;
+use qubit_io::Output;
+use qubit_io::Seekable;
 
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::checked_u16_len;
+use crate::util::checked_u32_len;
+use crate::util::write_all;
 use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for fixed-width binary values.

@@ -5,16 +5,12 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Write;
 
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_io::Output;
+use qubit_io::Seekable;
 use qubit_io_binary::Leb128Writer;
 
 struct FailingWriter;
@@ -76,7 +72,7 @@ fn test_leb128_writer_returns_writer_error() {
 
 #[test]
 fn test_leb128_writer_write_utf8_string_writes_length_prefixed_payload() {
-    let mut writer = qubit_io_binary::Leb128Writer::new(Vec::new());
+    let mut writer = Leb128Writer::new(Vec::new());
 
     writer
         .write_utf8_string_usize("hé")
@@ -87,7 +83,7 @@ fn test_leb128_writer_write_utf8_string_writes_length_prefixed_payload() {
 
 #[test]
 fn test_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
-    let mut writer = qubit_io_binary::Leb128Writer::new(Vec::new());
+    let mut writer = Leb128Writer::new(Vec::new());
 
     writer
         .write_utf8_string_u64("hé")
@@ -98,8 +94,7 @@ fn test_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
 
 #[test]
 fn test_leb128_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer =
-        qubit_io_binary::Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer = Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
 
     Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through Leb128Writer should succeed");

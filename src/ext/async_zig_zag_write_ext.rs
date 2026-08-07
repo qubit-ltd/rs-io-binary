@@ -10,16 +10,12 @@
 use core::future::Future;
 use std::io::Result;
 
-use qubit_codec_binary::{
-    NonStrict,
-    ZigZagCodec,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::ZigZagCodec;
 use qubit_io::AsyncOutput;
 
-use crate::util::{
-    encode_infallible_unchecked,
-    write_all_async,
-};
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all_async;
 
 macro_rules! zig_zag_write_method {
     ($doc:literal, $name:ident, $ty:ty) => {

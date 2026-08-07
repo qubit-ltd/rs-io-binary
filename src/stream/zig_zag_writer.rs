@@ -8,24 +8,17 @@
 
 //! Writer for ZigZag-encoded integer values.
 
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::Result;
+use std::io::SeekFrom;
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec_binary::{
-    NonStrict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::ZigZagCodec;
+use qubit_io::Output;
+use qubit_io::Seekable;
+
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all;
 
 /// Writer wrapper for canonical ZigZag + unsigned LEB128 integers.
 ///

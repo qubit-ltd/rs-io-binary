@@ -9,16 +9,12 @@
 use std::io::ErrorKind;
 use std::task::Poll;
 
-use qubit_io_binary::{
-    AsyncLeb128ReadExt,
-    Leb128WriteExt,
-};
+use qubit_io_binary::AsyncLeb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncInput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 fn leb128_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();

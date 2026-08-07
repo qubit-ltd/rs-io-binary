@@ -7,15 +7,11 @@
 // =============================================================================
 //! Internal helpers for decoding values through transcoding input adapters.
 
-use std::io::{
-    Error,
-    Result,
-};
+use std::io::Error;
+use std::io::Result;
 
-use qubit_codec::{
-    Codec,
-    TranscodeDecodeInput,
-};
+use qubit_codec::Codec;
+use qubit_codec::TranscodeDecodeInput;
 use qubit_io::Input;
 
 use super::stream_codec_decode_error::StreamCodecDecodeError;

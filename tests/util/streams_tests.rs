@@ -6,15 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
 
-use qubit_io_binary::{
-    Leb128ReadExt,
-    Leb128WriteExt,
-};
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
 
 #[test]
 fn test_read_leb128_payload_round_trips_maximum_u128_width() {

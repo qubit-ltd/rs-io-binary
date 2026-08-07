@@ -7,26 +7,18 @@
 // =============================================================================
 
 use std::future::Future;
-use std::io::{
-    Error,
-    ErrorKind,
-    Result,
-};
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Result;
 use std::pin::Pin;
-use std::sync::{
-    Arc,
-    Mutex,
-};
-use std::task::{
-    Context,
-    Poll,
-    Waker,
-};
+use std::sync::Arc;
+use std::sync::Mutex;
+use std::task::Context;
+use std::task::Poll;
+use std::task::Waker;
 
-use qubit_io::{
-    AsyncInput,
-    AsyncOutput,
-};
+use qubit_io::AsyncInput;
+use qubit_io::AsyncOutput;
 
 pub(crate) struct ChunkedAsyncInput {
     bytes: Vec<u8>,

@@ -10,15 +10,12 @@
 
 use std::io::Result;
 
-use crate::util::{
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::NonStrict;
 use qubit_io::Output;
+
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all;
 
 macro_rules! write_leb128_value {
     ($writer:expr, $value:expr, $ty:ty) => {

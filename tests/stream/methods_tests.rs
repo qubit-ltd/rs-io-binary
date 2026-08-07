@@ -7,30 +7,26 @@
 // =============================================================================
 
 use std::cell::RefCell;
-use std::io::{
-    Cursor,
-    Result,
-    SeekFrom,
-};
+use std::io::Cursor;
+use std::io::Result;
+use std::io::SeekFrom;
 use std::rc::Rc;
 
 use qubit_codec::BigEndian;
 use qubit_codec_binary::NonStrict;
 use qubit_io::Output;
-use qubit_io_binary::{
-    BinaryReader,
-    BinaryWriter,
-    BufferedBinaryReader,
-    BufferedBinaryWriter,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-    BufferedZigZagReader,
-    BufferedZigZagWriter,
-    Leb128Reader,
-    Leb128Writer,
-    ZigZagReader,
-    ZigZagWriter,
-};
+use qubit_io_binary::BinaryReader;
+use qubit_io_binary::BinaryWriter;
+use qubit_io_binary::BufferedBinaryReader;
+use qubit_io_binary::BufferedBinaryWriter;
+use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::BufferedLeb128Writer;
+use qubit_io_binary::BufferedZigZagReader;
+use qubit_io_binary::BufferedZigZagWriter;
+use qubit_io_binary::Leb128Reader;
+use qubit_io_binary::Leb128Writer;
+use qubit_io_binary::ZigZagReader;
+use qubit_io_binary::ZigZagWriter;
 
 #[derive(Clone)]
 struct RecordingOutput {

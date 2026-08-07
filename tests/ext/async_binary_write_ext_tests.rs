@@ -6,10 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    ErrorKind,
-    Result,
-};
+use std::io::ErrorKind;
+use std::io::Result;
 use std::marker::PhantomData;
 use std::pin::Pin;
 use std::rc::Rc;
@@ -18,16 +16,12 @@ use std::task::Poll;
 
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncOutput;
-use qubit_io_binary::{
-    AsyncBinaryWriteExt,
-    BinaryWriteExt,
-};
+use qubit_io_binary::AsyncBinaryWriteExt;
+use qubit_io_binary::BinaryWriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncOutput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncOutput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 struct NonSendAsyncOutput {
     inner: ChunkedAsyncOutput,

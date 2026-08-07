@@ -9,6 +9,13 @@
 
 use std::io::Result;
 
+use qubit_codec::ByteOrder;
+use qubit_io::Input;
+
+use crate::BinaryReadExt;
+use crate::Leb128ReadExt;
+use crate::util::read_utf8_payload as read_utf8_payload_impl;
+use crate::util::read_utf8_payload_into as read_utf8_payload_into_impl;
 #[cfg(not(any(
     target_pointer_width = "32",
     target_pointer_width = "64"
@@ -16,16 +23,6 @@ use std::io::Result;
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::util::{
-    read_utf8_payload as read_utf8_payload_impl,
-    read_utf8_payload_into as read_utf8_payload_into_impl,
-};
-use crate::{
-    BinaryReadExt,
-    Leb128ReadExt,
-};
-use qubit_codec::ByteOrder;
-use qubit_io::Input;
 
 /// Extension methods for reading length-prefixed UTF-8 strings.
 ///

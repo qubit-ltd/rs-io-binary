@@ -10,15 +10,12 @@
 
 use std::io::Result;
 
-use crate::util::{
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec_binary::{
-    NonStrict,
-    ZigZagCodec,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::ZigZagCodec;
 use qubit_io::Output;
+
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all;
 
 macro_rules! write_zig_zag_value {
     ($writer:expr, $value:expr, $ty:ty) => {

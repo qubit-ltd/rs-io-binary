@@ -13,6 +13,10 @@ use std::io::Result;
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
 
+use crate::AsyncBinaryReadExt;
+use crate::AsyncLeb128ReadExt;
+use crate::util::read_utf8_payload_async;
+use crate::util::read_utf8_payload_into_async;
 #[cfg(not(any(
     target_pointer_width = "32",
     target_pointer_width = "64"
@@ -20,14 +24,6 @@ use qubit_io::AsyncInput;
 use crate::util::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::util::{
-    read_utf8_payload_async,
-    read_utf8_payload_into_async,
-};
-use crate::{
-    AsyncBinaryReadExt,
-    AsyncLeb128ReadExt,
-};
 
 /// Future-based length-prefixed UTF-8 reads.
 ///

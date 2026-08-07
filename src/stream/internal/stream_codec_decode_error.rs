@@ -8,9 +8,10 @@
 
 //! Conversion helpers for codec decode failures exposed as I/O errors.
 
-use qubit_codec_binary::Leb128DecodeError;
 use std::error::Error as StdError;
 use std::io::ErrorKind;
+
+use qubit_codec_binary::Leb128DecodeError;
 
 /// Decode error behavior shared by codec stream decoders.
 pub(crate) trait StreamCodecDecodeError:

@@ -8,25 +8,18 @@
 
 //! Writer for LEB128-encoded values.
 
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::Result;
+use std::io::SeekFrom;
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u64_len,
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::NonStrict;
+use qubit_io::Output;
+use qubit_io::Seekable;
+
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::checked_u64_len;
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all;
 
 /// Writer wrapper for canonical LEB128 integers.
 ///

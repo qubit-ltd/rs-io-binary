@@ -5,21 +5,15 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
 
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    LittleEndian,
-    NativeEndian,
-};
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
+use qubit_codec::NativeEndian;
+use qubit_io::Output;
+use qubit_io::Seekable;
 use qubit_io_binary::BinaryWriter;
 
 #[test]
@@ -154,10 +148,8 @@ fn test_binary_writer_reports_length_errors() {
 
 #[test]
 fn test_binary_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer = qubit_io_binary::BinaryWriter::<
-        _,
-        qubit_codec::LittleEndian,
-    >::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer =
+        BinaryWriter::<_, LittleEndian>::new(std::io::Cursor::new(vec![0; 4]));
 
     Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
         .expect("seeking through BinaryWriter should succeed");

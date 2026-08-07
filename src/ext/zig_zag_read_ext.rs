@@ -10,13 +10,12 @@
 
 use std::io::Result;
 
-use crate::util::read_leb128_payload;
-use qubit_codec_binary::{
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_codec_binary::ZigZagCodec;
 use qubit_io::Input;
+
+use crate::util::read_leb128_payload;
 
 macro_rules! read_zig_zag_value {
     ($reader:expr, $ty:ty, $policy:ty) => {

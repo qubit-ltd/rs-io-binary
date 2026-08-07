@@ -10,17 +10,14 @@
 
 use std::io::Result;
 
-use crate::util::{
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::Output;
+
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all;
 
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {

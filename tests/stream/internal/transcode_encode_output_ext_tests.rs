@@ -6,18 +6,14 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    SeekFrom,
-};
+use std::io::Cursor;
+use std::io::SeekFrom;
 
 use qubit_codec::LittleEndian;
 use qubit_codec_binary::NonStrict;
-use qubit_io_binary::{
-    BufferedBinaryWriter,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-};
+use qubit_io_binary::BufferedBinaryWriter;
+use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::BufferedLeb128Writer;
 
 #[test]
 fn test_transcode_encode_output_ext_writes_scalar_and_raw_bytes() {

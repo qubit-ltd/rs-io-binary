@@ -5,17 +5,13 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Write,
-};
+use std::io::Cursor;
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Write;
 
-use qubit_io_binary::{
-    BufferedLeb128Writer,
-    Leb128WriteExt,
-};
+use qubit_io_binary::BufferedLeb128Writer;
+use qubit_io_binary::Leb128WriteExt;
 
 struct FailingWriter;
 

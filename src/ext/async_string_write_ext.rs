@@ -13,16 +13,12 @@ use std::io::Result;
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncOutput;
 
-use crate::util::{
-    checked_u16_len,
-    checked_u32_len,
-    checked_u64_len,
-    write_all_async,
-};
-use crate::{
-    AsyncBinaryWriteExt,
-    AsyncLeb128WriteExt,
-};
+use crate::AsyncBinaryWriteExt;
+use crate::AsyncLeb128WriteExt;
+use crate::util::checked_u16_len;
+use crate::util::checked_u32_len;
+use crate::util::checked_u64_len;
+use crate::util::write_all_async;
 
 /// Future-based length-prefixed UTF-8 writes.
 ///

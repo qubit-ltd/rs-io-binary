@@ -6,22 +6,16 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    ErrorKind,
-    SeekFrom,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
+use std::io::SeekFrom;
 
-use qubit_codec::{
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
 use qubit_codec_binary::NonStrict;
-use qubit_io_binary::{
-    BufferedBinaryReader,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-};
+use qubit_io_binary::BufferedBinaryReader;
+use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::BufferedLeb128Writer;
 
 #[test]
 fn test_transcode_decode_input_ext_delegates_public_raw_and_codec_reads() {

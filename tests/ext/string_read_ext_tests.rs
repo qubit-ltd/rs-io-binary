@@ -6,10 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
 
 use qubit_codec::ByteOrder;
 use qubit_io_binary::StringReadExt;

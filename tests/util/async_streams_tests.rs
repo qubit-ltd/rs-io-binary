@@ -9,24 +9,18 @@
 use std::future::Future;
 use std::io::Result;
 use std::pin::Pin;
-use std::task::{
-    Context,
-    Poll,
-    Waker,
-};
+use std::task::Context;
+use std::task::Poll;
+use std::task::Waker;
 
-use qubit_io::{
-    AsyncInput,
-    AsyncOutput,
-};
-use qubit_io_binary::{
-    AsyncBinaryReadExt,
-    AsyncBinaryWriteExt,
-    AsyncLeb128ReadExt,
-    AsyncLeb128WriteExt,
-    AsyncStringReadExt,
-    AsyncStringWriteExt,
-};
+use qubit_io::AsyncInput;
+use qubit_io::AsyncOutput;
+use qubit_io_binary::AsyncBinaryReadExt;
+use qubit_io_binary::AsyncBinaryWriteExt;
+use qubit_io_binary::AsyncLeb128ReadExt;
+use qubit_io_binary::AsyncLeb128WriteExt;
+use qubit_io_binary::AsyncStringReadExt;
+use qubit_io_binary::AsyncStringWriteExt;
 
 struct PartialAsyncInput {
     bytes: Vec<u8>,

@@ -9,23 +9,18 @@
 
 use core::convert::Infallible;
 use core::num::NonZeroUsize;
-use std::io::{
-    Error,
-    ErrorKind,
-    Result,
-};
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Result;
 use std::string::FromUtf8Error;
 
 use qubit_codec::Codec;
-use qubit_codec_binary::{
-    Leb128Codec,
-    Leb128DecodeError,
-    NonStrict,
-};
-use qubit_io::{
-    Input,
-    Output,
-};
+use qubit_codec::DecodeFailure;
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::Leb128DecodeError;
+use qubit_codec_binary::NonStrict;
+use qubit_io::Input;
+use qubit_io::Output;
 
 use super::try_reserve_vec;
 
@@ -114,10 +109,8 @@ where
     // SAFETY: The caller upholds the unchecked decode contract for `C`.
     match unsafe { Codec::decode(&mut codec, input, index) } {
         Ok((value, _)) => value,
-        Err(qubit_codec::DecodeFailure::Invalid { source, .. }) => {
-            match source {}
-        }
-        Err(qubit_codec::DecodeFailure::Incomplete { .. }) => {
+        Err(DecodeFailure::Invalid { source, .. }) => match source {},
+        Err(DecodeFailure::Incomplete { .. }) => {
             unreachable!("infallible codec reported incomplete input")
         }
     }
@@ -196,18 +189,18 @@ where
     // SAFETY: The caller upholds the unchecked decode contract for `C`.
     unsafe { Codec::decode(&mut codec, input, index) }.map_err(|failure| {
         match failure {
-            qubit_codec::DecodeFailure::Invalid { source, .. } => source,
-            qubit_codec::DecodeFailure::Incomplete {
+            DecodeFailure::Invalid { source, .. } => source,
+            DecodeFailure::Incomplete {
                 source: Some(source),
                 ..
             } => source,
-            qubit_codec::DecodeFailure::Incomplete {
-                required_total, ..
-            } => Leb128DecodeError::incomplete(
-                index,
-                required_total,
-                input.len().saturating_sub(index),
-            ),
+            DecodeFailure::Incomplete { required_total, .. } => {
+                Leb128DecodeError::incomplete(
+                    index,
+                    required_total,
+                    input.len().saturating_sub(index),
+                )
+            }
         }
     })
 }

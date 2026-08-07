@@ -6,16 +6,13 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    Error,
-    ErrorKind,
-    Write,
-};
 #[cfg(all(not(miri), unix, target_pointer_width = "64"))]
-use std::{
-    ffi::c_void,
-    ptr::null_mut,
-};
+use std::ffi::c_void;
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Write;
+#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+use std::ptr::null_mut;
 
 use qubit_codec::ByteOrder;
 use qubit_io_binary::StringWriteExt;

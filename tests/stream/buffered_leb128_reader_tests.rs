@@ -5,23 +5,17 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Read,
-};
+use std::io::Cursor;
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Read;
 
-use qubit_codec_binary::{
-    Leb128Codec,
-    Leb128DecodeError,
-    NonStrict,
-    Strict,
-};
-use qubit_io_binary::{
-    BufferedLeb128Reader,
-    Leb128WriteExt,
-};
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::Leb128DecodeError;
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::Leb128WriteExt;
 
 struct ByteThenErrorReader {
     byte: u8,

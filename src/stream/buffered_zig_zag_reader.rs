@@ -9,28 +9,20 @@
 //! Buffered reader for ZigZag-encoded integer values.
 
 use core::marker::PhantomData;
-use std::{
-    collections::TryReserveError,
-    io::{
-        Result,
-        SeekFrom,
-    },
-};
+use std::collections::TryReserveError;
+use std::io::Result;
+use std::io::SeekFrom;
+
+use qubit_codec::TranscodeDecodeInput;
+use qubit_codec_binary::Leb128DecodePolicy;
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_codec_binary::ZigZagCodec;
+use qubit_io::Buffer;
+use qubit_io::Input;
+use qubit_io::Seekable;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec::TranscodeDecodeInput;
-use qubit_codec_binary::{
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Buffer,
-    Input,
-    Seekable,
-};
-
 use super::internal::TranscodeDecodeInputExt;
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.

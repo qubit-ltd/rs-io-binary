@@ -6,73 +6,57 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::env;
-use std::fs::{
-    self,
-    File,
-};
+use std::fs::File;
+use std::fs::{self};
 use std::future::Future;
 use std::hint::black_box;
-use std::io::{
-    BufRead,
-    BufReader,
-    BufWriter,
-    Read,
-    Write,
-};
-use std::path::{
-    Path,
-    PathBuf,
-};
+use std::io::BufRead;
+use std::io::BufReader;
+use std::io::BufWriter;
+use std::io::Read;
+use std::io::Write;
+use std::path::Path;
+use std::path::PathBuf;
 use std::pin::Pin;
-use std::task::{
-    Context,
-    Poll,
-    Waker,
-};
+use std::task::Context;
+use std::task::Poll;
+use std::task::Waker;
 use std::time::Duration;
 
-use criterion::{
-    BenchmarkId,
-    Criterion,
-    Throughput,
-    criterion_group,
-    criterion_main,
-};
-use qubit_codec::{
-    ByteOrder,
-    LittleEndian,
-};
+use criterion::BenchmarkId;
+use criterion::Criterion;
+use criterion::Throughput;
+use criterion::criterion_group;
+use criterion::criterion_main;
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
 use qubit_codec_binary::NonStrict;
-use qubit_io::{
-    AsyncBufferedInput,
-    AsyncBufferedOutput,
-    AsyncInput,
-    AsyncOutput,
-};
-use qubit_io_binary::{
-    AsyncBinaryReadExt,
-    AsyncBinaryWriteExt,
-    BinaryReadExt,
-    BinaryReader,
-    BinaryWriteExt,
-    BinaryWriter,
-    BufferedBinaryReader,
-    BufferedBinaryWriter,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-    BufferedZigZagReader,
-    BufferedZigZagWriter,
-    Leb128ReadExt,
-    Leb128Reader,
-    Leb128WriteExt,
-    Leb128Writer,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagReader,
-    ZigZagWriteExt,
-    ZigZagWriter,
-};
+use qubit_io::AsyncBufferedInput;
+use qubit_io::AsyncBufferedOutput;
+use qubit_io::AsyncInput;
+use qubit_io::AsyncOutput;
+use qubit_io_binary::AsyncBinaryReadExt;
+use qubit_io_binary::AsyncBinaryWriteExt;
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryReader;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::BinaryWriter;
+use qubit_io_binary::BufferedBinaryReader;
+use qubit_io_binary::BufferedBinaryWriter;
+use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::BufferedLeb128Writer;
+use qubit_io_binary::BufferedZigZagReader;
+use qubit_io_binary::BufferedZigZagWriter;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128Reader;
+use qubit_io_binary::Leb128WriteExt;
+use qubit_io_binary::Leb128Writer;
+use qubit_io_binary::StringReadExt;
+use qubit_io_binary::StringWriteExt;
+use qubit_io_binary::ZigZagReadExt;
+use qubit_io_binary::ZigZagReader;
+use qubit_io_binary::ZigZagWriteExt;
+use qubit_io_binary::ZigZagWriter;
 
 const BINARY_BATCH: usize = 1_048_576;
 const BINARY_REPEAT: usize = 32;

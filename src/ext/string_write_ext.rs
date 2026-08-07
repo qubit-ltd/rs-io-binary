@@ -9,19 +9,16 @@
 
 use std::io::Result;
 
-use crate::util::{
-    checked_u64_len,
-    write_all,
-    write_utf8_payload as write_utf8_payload_impl,
-    write_utf8_string_with_u16_len,
-    write_utf8_string_with_u32_len,
-};
-use crate::{
-    BinaryWriteExt,
-    Leb128WriteExt,
-};
 use qubit_codec::ByteOrder;
 use qubit_io::Output;
+
+use crate::BinaryWriteExt;
+use crate::Leb128WriteExt;
+use crate::util::checked_u64_len;
+use crate::util::write_all;
+use crate::util::write_utf8_payload as write_utf8_payload_impl;
+use crate::util::write_utf8_string_with_u16_len;
+use crate::util::write_utf8_string_with_u32_len;
 
 /// Extension methods for writing length-prefixed UTF-8 strings.
 pub trait StringWriteExt: Output<Item = u8> {

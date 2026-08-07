@@ -7,31 +7,25 @@
 // =============================================================================
 //! Inherent forwarding methods for stream wrappers.
 
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::Result;
+use std::io::SeekFrom;
 
-use qubit_io::{
-    Input,
-    Output,
-    Seekable,
-};
+use qubit_io::Input;
+use qubit_io::Output;
+use qubit_io::Seekable;
 
-use super::{
-    BinaryReader,
-    BinaryWriter,
-    BufferedBinaryReader,
-    BufferedBinaryWriter,
-    BufferedLeb128Reader,
-    BufferedLeb128Writer,
-    BufferedZigZagReader,
-    BufferedZigZagWriter,
-    Leb128Reader,
-    Leb128Writer,
-    ZigZagReader,
-    ZigZagWriter,
-};
+use super::BinaryReader;
+use super::BinaryWriter;
+use super::BufferedBinaryReader;
+use super::BufferedBinaryWriter;
+use super::BufferedLeb128Reader;
+use super::BufferedLeb128Writer;
+use super::BufferedZigZagReader;
+use super::BufferedZigZagWriter;
+use super::Leb128Reader;
+use super::Leb128Writer;
+use super::ZigZagReader;
+use super::ZigZagWriter;
 
 macro_rules! impl_input_methods {
     ($type:ident<$($param:ident),+> where $($bound:tt)*) => {

@@ -9,33 +9,23 @@
 //! Buffered reader for LEB128-encoded values.
 
 use core::marker::PhantomData;
-use std::{
-    collections::TryReserveError,
-    io::{
-        Result,
-        SeekFrom,
-    },
-};
+use std::collections::TryReserveError;
+use std::io::Result;
+use std::io::SeekFrom;
 
+use qubit_codec::TranscodeDecodeInput;
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::Leb128DecodePolicy;
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_io::Buffer;
+use qubit_io::Input;
+use qubit_io::Seekable;
+
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::read_utf8_payload;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    read_utf8_payload,
-};
-use qubit_codec::TranscodeDecodeInput;
-use qubit_codec_binary::{
-    Leb128Codec,
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-};
-use qubit_io::{
-    Buffer,
-    Input,
-    Seekable,
-};
-
 use super::internal::TranscodeDecodeInputExt;
 
 /// Buffered reader for LEB128 integers.

@@ -6,24 +6,18 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::cell::RefCell;
-use std::io::{
-    Cursor,
-    Error,
-    ErrorKind,
-    Seek,
-    SeekFrom,
-    Write,
-};
+use std::io::Cursor;
+use std::io::Error;
+use std::io::ErrorKind;
+use std::io::Seek;
+use std::io::SeekFrom;
+use std::io::Write;
 use std::rc::Rc;
 
-use qubit_codec::{
-    ByteOrder,
-    LittleEndian,
-};
-use qubit_io_binary::{
-    BinaryWriteExt,
-    BufferedBinaryWriter,
-};
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::BufferedBinaryWriter;
 
 struct FailingWriter;
 

@@ -8,37 +8,31 @@
 
 #![no_main]
 
-use std::io::{
-    self,
-    Cursor,
-    ErrorKind,
-    Read,
-    Write,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
+use std::io::Read;
+use std::io::Write;
+use std::io::{self};
 
 use libfuzzer_sys::fuzz_target;
 use qubit_codec::LittleEndian;
-use qubit_codec_binary::{
-    NonStrict,
-    Strict,
-};
-use qubit_io_binary::{
-    BinaryReadExt,
-    BinaryReader,
-    BinaryWriteExt,
-    BinaryWriter,
-    BufferedBinaryReader,
-    BufferedBinaryWriter,
-    BufferedLeb128Reader,
-    BufferedZigZagReader,
-    Leb128ReadExt,
-    Leb128Reader,
-    Leb128WriteExt,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagReader,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryReader;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::BinaryWriter;
+use qubit_io_binary::BufferedBinaryReader;
+use qubit_io_binary::BufferedBinaryWriter;
+use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::BufferedZigZagReader;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128Reader;
+use qubit_io_binary::Leb128WriteExt;
+use qubit_io_binary::StringReadExt;
+use qubit_io_binary::StringWriteExt;
+use qubit_io_binary::ZigZagReadExt;
+use qubit_io_binary::ZigZagReader;
 
 /// Keeps allocations and each target invocation bounded outside CI.
 const MAX_FUZZ_INPUT_LEN: usize = 4096;

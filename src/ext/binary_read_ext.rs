@@ -10,14 +10,13 @@
 
 use std::io::Result;
 
-use crate::util::decode_infallible_unchecked;
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::Input;
+
+use crate::util::decode_infallible_unchecked;
 
 macro_rules! read_binary_value {
     ($reader:expr, $ty:ty, $order:ty) => {

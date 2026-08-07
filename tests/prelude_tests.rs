@@ -8,21 +8,15 @@
 
 use std::io::Cursor;
 
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    ByteOrderSpec,
-};
-use qubit_codec_binary::{
-    Leb128DecodePolicy,
-    NonStrict,
-};
-use qubit_io_binary::prelude::{
-    Leb128ReadExt,
-    Leb128WriteExt,
-    ZigZagReadExt,
-    ZigZagWriteExt,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::ByteOrderSpec;
+use qubit_codec_binary::Leb128DecodePolicy;
+use qubit_codec_binary::NonStrict;
+use qubit_io_binary::prelude::Leb128ReadExt;
+use qubit_io_binary::prelude::Leb128WriteExt;
+use qubit_io_binary::prelude::ZigZagReadExt;
+use qubit_io_binary::prelude::ZigZagWriteExt;
 
 fn leb128_policy_is_strict<P: Leb128DecodePolicy>() -> bool {
     P::STRICT

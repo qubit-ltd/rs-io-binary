@@ -15,16 +15,12 @@ use std::task::Poll;
 
 use qubit_codec::ByteOrder;
 use qubit_io::AsyncInput;
-use qubit_io_binary::{
-    AsyncBinaryReadExt,
-    BinaryWriteExt,
-};
+use qubit_io_binary::AsyncBinaryReadExt;
+use qubit_io_binary::BinaryWriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncInput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 struct NonSendAsyncInput {
     inner: ChunkedAsyncInput,

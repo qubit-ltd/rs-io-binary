@@ -8,26 +8,18 @@
 
 //! Buffered writer for ZigZag-encoded integer values.
 
-use std::{
-    collections::TryReserveError,
-    io::{
-        Result,
-        SeekFrom,
-    },
-};
+use std::collections::TryReserveError;
+use std::io::Result;
+use std::io::SeekFrom;
+
+use qubit_codec::TranscodeEncodeOutput;
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::ZigZagCodec;
+use qubit_io::Buffer;
+use qubit_io::Output;
+use qubit_io::Seekable;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
-use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{
-    NonStrict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Buffer,
-    Output,
-    Seekable,
-};
-
 use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for canonical ZigZag + unsigned LEB128 integers.

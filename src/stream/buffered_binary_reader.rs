@@ -9,38 +9,28 @@
 //! Buffered reader for fixed-width binary values.
 
 use core::marker::PhantomData;
-use std::{
-    collections::TryReserveError,
-    io::{
-        Result,
-        SeekFrom,
-    },
-};
+use std::collections::TryReserveError;
+use std::io::Result;
+use std::io::SeekFrom;
 
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::ByteOrderSpec;
+use qubit_codec::LittleEndian;
+use qubit_codec::NativeEndian;
+use qubit_codec::TranscodeDecodeInput;
+use qubit_codec_binary::BinaryCodec;
+use qubit_io::Buffer;
+use qubit_io::Input;
+use qubit_io::Seekable;
+
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::read_utf8_payload;
 #[cfg(not(any(
     target_pointer_width = "32",
     target_pointer_width = "64"
 )))]
 use crate::util::usize_from_u32_len;
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    read_utf8_payload,
-};
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    ByteOrderSpec,
-    LittleEndian,
-    NativeEndian,
-    TranscodeDecodeInput,
-};
-use qubit_codec_binary::BinaryCodec;
-use qubit_io::{
-    Buffer,
-    Input,
-    Seekable,
-};
-
 use super::internal::TranscodeDecodeInputExt;
 
 /// Buffered reader for fixed-width binary values.

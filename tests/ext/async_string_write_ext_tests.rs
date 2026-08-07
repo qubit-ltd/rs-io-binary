@@ -6,23 +6,17 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    ErrorKind,
-    Result,
-};
+use std::io::ErrorKind;
+use std::io::Result;
 use std::task::Poll;
 
 use qubit_codec::ByteOrder;
-use qubit_io_binary::{
-    AsyncStringWriteExt,
-    StringWriteExt,
-};
+use qubit_io_binary::AsyncStringWriteExt;
+use qubit_io_binary::StringWriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncOutput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncOutput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 #[test]
 fn async_string_write_covers_every_length_prefix() {

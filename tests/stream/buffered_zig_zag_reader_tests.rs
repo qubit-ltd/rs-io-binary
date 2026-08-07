@@ -5,20 +5,14 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
 
-use qubit_codec_binary::{
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
-use qubit_io_binary::{
-    BufferedZigZagReader,
-    ZigZagWriteExt,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_codec_binary::ZigZagCodec;
+use qubit_io_binary::BufferedZigZagReader;
+use qubit_io_binary::ZigZagWriteExt;
 
 #[test]
 fn test_buffered_zig_zag_reader_reads_values_across_buffer_boundaries() {

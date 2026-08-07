@@ -10,16 +10,12 @@
 use core::future::Future;
 use std::io::Result;
 
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::NonStrict;
 use qubit_io::AsyncOutput;
 
-use crate::util::{
-    encode_infallible_unchecked,
-    write_all_async,
-};
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all_async;
 
 macro_rules! leb128_write_method {
     ($doc:literal, $name:ident, $ty:ty) => {

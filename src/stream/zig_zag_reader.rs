@@ -9,25 +9,18 @@
 //! Reader for ZigZag-encoded integer values.
 
 use core::marker::PhantomData;
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::Result;
+use std::io::SeekFrom;
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    read_leb128_from_reader,
-};
-use qubit_codec_binary::{
-    Leb128DecodePolicy,
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Input,
-    Seekable,
-};
+use qubit_codec_binary::Leb128DecodePolicy;
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_codec_binary::ZigZagCodec;
+use qubit_io::Input;
+use qubit_io::Seekable;
+
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::read_leb128_from_reader;
 
 /// Reader wrapper for ZigZag + unsigned LEB128 integers.
 ///

@@ -9,41 +9,33 @@
 #![no_main]
 
 use std::future::Future;
-use std::io::{
-    self,
-    Cursor,
-    ErrorKind,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
+use std::io::{self};
 use std::pin::Pin;
-use std::task::{
-    Context,
-    Poll,
-    Waker,
-};
+use std::task::Context;
+use std::task::Poll;
+use std::task::Waker;
 
 use libfuzzer_sys::fuzz_target;
-use qubit_io::{
-    AsyncInput,
-    AsyncOutput,
-};
-use qubit_io_binary::{
-    AsyncBinaryReadExt,
-    AsyncBinaryWriteExt,
-    AsyncLeb128ReadExt,
-    AsyncLeb128WriteExt,
-    AsyncStringReadExt,
-    AsyncStringWriteExt,
-    AsyncZigZagReadExt,
-    AsyncZigZagWriteExt,
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagWriteExt,
-};
+use qubit_io::AsyncInput;
+use qubit_io::AsyncOutput;
+use qubit_io_binary::AsyncBinaryReadExt;
+use qubit_io_binary::AsyncBinaryWriteExt;
+use qubit_io_binary::AsyncLeb128ReadExt;
+use qubit_io_binary::AsyncLeb128WriteExt;
+use qubit_io_binary::AsyncStringReadExt;
+use qubit_io_binary::AsyncStringWriteExt;
+use qubit_io_binary::AsyncZigZagReadExt;
+use qubit_io_binary::AsyncZigZagWriteExt;
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
+use qubit_io_binary::StringReadExt;
+use qubit_io_binary::StringWriteExt;
+use qubit_io_binary::ZigZagReadExt;
+use qubit_io_binary::ZigZagWriteExt;
 
 /// Keeps each target invocation bounded before allocating test buffers.
 const MAX_FUZZ_INPUT_LEN: usize = 4096;

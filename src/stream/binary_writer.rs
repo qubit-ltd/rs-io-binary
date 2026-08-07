@@ -9,29 +9,22 @@
 //! Writer for fixed-width binary values.
 
 use core::marker::PhantomData;
-use std::io::{
-    Result,
-    SeekFrom,
-};
+use std::io::Result;
+use std::io::SeekFrom;
 
-use crate::util::{
-    checked_u16_len,
-    checked_u32_len,
-    encode_infallible_unchecked,
-    write_all,
-};
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    ByteOrderSpec,
-    LittleEndian,
-    NativeEndian,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::ByteOrderSpec;
+use qubit_codec::LittleEndian;
+use qubit_codec::NativeEndian;
 use qubit_codec_binary::BinaryCodec;
-use qubit_io::{
-    Output,
-    Seekable,
-};
+use qubit_io::Output;
+use qubit_io::Seekable;
+
+use crate::util::checked_u16_len;
+use crate::util::checked_u32_len;
+use crate::util::encode_infallible_unchecked;
+use crate::util::write_all;
 
 /// Writer wrapper for fixed-width binary values.
 ///

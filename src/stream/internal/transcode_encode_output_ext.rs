@@ -8,16 +8,12 @@
 //! Internal helpers for encoding values through transcoding output adapters.
 
 use std::error::Error as StdError;
-use std::io::{
-    self,
-    Error,
-    ErrorKind,
-};
+use std::io;
+use std::io::Error;
+use std::io::ErrorKind;
 
-use qubit_codec::{
-    Codec,
-    TranscodeEncodeOutput,
-};
+use qubit_codec::Codec;
+use qubit_codec::TranscodeEncodeOutput;
 use qubit_io::Output;
 
 /// Codec-oriented helpers for [`TranscodeEncodeOutput`].

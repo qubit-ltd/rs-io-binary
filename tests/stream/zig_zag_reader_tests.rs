@@ -5,24 +5,16 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
-use std::io::{
-    Cursor,
-    ErrorKind,
-};
+use std::io::Cursor;
+use std::io::ErrorKind;
 
-use qubit_codec_binary::{
-    NonStrict,
-    Strict,
-    ZigZagCodec,
-};
-use qubit_io::{
-    Input,
-    Seekable,
-};
-use qubit_io_binary::{
-    ZigZagReader,
-    ZigZagWriter,
-};
+use qubit_codec_binary::NonStrict;
+use qubit_codec_binary::Strict;
+use qubit_codec_binary::ZigZagCodec;
+use qubit_io::Input;
+use qubit_io::Seekable;
+use qubit_io_binary::ZigZagReader;
+use qubit_io_binary::ZigZagWriter;
 
 #[test]
 fn test_zig_zag_reader_reads_all_methods() {
@@ -327,10 +319,10 @@ fn test_zig_zag_reader_reports_all_instantiated_error_paths() {
 
 #[test]
 fn test_zig_zag_reader_read_and_seek_delegate_to_inner_reader() {
-    let mut reader = qubit_io_binary::ZigZagReader::<
-        _,
-        qubit_codec_binary::NonStrict,
-    >::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
+    let mut reader =
+        ZigZagReader::<_, NonStrict>::new(std::io::Cursor::new(vec![
+            1, 2, 3, 4,
+        ]));
 
     Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1))
         .expect("seeking through ZigZagReader should succeed");

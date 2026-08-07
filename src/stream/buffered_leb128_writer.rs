@@ -8,30 +8,20 @@
 
 //! Buffered writer for LEB128-encoded values.
 
-use std::{
-    collections::TryReserveError,
-    io::{
-        Result,
-        SeekFrom,
-    },
-};
+use std::collections::TryReserveError;
+use std::io::Result;
+use std::io::SeekFrom;
 
-use crate::util::{
-    MIN_CODEC_BUFFER_CAPACITY,
-    checked_u64_len,
-    write_all,
-};
 use qubit_codec::TranscodeEncodeOutput;
-use qubit_codec_binary::{
-    Leb128Codec,
-    NonStrict,
-};
-use qubit_io::{
-    Buffer,
-    Output,
-    Seekable,
-};
+use qubit_codec_binary::Leb128Codec;
+use qubit_codec_binary::NonStrict;
+use qubit_io::Buffer;
+use qubit_io::Output;
+use qubit_io::Seekable;
 
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
+use crate::util::checked_u64_len;
+use crate::util::write_all;
 use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for canonical LEB128 integers.

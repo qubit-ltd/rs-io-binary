@@ -6,22 +6,16 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{
-    ErrorKind,
-    Result,
-};
+use std::io::ErrorKind;
+use std::io::Result;
 use std::task::Poll;
 
-use qubit_io_binary::{
-    AsyncLeb128WriteExt,
-    Leb128WriteExt,
-};
+use qubit_io_binary::AsyncLeb128WriteExt;
+use qubit_io_binary::Leb128WriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncOutput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncOutput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 #[test]
 fn async_leb128_write_covers_supported_integer_widths() {

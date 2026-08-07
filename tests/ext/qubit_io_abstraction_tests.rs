@@ -8,20 +8,16 @@
 
 use std::io::Result;
 
-use qubit_io::{
-    Input,
-    Output,
-};
-use qubit_io_binary::{
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-    StringReadExt,
-    StringWriteExt,
-    ZigZagReadExt,
-    ZigZagWriteExt,
-};
+use qubit_io::Input;
+use qubit_io::Output;
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
+use qubit_io_binary::StringReadExt;
+use qubit_io_binary::StringWriteExt;
+use qubit_io_binary::ZigZagReadExt;
+use qubit_io_binary::ZigZagWriteExt;
 
 struct QubitInput {
     bytes: Vec<u8>,

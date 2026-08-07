@@ -6,9 +6,13 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-use std::io::{self, Cursor};
+use std::io;
+use std::io::Cursor;
 
-use qubit_io_binary::{BinaryReadExt, BinaryWriteExt, Leb128ReadExt, Leb128WriteExt};
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
 
 /// Compiles the README quick-start example with only its documented dependency.
 fn main() -> io::Result<()> {

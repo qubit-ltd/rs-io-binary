@@ -10,18 +10,14 @@
 use core::future::Future;
 use std::io::Result;
 
-use qubit_codec::{
-    BigEndian,
-    ByteOrder,
-    LittleEndian,
-};
+use qubit_codec::BigEndian;
+use qubit_codec::ByteOrder;
+use qubit_codec::LittleEndian;
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::AsyncInput;
 
-use crate::util::{
-    decode_infallible_unchecked,
-    read_exactly_async,
-};
+use crate::util::decode_infallible_unchecked;
+use crate::util::read_exactly_async;
 
 macro_rules! read_binary_value_async {
     ($reader:expr, $ty:ty, $order:ty) => {

@@ -9,16 +9,12 @@
 use std::io::ErrorKind;
 use std::task::Poll;
 
-use qubit_io_binary::{
-    AsyncZigZagReadExt,
-    ZigZagWriteExt,
-};
+use qubit_io_binary::AsyncZigZagReadExt;
+use qubit_io_binary::ZigZagWriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncInput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 fn zig_zag_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();

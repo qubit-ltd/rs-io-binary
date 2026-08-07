@@ -10,16 +10,12 @@ use std::io::ErrorKind;
 use std::task::Poll;
 
 use qubit_codec::ByteOrder;
-use qubit_io_binary::{
-    AsyncStringReadExt,
-    StringWriteExt,
-};
+use qubit_io_binary::AsyncStringReadExt;
+use qubit_io_binary::StringWriteExt;
 
-use super::internal::async_io_test_support_tests::{
-    ChunkedAsyncInput,
-    complete,
-    poll_once,
-};
+use super::internal::async_io_test_support_tests::ChunkedAsyncInput;
+use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::poll_once;
 
 fn string_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();
