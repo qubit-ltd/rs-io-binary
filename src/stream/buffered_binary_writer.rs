@@ -24,11 +24,11 @@ use qubit_io::Buffer;
 use qubit_io::Output;
 use qubit_io::Seekable;
 
+use super::internal::TranscodeEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::checked_u16_len;
 use crate::util::checked_u32_len;
 use crate::util::write_all;
-use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for fixed-width binary values.
 ///

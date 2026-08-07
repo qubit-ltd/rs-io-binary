@@ -19,8 +19,8 @@ use qubit_io::Buffer;
 use qubit_io::Output;
 use qubit_io::Seekable;
 
-use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use super::internal::TranscodeEncodeOutputExt;
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 
 /// Buffered writer for canonical ZigZag + unsigned LEB128 integers.
 ///

@@ -22,11 +22,11 @@ use qubit_io::Buffer;
 use qubit_io::Input;
 use qubit_io::Seekable;
 
+use super::internal::TranscodeDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::read_utf8_payload;
 #[cfg(not(target_pointer_width = "64"))]
 use crate::util::usize_from_u64_len;
-use super::internal::TranscodeDecodeInputExt;
 
 /// Buffered reader for LEB128 integers.
 ///

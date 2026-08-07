@@ -19,10 +19,10 @@ use qubit_io::Buffer;
 use qubit_io::Output;
 use qubit_io::Seekable;
 
+use super::internal::TranscodeEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::checked_u64_len;
 use crate::util::write_all;
-use super::internal::TranscodeEncodeOutputExt;
 
 /// Buffered writer for canonical LEB128 integers.
 ///

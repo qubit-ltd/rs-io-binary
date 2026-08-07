@@ -22,8 +22,8 @@ use qubit_io::Buffer;
 use qubit_io::Input;
 use qubit_io::Seekable;
 
-use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use super::internal::TranscodeDecodeInputExt;
+use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 
 /// Buffered reader for ZigZag + unsigned LEB128 integers.
 ///
