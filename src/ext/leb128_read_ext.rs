@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Extension methods for decoding LEB128 values from byte streams.
+
 use std::io::Result;
 
 use crate::util::read_leb128_payload;

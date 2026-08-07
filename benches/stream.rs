@@ -1941,6 +1941,32 @@ fn read_mixed_ext<R: qubit_io::Input<Item = u8>>(
     digest
 }
 
+fn read_mixed_reusing_payload<R>(
+    mut input: R,
+    fields: &[MixedBinaryField],
+) -> u64
+where
+    R: qubit_io::Input<Item = u8> + BinaryReadExt + StringReadExt,
+{
+    let mut payload = Vec::with_capacity(1024);
+    let mut digest = 0_u64;
+    for field in fields {
+        digest ^= match field {
+            MixedBinaryField::U8(_) => u64::from(input.read_u8().unwrap()),
+            MixedBinaryField::I32(_) => input.read_i32_le().unwrap() as u64,
+            MixedBinaryField::U64(_) => input.read_u64_le().unwrap(),
+            MixedBinaryField::String(_) => {
+                let len = usize::from(input.read_u16_le().unwrap());
+                input
+                    .read_utf8_payload_into(&mut payload, len, 1024)
+                    .unwrap();
+                payload.len() as u64
+            }
+        };
+    }
+    digest
+}
+
 fn read_mixed_buffered(path: &Path, fields: &[MixedBinaryField]) -> u64 {
     let file = File::open(path).unwrap();
     let mut input = BufferedBinaryReader::<_, LittleEndian>::new(file);
@@ -2009,9 +2035,27 @@ fn bench_prod_mixed_binary_pipeline(c: &mut Criterion) {
             ))
         })
     });
+    group.bench_function("ext_bufreader_read_reuse", |b| {
+        b.iter(|| {
+            black_box(read_mixed_reusing_payload(
+                BufReader::new(File::open(&raw_path).unwrap()),
+                black_box(&fields),
+            ))
+        })
+    });
     group.bench_function("buffered_read", |b| {
         b.iter(|| {
             black_box(read_mixed_buffered(&buffered_path, black_box(&fields)))
+        })
+    });
+    group.bench_function("buffered_read_reuse", |b| {
+        b.iter(|| {
+            black_box(read_mixed_reusing_payload(
+                BufferedBinaryReader::<_, LittleEndian>::new(
+                    File::open(&buffered_path).unwrap(),
+                ),
+                black_box(&fields),
+            ))
         })
     });
     group.finish();

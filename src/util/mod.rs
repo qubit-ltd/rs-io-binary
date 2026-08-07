@@ -5,6 +5,8 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+//! Private stream and allocation helpers shared by extension traits.
+
 mod async_streams;
 mod streams;
 pub(crate) use qubit_utils::try_reserve_vec;
@@ -13,6 +15,7 @@ pub(crate) use async_streams::{
     read_exactly_async,
     read_leb128_payload_async,
     read_utf8_payload_async,
+    read_utf8_payload_into_async,
     write_all_async,
 };
 pub(crate) use streams::{
@@ -25,6 +28,7 @@ pub(crate) use streams::{
     read_leb128_from_reader,
     read_leb128_payload,
     read_utf8_payload,
+    read_utf8_payload_into,
     write_all,
     write_utf8_payload,
     write_utf8_string_with_u16_len,

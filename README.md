@@ -117,12 +117,18 @@ a maximum payload length to bound allocation. For persistent formats, prefer
 fixed-width length fields or `u64` LEB128 lengths over target-width `usize`
 helpers.
 
+High-throughput string readers can call `read_utf8_payload_into` (or the async
+variant) with a reusable `Vec<u8>` to avoid reallocating payload storage for
+each record. The buffer is retained on invalid UTF-8 errors for diagnostics.
+
 ## Mixed Binary Stream Benchmark
 
 The 2026-08-04 Criterion run below used a deterministic random mix of `u8`,
 `i32`, `u64`, and multibyte UTF-8 strings (131,072 fields per iteration). The
 full command and environment are recorded in
 [`benches/results/2026-08-04-mixed-binary-pipeline.md`](benches/results/2026-08-04-mixed-binary-pipeline.md).
+The reusable payload-buffer comparison is recorded in
+[`benches/results/2026-08-07-string-buffer-reuse.md`](benches/results/2026-08-07-string-buffer-reuse.md).
 Treat these values as a comparison of buffering strategies, not as portable
 performance guarantees.
 

@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Writer for fixed-width binary values.
+
 use core::marker::PhantomData;
 use std::io::{
     Result,

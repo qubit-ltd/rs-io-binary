@@ -7,6 +7,8 @@
     adapter、临时缓冲和内部 buffer 的成本。
   - `prod_binary_pipeline`：固定字段的二进制读写。
   - `prod_mixed_binary_pipeline`：混合固定宽度整数和 UTF-8 字符串的记录流。
+    该组同时测量每条记录分配 `String` 的默认读取路径，以及复用
+    `Vec<u8>` 的 `read_utf8_payload_into` 路径。
   - `prod_varints`：随机类型字段流的无符号 LEB128 编解码。
   - `prod_signed_varints`：随机类型字段流的 ZigZag 编解码。
   - `async_binary_pipeline`：运行时无关的异步 `u64` 读写，以及与
@@ -52,6 +54,8 @@
 - `std_manual_*`：仅在 `prod_varints` 与 `prod_signed_varints` 中出现，使用标准库 `BufReader<File>` / `BufWriter<File>` 加手写安全 LEB128 / ZigZag 协议实现。
 - `wrapper_*`：使用 `BinaryReader` / `BinaryWriter`、`Leb128Reader` / `Leb128Writer`、`ZigZagReader` / `ZigZagWriter`；reader 显式选择 `Strict` 或 `NonStrict`，宽松路径调用带 `_non_strict` 后缀的方法。
 - `buffered_*`：使用自带大缓冲区并直接在缓冲区上调用 codec unsafe 方法的 buffered reader/writer。
+- `*_read_reuse`：读取混合记录时复用调用方的 UTF-8 payload `Vec<u8>`；这些结果与默认
+  `*_read` 路径分开比较，避免把分配策略变化误认为缓冲区变化。
 
 结果解读时应比较同一 group 下相同方向的 `ext_*` 与 `wrapper_*`，例如：
 

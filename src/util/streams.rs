@@ -5,6 +5,8 @@
 //
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
+//! Low-level bounded reads and writes used by the public stream adapters.
+
 use core::convert::Infallible;
 use core::num::NonZeroUsize;
 use std::io::{
@@ -352,14 +354,70 @@ pub(crate) fn read_utf8_payload<R>(
 where
     R: Input<Item = u8> + ?Sized,
 {
+    let mut bytes = Vec::new();
+    read_utf8_payload_bytes(reader, &mut bytes, len, max_len)?;
+    String::from_utf8(bytes).map_err(invalid_utf8_error)
+}
+
+/// Reads and validates a UTF-8 payload into reusable caller-owned storage.
+///
+/// # Type Parameters
+///
+/// - `R`: Source Qubit input.
+///
+/// # Parameters
+///
+/// - `reader`: Reader that provides the UTF-8 payload bytes.
+/// - `bytes`: Reusable destination buffer. It is cleared before a permitted
+///   read and contains the received bytes when the read succeeds or when UTF-8
+///   validation fails.
+/// - `len`: Payload length in bytes.
+/// - `max_len`: Maximum accepted payload length in bytes.
+///
+/// # Returns
+///
+/// Returns after `bytes` contains one valid UTF-8 payload.
+///
+/// # Errors
+///
+/// Returns [`ErrorKind::InvalidData`] when `len` exceeds `max_len` or the
+/// payload is not valid UTF-8, an allocation error when the buffer cannot be
+/// resized, or an I/O error from `reader`.
+pub(crate) fn read_utf8_payload_into<R>(
+    reader: &mut R,
+    bytes: &mut Vec<u8>,
+    len: usize,
+    max_len: usize,
+) -> Result<()>
+where
+    R: Input<Item = u8> + ?Sized,
+{
+    read_utf8_payload_bytes(reader, bytes, len, max_len)?;
+    std::str::from_utf8(bytes)
+        .map(|_| ())
+        .map_err(|error| Error::new(ErrorKind::InvalidData, error))
+}
+
+/// Reads a bounded payload into a caller-owned byte buffer.
+///
+/// The helper performs length validation, fallible capacity reservation, and
+/// exact input transfer but leaves UTF-8 validation to its caller.
+fn read_utf8_payload_bytes<R>(
+    reader: &mut R,
+    bytes: &mut Vec<u8>,
+    len: usize,
+    max_len: usize,
+) -> Result<()>
+where
+    R: Input<Item = u8> + ?Sized,
+{
     if len > max_len {
         return Err(length_exceeded_error(len, max_len));
     }
-    let mut bytes = Vec::new();
-    try_reserve_vec(&mut bytes, len)?;
+    bytes.clear();
+    try_reserve_vec(bytes, len)?;
     bytes.resize(len, 0);
-    Input::read_exactly(reader, &mut bytes)?;
-    String::from_utf8(bytes).map_err(invalid_utf8_error)
+    Input::read_exactly(reader, bytes)
 }
 
 /// Writes a UTF-8 payload without a length prefix.

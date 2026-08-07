@@ -6,6 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Extension methods for encoding fixed-width binary values into byte streams.
+
 use std::io::Result;
 
 use crate::util::{
