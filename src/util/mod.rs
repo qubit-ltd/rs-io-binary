@@ -26,10 +26,7 @@ pub(crate) use self::streams::read_leb128_from_reader;
 pub(crate) use self::streams::read_leb128_payload;
 pub(crate) use self::streams::read_utf8_payload;
 pub(crate) use self::streams::read_utf8_payload_into;
-#[cfg(not(any(
-    target_pointer_width = "32",
-    target_pointer_width = "64"
-)))]
+#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
 pub(crate) use self::streams::usize_from_u32_len;
 #[cfg(not(target_pointer_width = "64"))]
 pub(crate) use self::streams::usize_from_u64_len;

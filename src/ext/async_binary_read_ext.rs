@@ -21,12 +21,7 @@ use crate::util::read_exactly_async;
 
 macro_rules! read_binary_value_async {
     ($reader:expr, $ty:ty, $order:ty) => {
-        read_binary_async::<
-            { BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE },
-            _,
-            _,
-            _,
-        >($reader, |bytes| {
+        read_binary_async::<{ BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE }, _, _, _>($reader, |bytes| {
             type Codec = BinaryCodec<$ty, $order>;
             // SAFETY: The local buffer has exactly the codec's fixed width.
             unsafe { decode_infallible_unchecked::<Codec>(bytes, 0) }
@@ -84,10 +79,7 @@ macro_rules! runtime_order_read_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already consumed from the input."]
         #[inline]
-        fn $name(
-            &mut self,
-            byte_order: ByteOrder,
-        ) -> impl Future<Output = Result<$ty>> + '_
+        fn $name(&mut self, byte_order: ByteOrder) -> impl Future<Output = Result<$ty>> + '_
         where
             Self: Unpin,
         {
@@ -383,10 +375,7 @@ impl<R> AsyncBinaryReadExt for R where R: AsyncInput<Item = u8> + ?Sized {}
 ///
 /// This operation is not cancellation safe. Dropping it retains bytes already
 /// consumed from `reader`.
-async fn read_binary_async<const N: usize, T, R, F>(
-    reader: &mut R,
-    decode: F,
-) -> Result<T>
+async fn read_binary_async<const N: usize, T, R, F>(reader: &mut R, decode: F) -> Result<T>
 where
     R: AsyncInput<Item = u8> + Unpin + ?Sized,
     F: FnOnce(&[u8]) -> T,

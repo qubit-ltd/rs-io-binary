@@ -137,11 +137,7 @@ macro_rules! impl_value_write {
             // SAFETY: `LEN` is declared by the codec and fits the fixed
             // internal buffer.
             unsafe {
-                let _ = encode_infallible_unchecked::<Codec>(
-                    value,
-                    &mut self.buffer,
-                    0,
-                );
+                let _ = encode_infallible_unchecked::<Codec>(value, &mut self.buffer, 0);
             }
             write_all(&mut self.inner, &self.buffer[..LEN])
         }
@@ -154,66 +150,16 @@ macro_rules! impl_for_order {
         where
             W: Output<Item = u8>,
         {
-            impl_value_write!(
-                $order,
-                write_u8,
-                u8,
-                "Writes an unsigned 8-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i8,
-                i8,
-                "Writes a signed 8-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u16,
-                u16,
-                "Writes an unsigned 16-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u32,
-                u32,
-                "Writes an unsigned 32-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u64,
-                u64,
-                "Writes an unsigned 64-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_u128,
-                u128,
-                "Writes an unsigned 128-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i16,
-                i16,
-                "Writes a signed 16-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i32,
-                i32,
-                "Writes a signed 32-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i64,
-                i64,
-                "Writes a signed 64-bit integer."
-            );
-            impl_value_write!(
-                $order,
-                write_i128,
-                i128,
-                "Writes a signed 128-bit integer."
-            );
+            impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
+            impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
+            impl_value_write!($order, write_u16, u16, "Writes an unsigned 16-bit integer.");
+            impl_value_write!($order, write_u32, u32, "Writes an unsigned 32-bit integer.");
+            impl_value_write!($order, write_u64, u64, "Writes an unsigned 64-bit integer.");
+            impl_value_write!($order, write_u128, u128, "Writes an unsigned 128-bit integer.");
+            impl_value_write!($order, write_i16, i16, "Writes a signed 16-bit integer.");
+            impl_value_write!($order, write_i32, i32, "Writes a signed 32-bit integer.");
+            impl_value_write!($order, write_i64, i64, "Writes a signed 64-bit integer.");
+            impl_value_write!($order, write_i128, i128, "Writes a signed 128-bit integer.");
             impl_value_write!($order, write_f32, f32, "Writes a 32-bit float.");
             impl_value_write!($order, write_f64, f64, "Writes a 64-bit float.");
 
@@ -232,10 +178,7 @@ macro_rules! impl_for_order {
             /// Returns an invalid-input error when the length exceeds
             /// `u16::MAX`, or an output error while writing.
             #[inline]
-            pub fn write_string_with_u16_len(
-                &mut self,
-                value: &str,
-            ) -> Result<()> {
+            pub fn write_string_with_u16_len(&mut self, value: &str) -> Result<()> {
                 self.write_u16(checked_u16_len(value.len())?)?;
                 let bytes = value.as_bytes();
                 write_all(&mut self.inner, bytes)
@@ -256,10 +199,7 @@ macro_rules! impl_for_order {
             /// Returns an invalid-input error when the length exceeds
             /// `u32::MAX`, or an output error while writing.
             #[inline]
-            pub fn write_string_with_u32_len(
-                &mut self,
-                value: &str,
-            ) -> Result<()> {
+            pub fn write_string_with_u32_len(&mut self, value: &str) -> Result<()> {
                 self.write_u32(checked_u32_len(value.len())?)?;
                 let bytes = value.as_bytes();
                 write_all(&mut self.inner, bytes)
@@ -308,12 +248,7 @@ where
     ///
     /// `index..index + count` must be a valid range within `input`.
     #[inline(always)]
-    unsafe fn write_unchecked(
-        &mut self,
-        input: &[u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
         // SAFETY: The caller upholds the same indexed range contract required
         // by the wrapped output.
         unsafe { self.inner.write_unchecked(input, index, count) }

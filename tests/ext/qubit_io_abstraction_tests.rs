@@ -33,16 +33,10 @@ impl QubitInput {
 impl Input for QubitInput {
     type Item = u8;
 
-    unsafe fn read_unchecked(
-        &mut self,
-        output: &mut [u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn read_unchecked(&mut self, output: &mut [u8], index: usize, count: usize) -> Result<usize> {
         let available = self.bytes.len().saturating_sub(self.position);
         let read = available.min(count);
-        output[index..index + read]
-            .copy_from_slice(&self.bytes[self.position..self.position + read]);
+        output[index..index + read].copy_from_slice(&self.bytes[self.position..self.position + read]);
         self.position += read;
         Ok(read)
     }
@@ -56,12 +50,7 @@ struct QubitOutput {
 impl Output for QubitOutput {
     type Item = u8;
 
-    unsafe fn write_unchecked(
-        &mut self,
-        input: &[u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
         self.bytes.extend_from_slice(&input[index..index + count]);
         Ok(count)
     }

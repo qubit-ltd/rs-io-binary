@@ -35,12 +35,8 @@ fn test_zig_zag_writer_writes_all_methods_and_exposes_accessors() {
     writer.write_i16(-300).expect("i16 should be written");
     writer.write_i32(-0x1f600).expect("i32 should be written");
     writer.write_i64(i64::MIN).expect("i64 should be written");
-    writer
-        .write_i128(i128::MIN)
-        .expect("i128 should be written");
-    writer
-        .write_isize(isize::MIN)
-        .expect("isize should be written");
+    writer.write_i128(i128::MIN).expect("i128 should be written");
+    writer.write_isize(isize::MIN).expect("isize should be written");
 
     assert!(!writer.into_inner().is_empty());
 }
@@ -49,9 +45,7 @@ fn test_zig_zag_writer_writes_all_methods_and_exposes_accessors() {
 fn test_zig_zag_writer_returns_writer_error() {
     let mut writer = ZigZagWriter::new(FailingWriter);
 
-    let error = writer
-        .write_i16(-300)
-        .expect_err("writer error should be returned");
+    let error = writer.write_i16(-300).expect_err("writer error should be returned");
 
     assert_eq!(ErrorKind::Other, error.kind());
 }
@@ -60,12 +54,9 @@ fn test_zig_zag_writer_returns_writer_error() {
 fn test_zig_zag_writer_write_and_seek_delegate_to_inner_writer() {
     let mut writer = ZigZagWriter::new(std::io::Cursor::new(vec![0; 4]));
 
-    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
-        .expect("seeking through ZigZagWriter should succeed");
-    Output::write_fully(&mut writer, b"xy")
-        .expect("writing through ZigZagWriter should succeed");
-    Output::flush(&mut writer)
-        .expect("flushing through ZigZagWriter should succeed");
+    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1)).expect("seeking through ZigZagWriter should succeed");
+    Output::write_fully(&mut writer, b"xy").expect("writing through ZigZagWriter should succeed");
+    Output::flush(&mut writer).expect("flushing through ZigZagWriter should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

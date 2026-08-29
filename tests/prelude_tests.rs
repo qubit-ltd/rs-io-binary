@@ -28,9 +28,7 @@ fn test_prelude_imports_binary_extension_traits() {
     assert!(!leb128_policy_is_strict::<NonStrict>());
 
     let mut buffer = Vec::new();
-    buffer
-        .write_uleb_u16(300)
-        .expect("Leb128WriteExt should be in prelude");
+    buffer.write_uleb_u16(300).expect("Leb128WriteExt should be in prelude");
     buffer
         .write_zig_zag_i16(-42)
         .expect("ZigZagWriteExt should be in prelude");

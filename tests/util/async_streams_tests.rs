@@ -59,8 +59,7 @@ impl AsyncInput for PartialAsyncInput {
         if read == 0 {
             return Poll::Ready(Ok(0));
         }
-        output[index..index + read]
-            .copy_from_slice(&self.bytes[self.position..self.position + read]);
+        output[index..index + read].copy_from_slice(&self.bytes[self.position..self.position + read]);
         self.position += read;
         Poll::Ready(Ok(read))
     }
@@ -101,10 +100,7 @@ impl AsyncOutput for PartialAsyncOutput {
         Poll::Ready(Ok(written))
     }
 
-    fn poll_flush(
-        self: Pin<&mut Self>,
-        _cx: &mut Context<'_>,
-    ) -> Poll<Result<()>> {
+    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<()>> {
         Poll::Ready(Ok(()))
     }
 }
@@ -126,27 +122,21 @@ where
 #[test]
 fn async_stream_drivers_handle_pending_and_partial_io() {
     let mut output = PartialAsyncOutput::new();
-    complete(output.write_u32_be_async(0x1234_5678))
-        .expect("fixed-width payload should write");
-    complete(output.write_uleb_u64_async(300))
-        .expect("LEB128 payload should write");
-    complete(output.write_utf8_payload_async("payload"))
-        .expect("UTF-8 payload should write");
+    complete(output.write_u32_be_async(0x1234_5678)).expect("fixed-width payload should write");
+    complete(output.write_uleb_u64_async(300)).expect("LEB128 payload should write");
+    complete(output.write_utf8_payload_async("payload")).expect("UTF-8 payload should write");
 
     let mut input = PartialAsyncInput::new(output.bytes);
     assert_eq!(
         0x1234_5678,
-        complete(input.read_u32_be_async())
-            .expect("fixed-width payload should read"),
+        complete(input.read_u32_be_async()).expect("fixed-width payload should read"),
     );
     assert_eq!(
         300,
-        complete(input.read_uleb_u64_strict_async())
-            .expect("LEB128 payload should read"),
+        complete(input.read_uleb_u64_strict_async()).expect("LEB128 payload should read"),
     );
     assert_eq!(
         "payload",
-        complete(input.read_utf8_payload_async(7, 7))
-            .expect("UTF-8 payload should read"),
+        complete(input.read_utf8_payload_async(7, 7)).expect("UTF-8 payload should read"),
     );
 }

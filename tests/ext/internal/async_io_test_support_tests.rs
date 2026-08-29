@@ -69,8 +69,7 @@ impl AsyncInput for ChunkedAsyncInput {
         if read == 0 {
             return Poll::Ready(Ok(0));
         }
-        output[index..index + read]
-            .copy_from_slice(&self.bytes[self.position..self.position + read]);
+        output[index..index + read].copy_from_slice(&self.bytes[self.position..self.position + read]);
         self.position += read;
         Poll::Ready(Ok(read))
     }
@@ -123,10 +122,7 @@ impl AsyncOutput for ChunkedAsyncOutput {
         count: usize,
     ) -> Poll<Result<usize>> {
         if let Some(kind) = self.error {
-            return Poll::Ready(Err(Error::new(
-                kind,
-                "scripted write failure",
-            )));
+            return Poll::Ready(Err(Error::new(kind, "scripted write failure")));
         }
         if self.pending {
             self.pending = false;
@@ -142,10 +138,7 @@ impl AsyncOutput for ChunkedAsyncOutput {
         Poll::Ready(Ok(written))
     }
 
-    fn poll_flush(
-        self: Pin<&mut Self>,
-        _cx: &mut Context<'_>,
-    ) -> Poll<Result<()>> {
+    fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<Result<()>> {
         Poll::Ready(Ok(()))
     }
 }

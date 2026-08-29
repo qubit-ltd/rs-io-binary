@@ -89,10 +89,7 @@ where
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
         Self {
-            output: TranscodeEncodeOutput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            output: TranscodeEncodeOutput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
         }
     }
 
@@ -103,15 +100,9 @@ where
     /// Returns an allocation error when the requested buffer cannot be
     /// allocated.
     #[inline]
-    pub fn try_with_capacity(
-        inner: W,
-        capacity: usize,
-    ) -> std::result::Result<Self, TryReserveError> {
+    pub fn try_with_capacity(inner: W, capacity: usize) -> std::result::Result<Self, TryReserveError> {
         Ok(Self {
-            output: TranscodeEncodeOutput::try_with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            )?,
+            output: TranscodeEncodeOutput::try_with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY))?,
         })
     }
 
@@ -224,12 +215,7 @@ where
     ///
     /// `index..index + count` must be a valid range within `input`.
     #[inline(always)]
-    unsafe fn write_unchecked(
-        &mut self,
-        input: &[u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
         // SAFETY: The caller upholds the indexed source range contract.
         unsafe { self.output.write_unchecked(input, index, count) }
     }

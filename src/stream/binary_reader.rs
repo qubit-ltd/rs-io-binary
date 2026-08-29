@@ -23,10 +23,7 @@ use qubit_io::Seekable;
 
 use crate::util::decode_infallible_unchecked;
 use crate::util::read_utf8_payload;
-#[cfg(not(any(
-    target_pointer_width = "32",
-    target_pointer_width = "64"
-)))]
+#[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
 use crate::util::usize_from_u32_len;
 
 /// Reader wrapper for fixed-width binary values.
@@ -147,66 +144,16 @@ macro_rules! impl_for_order {
         where
             R: Input<Item = u8>,
         {
-            impl_value_read!(
-                $order,
-                read_u8,
-                u8,
-                "Reads an unsigned 8-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i8,
-                i8,
-                "Reads a signed 8-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u16,
-                u16,
-                "Reads an unsigned 16-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u32,
-                u32,
-                "Reads an unsigned 32-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u64,
-                u64,
-                "Reads an unsigned 64-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_u128,
-                u128,
-                "Reads an unsigned 128-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i16,
-                i16,
-                "Reads a signed 16-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i32,
-                i32,
-                "Reads a signed 32-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i64,
-                i64,
-                "Reads a signed 64-bit integer."
-            );
-            impl_value_read!(
-                $order,
-                read_i128,
-                i128,
-                "Reads a signed 128-bit integer."
-            );
+            impl_value_read!($order, read_u8, u8, "Reads an unsigned 8-bit integer.");
+            impl_value_read!($order, read_i8, i8, "Reads a signed 8-bit integer.");
+            impl_value_read!($order, read_u16, u16, "Reads an unsigned 16-bit integer.");
+            impl_value_read!($order, read_u32, u32, "Reads an unsigned 32-bit integer.");
+            impl_value_read!($order, read_u64, u64, "Reads an unsigned 64-bit integer.");
+            impl_value_read!($order, read_u128, u128, "Reads an unsigned 128-bit integer.");
+            impl_value_read!($order, read_i16, i16, "Reads a signed 16-bit integer.");
+            impl_value_read!($order, read_i32, i32, "Reads a signed 32-bit integer.");
+            impl_value_read!($order, read_i64, i64, "Reads a signed 64-bit integer.");
+            impl_value_read!($order, read_i128, i128, "Reads a signed 128-bit integer.");
             impl_value_read!($order, read_f32, f32, "Reads a 32-bit float.");
             impl_value_read!($order, read_f64, f64, "Reads a 64-bit float.");
 
@@ -226,10 +173,7 @@ macro_rules! impl_for_order {
             /// [`std::io::ErrorKind::InvalidData`] when the encoded length
             /// exceeds `max_len` or the payload is not valid UTF-8.
             #[inline]
-            pub fn read_string_with_u16_len(
-                &mut self,
-                max_len: usize,
-            ) -> Result<String> {
+            pub fn read_string_with_u16_len(&mut self, max_len: usize) -> Result<String> {
                 let len = usize::from(self.read_u16()?);
                 read_utf8_payload(&mut self.inner, len, max_len)
             }
@@ -250,20 +194,11 @@ macro_rules! impl_for_order {
             /// [`std::io::ErrorKind::InvalidData`] when the encoded length
             /// exceeds `max_len` or the payload is not valid UTF-8.
             #[inline]
-            pub fn read_string_with_u32_len(
-                &mut self,
-                max_len: usize,
-            ) -> Result<String> {
+            pub fn read_string_with_u32_len(&mut self, max_len: usize) -> Result<String> {
                 let len = self.read_u32()?;
-                #[cfg(any(
-                    target_pointer_width = "32",
-                    target_pointer_width = "64"
-                ))]
+                #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
                 let len = len as usize;
-                #[cfg(not(any(
-                    target_pointer_width = "32",
-                    target_pointer_width = "64"
-                )))]
+                #[cfg(not(any(target_pointer_width = "32", target_pointer_width = "64")))]
                 let len = usize_from_u32_len(len)?;
                 read_utf8_payload(&mut self.inner, len, max_len)
             }
@@ -311,12 +246,7 @@ where
     ///
     /// `index..index + count` must be a valid range within `output`.
     #[inline(always)]
-    unsafe fn read_unchecked(
-        &mut self,
-        output: &mut [u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn read_unchecked(&mut self, output: &mut [u8], index: usize, count: usize) -> Result<usize> {
         // SAFETY: The caller upholds the same indexed range contract required
         // by the wrapped input.
         unsafe { self.inner.read_unchecked(output, index, count) }

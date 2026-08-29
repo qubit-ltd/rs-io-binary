@@ -58,8 +58,7 @@ fn dropping_zig_zag_write_future_retains_partial_output() {
 fn async_zig_zag_write_propagates_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
 
-    let error = complete(output.write_zig_zag_i64_async(-42))
-        .expect_err("scripted output should fail");
+    let error = complete(output.write_zig_zag_i64_async(-42)).expect_err("scripted output should fail");
 
     assert_eq!(ErrorKind::BrokenPipe, error.kind());
 }

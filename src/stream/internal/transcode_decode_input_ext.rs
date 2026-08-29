@@ -60,8 +60,6 @@ where
         C::DecodeError: StreamCodecDecodeError,
     {
         let mut codec = C::default();
-        self.read_decoded_with(&mut codec, |source| {
-            Error::new(source.io_error_kind(), source)
-        })
+        self.read_decoded_with(&mut codec, |source| Error::new(source.io_error_kind(), source))
     }
 }

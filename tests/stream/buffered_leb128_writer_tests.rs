@@ -28,66 +28,44 @@ impl Write for FailingWriter {
 #[test]
 fn test_buffered_leb128_writer_writes_values_across_buffer_boundaries() {
     let mut expected = Vec::new();
-    expected
-        .write_uleb_u8(u8::MAX)
-        .expect("u8 should be encoded");
+    expected.write_uleb_u8(u8::MAX).expect("u8 should be encoded");
     expected.write_uleb_u16(300).expect("u16 should be encoded");
-    expected
-        .write_uleb_u32(0x1f600)
-        .expect("u32 should be encoded");
+    expected.write_uleb_u32(0x1f600).expect("u32 should be encoded");
     expected
         .write_uleb_u64(0x0102_0304_0506_0708)
         .expect("u64 should be encoded");
     expected
         .write_uleb_u128(0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("u128 should be encoded");
-    expected
-        .write_uleb_usize(usize::MAX)
-        .expect("usize should be encoded");
-    expected
-        .write_sleb_i8(i8::MIN)
-        .expect("i8 should be encoded");
-    expected
-        .write_sleb_i16(-300)
-        .expect("i16 should be encoded");
-    expected
-        .write_sleb_i32(-0x1f600)
-        .expect("i32 should be encoded");
+    expected.write_uleb_usize(usize::MAX).expect("usize should be encoded");
+    expected.write_sleb_i8(i8::MIN).expect("i8 should be encoded");
+    expected.write_sleb_i16(-300).expect("i16 should be encoded");
+    expected.write_sleb_i32(-0x1f600).expect("i32 should be encoded");
     expected
         .write_sleb_i64(-0x0102_0304_0506_0708)
         .expect("i64 should be encoded");
     expected
         .write_sleb_i128(-0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("i128 should be encoded");
-    expected
-        .write_sleb_isize(isize::MIN)
-        .expect("isize should be encoded");
+    expected.write_sleb_isize(isize::MIN).expect("isize should be encoded");
 
     let mut writer = BufferedLeb128Writer::with_capacity(Vec::new(), 3);
     writer.write_u8(u8::MAX).expect("u8 should be written");
     writer.write_u16(300).expect("u16 should be written");
     writer.write_u32(0x1f600).expect("u32 should be written");
-    writer
-        .write_u64(0x0102_0304_0506_0708)
-        .expect("u64 should be written");
+    writer.write_u64(0x0102_0304_0506_0708).expect("u64 should be written");
     writer
         .write_u128(0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("u128 should be written");
-    writer
-        .write_usize(usize::MAX)
-        .expect("usize should be written");
+    writer.write_usize(usize::MAX).expect("usize should be written");
     writer.write_i8(i8::MIN).expect("i8 should be written");
     writer.write_i16(-300).expect("i16 should be written");
     writer.write_i32(-0x1f600).expect("i32 should be written");
-    writer
-        .write_i64(-0x0102_0304_0506_0708)
-        .expect("i64 should be written");
+    writer.write_i64(-0x0102_0304_0506_0708).expect("i64 should be written");
     writer
         .write_i128(-0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("i128 should be written");
-    writer
-        .write_isize(isize::MIN)
-        .expect("isize should be written");
+    writer.write_isize(isize::MIN).expect("isize should be written");
 
     writer.flush().expect("writer should flush");
     assert_eq!(expected, writer.inner().clone());
@@ -102,9 +80,7 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_and_string() {
         .write_utf8_string_usize("abc")
         .expect("string should be buffered");
     assert_eq!(1, writer.write(&[9]).expect("raw byte should be buffered"));
-    writer
-        .write_fully(&[10])
-        .expect("raw byte should be buffered");
+    writer.write_fully(&[10]).expect("raw byte should be buffered");
     assert_eq!(
         6,
         writer
@@ -114,15 +90,11 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_and_string() {
 
     writer.flush().expect("flush should write all bytes");
 
-    assert_eq!(
-        vec![3, b'a', b'b', b'c', 9, 10],
-        writer.inner().clone().into_inner()
-    );
+    assert_eq!(vec![3, b'a', b'b', b'c', 9, 10], writer.inner().clone().into_inner());
 }
 
 #[test]
-fn test_buffered_leb128_writer_into_parts_returns_pending_bytes_without_flushing()
- {
+fn test_buffered_leb128_writer_into_parts_returns_pending_bytes_without_flushing() {
     let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
 
     writer.write_u64(300).expect("u64 should be buffered");
@@ -138,9 +110,7 @@ fn test_buffered_leb128_writer_flush_error_leaves_writer_available_for_retry() {
     let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 8);
     writer.write_u64(300).expect("u64 should be buffered");
 
-    let error = writer
-        .flush()
-        .expect_err("flush should report write failure");
+    let error = writer.flush().expect_err("flush should report write failure");
 
     assert_eq!(ErrorKind::Other, error.kind());
     let retry_error = writer
@@ -163,12 +133,8 @@ fn test_buffered_leb128_writer_returns_writer_error() {
 fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
     let mut writer = BufferedLeb128Writer::with_capacity(Vec::new(), 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
-    writer
-        .write_u8(1)
-        .expect("encoded value should flush then buffer");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
+    writer.write_u8(1).expect("encoded value should flush then buffer");
 
     let mut expected = vec![1; 18];
     expected.push(1);
@@ -180,9 +146,7 @@ fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
 fn test_buffered_leb128_writer_defers_utf8_string_flush_error() {
     let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     writer
         .write_utf8_string_usize("a")
         .expect("length-prefixed string should grow the persistent buffer");
@@ -194,8 +158,7 @@ fn test_buffered_leb128_writer_defers_utf8_string_flush_error() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix()
- {
+fn test_buffered_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
     let mut writer = BufferedLeb128Writer::new(Vec::new());
 
     writer
@@ -227,7 +190,6 @@ fn test_buffered_leb128_writer_reports_string_prefix_and_capacity_errors() {
         .expect_err("u64 prefix flush error should be returned");
     assert_eq!(ErrorKind::Other, error.kind());
 
-    let result =
-        BufferedLeb128Writer::try_with_capacity(Vec::<u8>::new(), usize::MAX);
+    let result = BufferedLeb128Writer::try_with_capacity(Vec::<u8>::new(), usize::MAX);
     assert!(result.is_err());
 }

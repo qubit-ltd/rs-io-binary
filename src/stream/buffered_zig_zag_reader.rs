@@ -94,10 +94,7 @@ where
     #[inline]
     pub fn with_capacity(inner: R, capacity: usize) -> Self {
         Self {
-            input: TranscodeDecodeInput::with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            ),
+            input: TranscodeDecodeInput::with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY)),
             marker: PhantomData,
         }
     }
@@ -109,15 +106,9 @@ where
     /// Returns an allocation error when the requested buffer cannot be
     /// allocated.
     #[inline]
-    pub fn try_with_capacity(
-        inner: R,
-        capacity: usize,
-    ) -> std::result::Result<Self, TryReserveError> {
+    pub fn try_with_capacity(inner: R, capacity: usize) -> std::result::Result<Self, TryReserveError> {
         Ok(Self {
-            input: TranscodeDecodeInput::try_with_capacity(
-                inner,
-                capacity.max(MIN_CODEC_BUFFER_CAPACITY),
-            )?,
+            input: TranscodeDecodeInput::try_with_capacity(inner, capacity.max(MIN_CODEC_BUFFER_CAPACITY))?,
             marker: PhantomData,
         })
     }
@@ -260,12 +251,7 @@ where
     ///
     /// `index..index + count` must be a valid range within `output`.
     #[inline(always)]
-    unsafe fn read_unchecked(
-        &mut self,
-        output: &mut [u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn read_unchecked(&mut self, output: &mut [u8], index: usize, count: usize) -> Result<usize> {
         // SAFETY: The caller upholds the indexed destination range contract.
         unsafe { self.input.read_unchecked(output, index, count) }
     }

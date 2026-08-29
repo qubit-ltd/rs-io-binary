@@ -50,10 +50,7 @@ use super::try_reserve_vec;
 /// This operation is not cancellation safe. Dropping it retains bytes already
 /// consumed from `input` and modifications already made to `output`.
 #[inline(always)]
-pub(crate) async fn read_exactly_async<I>(
-    input: &mut I,
-    output: &mut [u8],
-) -> Result<()>
+pub(crate) async fn read_exactly_async<I>(input: &mut I, output: &mut [u8]) -> Result<()>
 where
     I: AsyncInput<Item = u8> + Unpin + ?Sized,
 {
@@ -85,10 +82,7 @@ where
 /// This operation is not cancellation safe. Dropping it leaves any
 /// already-written prefix in `output`.
 #[inline(always)]
-pub(crate) async fn write_all_async<O>(
-    output: &mut O,
-    input: &[u8],
-) -> Result<()>
+pub(crate) async fn write_all_async<O>(output: &mut O, input: &[u8]) -> Result<()>
 where
     O: AsyncOutput<Item = u8> + Unpin + ?Sized,
 {
@@ -120,9 +114,7 @@ where
 ///
 /// This operation is not cancellation safe. Dropping it retains any bytes
 /// already consumed from `reader`.
-pub(crate) async fn read_leb128_payload_async<const N: usize, C, R>(
-    reader: &mut R,
-) -> Result<C::Value>
+pub(crate) async fn read_leb128_payload_async<const N: usize, C, R>(reader: &mut R) -> Result<C::Value>
 where
     R: AsyncInput<Item = u8> + Unpin + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
@@ -169,11 +161,7 @@ where
 ///
 /// This operation is not cancellation safe. Dropping it retains bytes already
 /// consumed from `reader`.
-pub(crate) async fn read_utf8_payload_async<R>(
-    reader: &mut R,
-    len: usize,
-    max_len: usize,
-) -> Result<String>
+pub(crate) async fn read_utf8_payload_async<R>(reader: &mut R, len: usize, max_len: usize) -> Result<String>
 where
     R: AsyncInput<Item = u8> + Unpin + ?Sized,
 {
@@ -229,12 +217,7 @@ where
 ///
 /// The helper performs length validation, fallible capacity reservation, and
 /// exact input transfer but leaves UTF-8 validation to its caller.
-async fn read_utf8_payload_bytes_async<R>(
-    reader: &mut R,
-    bytes: &mut Vec<u8>,
-    len: usize,
-    max_len: usize,
-) -> Result<()>
+async fn read_utf8_payload_bytes_async<R>(reader: &mut R, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()>
 where
     R: AsyncInput<Item = u8> + Unpin + ?Sized,
 {

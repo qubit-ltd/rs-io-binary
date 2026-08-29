@@ -21,18 +21,17 @@ use crate::util::write_all_async;
 
 macro_rules! write_binary_value_async {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
-        write_binary_async::<
-            { BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE },
-            _,
-            _,
-            _,
-        >($writer, $value, |bytes, value| {
-            type Codec = BinaryCodec<$ty, $order>;
-            // SAFETY: The local buffer has exactly the codec's fixed width.
-            unsafe {
-                let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
-            }
-        })
+        write_binary_async::<{ BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE }, _, _, _>(
+            $writer,
+            $value,
+            |bytes, value| {
+                type Codec = BinaryCodec<$ty, $order>;
+                // SAFETY: The local buffer has exactly the codec's fixed width.
+                unsafe {
+                    let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
+                }
+            },
+        )
         .await
     };
 }
@@ -93,11 +92,7 @@ macro_rules! runtime_order_write_method {
         #[doc = "This operation is not cancellation safe. Dropping the future \
                  retains any bytes already written to the output."]
         #[inline]
-        fn $name(
-            &mut self,
-            value: $ty,
-            byte_order: ByteOrder,
-        ) -> impl Future<Output = Result<()>> + '_
+        fn $name(&mut self, value: $ty, byte_order: ByteOrder) -> impl Future<Output = Result<()>> + '_
         where
             Self: Unpin,
         {
@@ -394,11 +389,7 @@ impl<W> AsyncBinaryWriteExt for W where W: AsyncOutput<Item = u8> + ?Sized {}
 ///
 /// This operation is not cancellation safe. Dropping it leaves an
 /// already-written prefix in `writer`.
-async fn write_binary_async<const N: usize, T, W, F>(
-    writer: &mut W,
-    value: T,
-    encode: F,
-) -> Result<()>
+async fn write_binary_async<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
 where
     W: AsyncOutput<Item = u8> + Unpin + ?Sized,
     F: FnOnce(&mut [u8], T),

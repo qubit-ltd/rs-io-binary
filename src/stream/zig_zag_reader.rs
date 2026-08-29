@@ -127,11 +127,10 @@ macro_rules! impl_read_value {
         pub fn $method(&mut self) -> Result<$ty> {
             type Codec = ZigZagCodec<$ty, $policy>;
 
-            read_leb128_from_reader::<
-                { Codec::MAX_DECODE_UNITS_PER_VALUE },
-                Codec,
-                _,
-            >(&mut self.inner, &mut self.buffer)
+            read_leb128_from_reader::<{ Codec::MAX_DECODE_UNITS_PER_VALUE }, Codec, _>(
+                &mut self.inner,
+                &mut self.buffer,
+            )
         }
     };
 }
@@ -213,12 +212,7 @@ where
     ///
     /// `index..index + count` must be a valid range within `output`.
     #[inline(always)]
-    unsafe fn read_unchecked(
-        &mut self,
-        output: &mut [u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn read_unchecked(&mut self, output: &mut [u8], index: usize, count: usize) -> Result<usize> {
         // SAFETY: The caller upholds the wrapped input's range contract.
         unsafe { self.inner.read_unchecked(output, index, count) }
     }

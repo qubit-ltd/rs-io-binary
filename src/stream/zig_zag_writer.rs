@@ -111,12 +111,9 @@ macro_rules! impl_write_value {
         pub fn $method(&mut self, value: $ty) -> Result<()> {
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
-            self.write_zig_zag::<$ty, { Codec::MAX_ENCODE_UNITS_PER_VALUE }, _>(
-                value,
-                |bytes, value| unsafe {
-                    encode_infallible_unchecked::<Codec>(value, bytes, 0)
-                },
-            )
+            self.write_zig_zag::<$ty, { Codec::MAX_ENCODE_UNITS_PER_VALUE }, _>(value, |bytes, value| unsafe {
+                encode_infallible_unchecked::<Codec>(value, bytes, 0)
+            })
         }
     };
 }
@@ -155,11 +152,7 @@ where
     /// Returns an output error, including a write-zero error when the output
     /// stops making progress.
     #[inline]
-    fn write_zig_zag<T, const N: usize, F>(
-        &mut self,
-        value: T,
-        encode: F,
-    ) -> Result<()>
+    fn write_zig_zag<T, const N: usize, F>(&mut self, value: T, encode: F) -> Result<()>
     where
         F: FnOnce(&mut [u8; MIN_CODEC_BUFFER_CAPACITY], T) -> usize,
     {
@@ -204,12 +197,7 @@ where
     ///
     /// `index..index + count` must be a valid range within `input`.
     #[inline(always)]
-    unsafe fn write_unchecked(
-        &mut self,
-        input: &[u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
         // SAFETY: The caller upholds the wrapped output's range contract.
         unsafe { self.inner.write_unchecked(input, index, count) }
     }

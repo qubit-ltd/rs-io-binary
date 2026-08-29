@@ -21,19 +21,18 @@ use crate::util::write_all;
 
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
-        write_binary::<
-            { BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE },
-            _,
-            _,
-            _,
-        >($writer, $value, |bytes, value| {
-            type Codec = BinaryCodec<$ty, $order>;
-            // SAFETY: The local buffer is exactly the codec's maximum buffer
-            // length.
-            unsafe {
-                let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
-            }
-        })
+        write_binary::<{ BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE }, _, _, _>(
+            $writer,
+            $value,
+            |bytes, value| {
+                type Codec = BinaryCodec<$ty, $order>;
+                // SAFETY: The local buffer is exactly the codec's maximum buffer
+                // length.
+                unsafe {
+                    let _ = encode_infallible_unchecked::<Codec>(value, bytes, 0);
+                }
+            },
+        )
     };
 }
 
@@ -744,11 +743,7 @@ impl<W> BinaryWriteExt for W where W: Output<Item = u8> + ?Sized {}
 /// Returns an output error, including a write-zero error when the output stops
 /// making progress.
 #[inline]
-fn write_binary<const N: usize, T, W, F>(
-    writer: &mut W,
-    value: T,
-    encode: F,
-) -> Result<()>
+fn write_binary<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
 where
     W: Output<Item = u8> + ?Sized,
     F: FnOnce(&mut [u8], T),

@@ -49,16 +49,10 @@ impl AsyncOutput for NonSendAsyncOutput {
     ) -> std::task::Poll<std::io::Result<usize>> {
         let this = self.get_mut();
         // SAFETY: The caller upholds the indexed input range contract.
-        unsafe {
-            Pin::new(&mut this.inner)
-                .poll_write_unchecked(cx, input, index, count)
-        }
+        unsafe { Pin::new(&mut this.inner).poll_write_unchecked(cx, input, index, count) }
     }
 
-    fn poll_flush(
-        self: Pin<&mut Self>,
-        cx: &mut Context<'_>,
-    ) -> std::task::Poll<std::io::Result<()>> {
+    fn poll_flush(self: Pin<&mut Self>, cx: &mut Context<'_>) -> std::task::Poll<std::io::Result<()>> {
         let this = self.get_mut();
         Pin::new(&mut this.inner).poll_flush(cx)
     }
@@ -79,14 +73,10 @@ fn async_binary_write_covers_scalars_and_byte_orders() {
         output.write_i8_async(-0x25).await?;
         output.write_u16_be_async(0x1234).await?;
         output.write_u16_le_async(0x5678).await?;
-        output
-            .write_u16_async(0x9ABC, ByteOrder::NativeEndian)
-            .await?;
+        output.write_u16_async(0x9ABC, ByteOrder::NativeEndian).await?;
         output.write_u32_be_async(0x1234_5678).await?;
         output.write_u32_le_async(0x9ABC_DEF0).await?;
-        output
-            .write_u32_async(0x1357_9BDF, ByteOrder::BigEndian)
-            .await?;
+        output.write_u32_async(0x1357_9BDF, ByteOrder::BigEndian).await?;
         output.write_u64_be_async(0x0123_4567_89AB_CDEF).await?;
         output.write_u64_le_async(0xFEDC_BA98_7654_3210).await?;
         output
@@ -101,12 +91,8 @@ fn async_binary_write_covers_scalars_and_byte_orders() {
         output.write_i32_le_async(234_567).await?;
         output.write_i64_be_async(-1_234_567_890).await?;
         output.write_i64_le_async(2_345_678_901).await?;
-        output
-            .write_i128_be_async(-12_345_678_901_234_567_890)
-            .await?;
-        output
-            .write_i128_le_async(23_456_789_012_345_678_901)
-            .await?;
+        output.write_i128_be_async(-12_345_678_901_234_567_890).await?;
+        output.write_i128_le_async(23_456_789_012_345_678_901).await?;
         output.write_f32_be_async(1.25).await?;
         output.write_f32_le_async(-2.5).await?;
         output.write_f64_be_async(10.25).await?;
@@ -123,21 +109,13 @@ fn async_binary_write_covers_scalars_and_byte_orders() {
     expected
         .write_u16(0x9ABC, ByteOrder::NativeEndian)
         .expect("u16 should encode");
-    expected
-        .write_u32_be(0x1234_5678)
-        .expect("u32 should encode");
-    expected
-        .write_u32_le(0x9ABC_DEF0)
-        .expect("u32 should encode");
+    expected.write_u32_be(0x1234_5678).expect("u32 should encode");
+    expected.write_u32_le(0x9ABC_DEF0).expect("u32 should encode");
     expected
         .write_u32(0x1357_9BDF, ByteOrder::BigEndian)
         .expect("u32 should encode");
-    expected
-        .write_u64_be(0x0123_4567_89AB_CDEF)
-        .expect("u64 should encode");
-    expected
-        .write_u64_le(0xFEDC_BA98_7654_3210)
-        .expect("u64 should encode");
+    expected.write_u64_be(0x0123_4567_89AB_CDEF).expect("u64 should encode");
+    expected.write_u64_le(0xFEDC_BA98_7654_3210).expect("u64 should encode");
     expected
         .write_u128_be(0x0123_4567_89AB_CDEF_0011_2233_4455_6677)
         .expect("u128 should encode");
@@ -148,12 +126,8 @@ fn async_binary_write_covers_scalars_and_byte_orders() {
     expected.write_i16_le(2345).expect("i16 should encode");
     expected.write_i32_be(-123_456).expect("i32 should encode");
     expected.write_i32_le(234_567).expect("i32 should encode");
-    expected
-        .write_i64_be(-1_234_567_890)
-        .expect("i64 should encode");
-    expected
-        .write_i64_le(2_345_678_901)
-        .expect("i64 should encode");
+    expected.write_i64_be(-1_234_567_890).expect("i64 should encode");
+    expected.write_i64_le(2_345_678_901).expect("i64 should encode");
     expected
         .write_i128_be(-12_345_678_901_234_567_890)
         .expect("i128 should encode");
@@ -184,8 +158,7 @@ fn dropping_binary_write_future_retains_partial_output() {
 fn async_binary_write_propagates_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
 
-    let error = complete(output.write_u32_be_async(0x1234_5678))
-        .expect_err("scripted output should fail");
+    let error = complete(output.write_u32_be_async(0x1234_5678)).expect_err("scripted output should fail");
 
     assert_eq!(ErrorKind::BrokenPipe, error.kind());
 }

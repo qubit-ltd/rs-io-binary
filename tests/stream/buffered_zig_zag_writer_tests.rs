@@ -28,15 +28,9 @@ impl Write for FailingWriter {
 #[test]
 fn test_buffered_zig_zag_writer_writes_values_across_buffer_boundaries() {
     let mut expected = Vec::new();
-    expected
-        .write_zig_zag_i8(i8::MIN)
-        .expect("i8 should be encoded");
-    expected
-        .write_zig_zag_i16(-300)
-        .expect("i16 should be encoded");
-    expected
-        .write_zig_zag_i32(-0x1f600)
-        .expect("i32 should be encoded");
+    expected.write_zig_zag_i8(i8::MIN).expect("i8 should be encoded");
+    expected.write_zig_zag_i16(-300).expect("i16 should be encoded");
+    expected.write_zig_zag_i32(-0x1f600).expect("i32 should be encoded");
     expected
         .write_zig_zag_i64(-0x0102_0304_0506_0708)
         .expect("i64 should be encoded");
@@ -51,15 +45,11 @@ fn test_buffered_zig_zag_writer_writes_values_across_buffer_boundaries() {
     writer.write_i8(i8::MIN).expect("i8 should be written");
     writer.write_i16(-300).expect("i16 should be written");
     writer.write_i32(-0x1f600).expect("i32 should be written");
-    writer
-        .write_i64(-0x0102_0304_0506_0708)
-        .expect("i64 should be written");
+    writer.write_i64(-0x0102_0304_0506_0708).expect("i64 should be written");
     writer
         .write_i128(-0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("i128 should be written");
-    writer
-        .write_isize(isize::MIN)
-        .expect("isize should be written");
+    writer.write_isize(isize::MIN).expect("isize should be written");
 
     writer.flush().expect("writer should flush");
     assert_eq!(expected, writer.inner().clone());
@@ -70,13 +60,9 @@ fn test_buffered_zig_zag_writer_accessors_write_all_and_seek() {
     let mut writer = BufferedZigZagWriter::new(Cursor::new(Vec::new()));
 
     assert_eq!(0, writer.inner().position());
-    writer
-        .write_i8(-1)
-        .expect("ZigZag value should be buffered");
+    writer.write_i8(-1).expect("ZigZag value should be buffered");
     assert_eq!(1, writer.write(&[9]).expect("raw byte should be buffered"));
-    writer
-        .write_fully(&[10])
-        .expect("raw byte should be buffered");
+    writer.write_fully(&[10]).expect("raw byte should be buffered");
     assert_eq!(
         3,
         writer
@@ -90,8 +76,7 @@ fn test_buffered_zig_zag_writer_accessors_write_all_and_seek() {
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushing()
- {
+fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushing() {
     let mut writer = BufferedZigZagWriter::new(Cursor::new(Vec::new()));
 
     writer.write_i64(-300).expect("i64 should be buffered");
@@ -103,14 +88,11 @@ fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushin
 }
 
 #[test]
-fn test_buffered_zig_zag_writer_flush_error_leaves_writer_available_for_retry()
-{
+fn test_buffered_zig_zag_writer_flush_error_leaves_writer_available_for_retry() {
     let mut writer = BufferedZigZagWriter::with_capacity(FailingWriter, 8);
     writer.write_i64(-300).expect("i64 should be buffered");
 
-    let error = writer
-        .flush()
-        .expect_err("flush should report write failure");
+    let error = writer.flush().expect_err("flush should report write failure");
 
     assert_eq!(ErrorKind::Other, error.kind());
     let retry_error = writer
@@ -133,12 +115,8 @@ fn test_buffered_zig_zag_writer_returns_writer_error() {
 fn test_buffered_zig_zag_writer_flushes_before_encoded_value_when_full() {
     let mut writer = BufferedZigZagWriter::with_capacity(Vec::new(), 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
-    writer
-        .write_i8(-1)
-        .expect("encoded value should flush then buffer");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
+    writer.write_i8(-1).expect("encoded value should flush then buffer");
 
     let mut expected = vec![1; 18];
     expected.push(1);

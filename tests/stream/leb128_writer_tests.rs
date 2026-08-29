@@ -34,27 +34,19 @@ fn test_leb128_writer_writes_all_methods_and_exposes_accessors() {
     writer.write_u8(u8::MAX).expect("u8 should be written");
     writer.write_u16(300).expect("u16 should be written");
     writer.write_u32(0x1f600).expect("u32 should be written");
-    writer
-        .write_u64(0x0102_0304_0506_0708)
-        .expect("u64 should be written");
+    writer.write_u64(0x0102_0304_0506_0708).expect("u64 should be written");
     writer
         .write_u128(0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("u128 should be written");
-    writer
-        .write_usize(usize::MAX)
-        .expect("usize should be written");
+    writer.write_usize(usize::MAX).expect("usize should be written");
     writer.write_i8(i8::MIN).expect("i8 should be written");
     writer.write_i16(-300).expect("i16 should be written");
     writer.write_i32(-0x1f600).expect("i32 should be written");
-    writer
-        .write_i64(-0x0102_0304_0506_0708)
-        .expect("i64 should be written");
+    writer.write_i64(-0x0102_0304_0506_0708).expect("i64 should be written");
     writer
         .write_i128(-0x0102_0304_0506_0708_1112_1314_1516_1718)
         .expect("i128 should be written");
-    writer
-        .write_isize(isize::MIN)
-        .expect("isize should be written");
+    writer.write_isize(isize::MIN).expect("isize should be written");
 
     assert!(!writer.into_inner().is_empty());
 }
@@ -63,9 +55,7 @@ fn test_leb128_writer_writes_all_methods_and_exposes_accessors() {
 fn test_leb128_writer_returns_writer_error() {
     let mut writer = Leb128Writer::new(FailingWriter);
 
-    let error = writer
-        .write_u16(300)
-        .expect_err("writer error should be returned");
+    let error = writer.write_u16(300).expect_err("writer error should be returned");
 
     assert_eq!(ErrorKind::Other, error.kind());
 }
@@ -96,12 +86,9 @@ fn test_leb128_writer_write_utf8_string_u64_writes_portable_length_prefix() {
 fn test_leb128_writer_write_and_seek_delegate_to_inner_writer() {
     let mut writer = Leb128Writer::new(std::io::Cursor::new(vec![0; 4]));
 
-    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1))
-        .expect("seeking through Leb128Writer should succeed");
-    Output::write_fully(&mut writer, b"xy")
-        .expect("writing through Leb128Writer should succeed");
-    Output::flush(&mut writer)
-        .expect("flushing through Leb128Writer should succeed");
+    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1)).expect("seeking through Leb128Writer should succeed");
+    Output::write_fully(&mut writer, b"xy").expect("writing through Leb128Writer should succeed");
+    Output::flush(&mut writer).expect("flushing through Leb128Writer should succeed");
 
     let cursor = writer.into_inner();
     assert_eq!(cursor.into_inner(), vec![0, b'x', b'y', 0]);

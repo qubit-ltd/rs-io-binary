@@ -42,15 +42,8 @@ impl RecordingOutput {
 impl Output for RecordingOutput {
     type Item = u8;
 
-    unsafe fn write_unchecked(
-        &mut self,
-        input: &[u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
-        self.bytes
-            .borrow_mut()
-            .extend_from_slice(&input[index..index + count]);
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
+        self.bytes.borrow_mut().extend_from_slice(&input[index..index + count]);
         Ok(count)
     }
 
@@ -67,8 +60,7 @@ macro_rules! exercise_input_methods {
         let mut output = [0; 5];
         assert_eq!(
             2,
-            unsafe { reader.read_unchecked(&mut output, 1, 2) }
-                .expect("unchecked read should succeed")
+            unsafe { reader.read_unchecked(&mut output, 1, 2) }.expect("unchecked read should succeed")
         );
         assert_eq!([0, 0x10, 0x20, 0, 0], output);
 
@@ -81,26 +73,18 @@ macro_rules! exercise_input_methods {
         let mut output = [0; 5];
         assert_eq!(
             2,
-            unsafe { reader.read_fully_unchecked(&mut output, 1, 2) }
-                .expect("unchecked full read should succeed")
+            unsafe { reader.read_fully_unchecked(&mut output, 1, 2) }.expect("unchecked full read should succeed")
         );
         assert_eq!([0, 0x10, 0x20, 0, 0], output);
 
         let mut reader = $constructor(vec![0x10, 0x20, 0x30]);
         let mut output = [0; 3];
-        assert_eq!(
-            3,
-            reader
-                .read_fully(&mut output)
-                .expect("full read should succeed")
-        );
+        assert_eq!(3, reader.read_fully(&mut output).expect("full read should succeed"));
         assert_eq!([0x10, 0x20, 0x30], output);
 
         let mut reader = $constructor(vec![0x10, 0x20]);
         let mut output = [0; 2];
-        reader
-            .read_exactly(&mut output)
-            .expect("exact read should succeed");
+        reader.read_exactly(&mut output).expect("exact read should succeed");
         assert_eq!([0x10, 0x20], output);
     }};
 }
@@ -114,13 +98,9 @@ macro_rules! exercise_output_methods {
         let input = [0x10, 0x20, 0x30];
         assert_eq!(
             2,
-            unsafe { writer.write_unchecked(&input, 1, 2) }
-                .expect("unchecked write should succeed")
+            unsafe { writer.write_unchecked(&input, 1, 2) }.expect("unchecked write should succeed")
         );
-        assert_eq!(
-            2,
-            writer.write(&[0x40, 0x50]).expect("write should succeed")
-        );
+        assert_eq!(2, writer.write(&[0x40, 0x50]).expect("write should succeed"));
 
         let input = [0x60, 0x70, 0x80];
         unsafe {
@@ -128,9 +108,7 @@ macro_rules! exercise_output_methods {
                 .write_fully_unchecked(&input, 1, 2)
                 .expect("unchecked full write should succeed");
         }
-        writer
-            .write_fully(&[0x90, 0xa0])
-            .expect("full write should succeed");
+        writer.write_fully(&[0x90, 0xa0]).expect("full write should succeed");
         writer.flush().expect("flush should succeed");
 
         assert_eq!(
@@ -151,26 +129,17 @@ macro_rules! exercise_seek_method {
 
 #[test]
 fn reader_forwarding_methods_delegate_for_every_reader_wrapper() {
-    exercise_input_methods!(
-        |bytes| BinaryReader::<_, BigEndian>::new(Cursor::new(bytes)),
-        false
-    );
+    exercise_input_methods!(|bytes| BinaryReader::<_, BigEndian>::new(Cursor::new(bytes)), false);
     exercise_input_methods!(
         |bytes| BufferedBinaryReader::<_, BigEndian>::new(Cursor::new(bytes)),
         true
     );
-    exercise_input_methods!(
-        |bytes| Leb128Reader::<_, NonStrict>::new(Cursor::new(bytes)),
-        false
-    );
+    exercise_input_methods!(|bytes| Leb128Reader::<_, NonStrict>::new(Cursor::new(bytes)), false);
     exercise_input_methods!(
         |bytes| BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(bytes)),
         true
     );
-    exercise_input_methods!(
-        |bytes| ZigZagReader::<_, NonStrict>::new(Cursor::new(bytes)),
-        false
-    );
+    exercise_input_methods!(|bytes| ZigZagReader::<_, NonStrict>::new(Cursor::new(bytes)), false);
     exercise_input_methods!(
         |bytes| BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(bytes)),
         true
@@ -189,30 +158,14 @@ fn writer_forwarding_methods_delegate_for_every_writer_wrapper() {
 
 #[test]
 fn seek_forwarding_methods_delegate_for_every_seekable_wrapper() {
-    exercise_seek_method!(BinaryReader::<_, BigEndian>::new(Cursor::new(
-        vec![0, 1, 2,]
-    )));
-    exercise_seek_method!(BufferedBinaryReader::<_, BigEndian>::new(
-        Cursor::new(vec![0, 1, 2])
-    ));
-    exercise_seek_method!(Leb128Reader::<_, NonStrict>::new(Cursor::new(
-        vec![0, 1, 2,]
-    )));
-    exercise_seek_method!(BufferedLeb128Reader::<_, NonStrict>::new(
-        Cursor::new(vec![0, 1, 2])
-    ));
-    exercise_seek_method!(ZigZagReader::<_, NonStrict>::new(Cursor::new(
-        vec![0, 1, 2,]
-    )));
-    exercise_seek_method!(BufferedZigZagReader::<_, NonStrict>::new(
-        Cursor::new(vec![0, 1, 2])
-    ));
-    exercise_seek_method!(BinaryWriter::<_, BigEndian>::new(Cursor::new(
-        Vec::new(),
-    )));
-    exercise_seek_method!(BufferedBinaryWriter::<_, BigEndian>::new(
-        Cursor::new(Vec::new())
-    ));
+    exercise_seek_method!(BinaryReader::<_, BigEndian>::new(Cursor::new(vec![0, 1, 2,])));
+    exercise_seek_method!(BufferedBinaryReader::<_, BigEndian>::new(Cursor::new(vec![0, 1, 2])));
+    exercise_seek_method!(Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0, 1, 2,])));
+    exercise_seek_method!(BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(vec![0, 1, 2])));
+    exercise_seek_method!(ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0, 1, 2,])));
+    exercise_seek_method!(BufferedZigZagReader::<_, NonStrict>::new(Cursor::new(vec![0, 1, 2])));
+    exercise_seek_method!(BinaryWriter::<_, BigEndian>::new(Cursor::new(Vec::new(),)));
+    exercise_seek_method!(BufferedBinaryWriter::<_, BigEndian>::new(Cursor::new(Vec::new())));
     exercise_seek_method!(Leb128Writer::new(Cursor::new(Vec::new())));
     exercise_seek_method!(BufferedLeb128Writer::new(Cursor::new(Vec::new())));
     exercise_seek_method!(ZigZagWriter::new(Cursor::new(Vec::new())));

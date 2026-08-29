@@ -15,9 +15,7 @@ use qubit_io_binary::Leb128WriteExt;
 #[test]
 fn test_read_leb128_payload_round_trips_maximum_u128_width() {
     let mut bytes = Vec::new();
-    bytes
-        .write_uleb_u128(u128::MAX)
-        .expect("maximum u128 should encode");
+    bytes.write_uleb_u128(u128::MAX).expect("maximum u128 should encode");
     assert_eq!(19, bytes.len());
 
     let decoded = Cursor::new(bytes)

@@ -31,26 +31,14 @@ fn zig_zag_fixture() -> Vec<u8> {
 fn async_zig_zag_read_covers_supported_integer_widths() {
     let mut input = ChunkedAsyncInput::new(zig_zag_fixture());
 
-    assert_eq!(
-        -100,
-        complete(input.read_zig_zag_i8_strict_async()).unwrap(),
-    );
-    assert_eq!(
-        -20_000,
-        complete(input.read_zig_zag_i16_non_strict_async()).unwrap(),
-    );
-    assert_eq!(
-        -2_000_000,
-        complete(input.read_zig_zag_i32_strict_async()).unwrap(),
-    );
+    assert_eq!(-100, complete(input.read_zig_zag_i8_strict_async()).unwrap(),);
+    assert_eq!(-20_000, complete(input.read_zig_zag_i16_non_strict_async()).unwrap(),);
+    assert_eq!(-2_000_000, complete(input.read_zig_zag_i32_strict_async()).unwrap(),);
     assert_eq!(
         -20_000_000_000,
         complete(input.read_zig_zag_i64_non_strict_async()).unwrap(),
     );
-    assert_eq!(
-        i128::MIN,
-        complete(input.read_zig_zag_i128_strict_async()).unwrap(),
-    );
+    assert_eq!(i128::MIN, complete(input.read_zig_zag_i128_strict_async()).unwrap(),);
     assert_eq!(
         isize::MIN,
         complete(input.read_zig_zag_isize_non_strict_async()).unwrap(),
@@ -74,12 +62,11 @@ fn dropping_zig_zag_read_future_retains_consumed_input() {
 #[test]
 fn async_zig_zag_read_reports_invalid_and_truncated_payloads() {
     let mut input = ChunkedAsyncInput::new(vec![0x80; 19]);
-    let invalid = complete(input.read_zig_zag_i128_non_strict_async())
-        .expect_err("unterminated maximum payload should fail");
+    let invalid =
+        complete(input.read_zig_zag_i128_non_strict_async()).expect_err("unterminated maximum payload should fail");
     assert_eq!(ErrorKind::InvalidData, invalid.kind());
 
     let mut input = ChunkedAsyncInput::new(vec![0x80]);
-    let truncated = complete(input.read_zig_zag_i128_non_strict_async())
-        .expect_err("truncated payload should fail");
+    let truncated = complete(input.read_zig_zag_i128_non_strict_async()).expect_err("truncated payload should fail");
     assert_eq!(ErrorKind::UnexpectedEof, truncated.kind());
 }

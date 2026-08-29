@@ -39,15 +39,9 @@ impl QubitInput {
 impl Input for QubitInput {
     type Item = u8;
 
-    unsafe fn read_unchecked(
-        &mut self,
-        output: &mut [u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn read_unchecked(&mut self, output: &mut [u8], index: usize, count: usize) -> Result<usize> {
         let read = count.min(self.bytes.len().saturating_sub(self.position));
-        output[index..index + read]
-            .copy_from_slice(&self.bytes[self.position..self.position + read]);
+        output[index..index + read].copy_from_slice(&self.bytes[self.position..self.position + read]);
         self.position += read;
         Ok(read)
     }
@@ -61,12 +55,7 @@ struct QubitOutput {
 impl Output for QubitOutput {
     type Item = u8;
 
-    unsafe fn write_unchecked(
-        &mut self,
-        input: &[u8],
-        index: usize,
-        count: usize,
-    ) -> Result<usize> {
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
         self.bytes.extend_from_slice(&input[index..index + count]);
         Ok(count)
     }
@@ -78,15 +67,12 @@ impl Output for QubitOutput {
 
 #[test]
 fn binary_reader_accepts_input_without_std_read() {
-    let mut reader =
-        BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
+    let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
     assert!(!reader.is_buffered());
     assert_eq!(0x1234, reader.read_u16().unwrap());
 
-    let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![
-        0, 1, b'a', 0, 0, 0, 1, b'b',
-    ]));
+    let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0, 1, b'a', 0, 0, 0, 1, b'b']));
     assert_eq!("a", reader.read_string_with_u16_len(1).unwrap());
     assert_eq!("b", reader.read_string_with_u32_len(1).unwrap());
 }
@@ -108,10 +94,7 @@ fn binary_writer_accepts_output_without_std_write() {
 
 #[test]
 fn buffered_binary_reader_accepts_input_without_std_read() {
-    let mut reader =
-        BufferedBinaryReader::<_, BigEndian>::new(QubitInput::new(vec![
-            0x12, 0x34,
-        ]));
+    let mut reader = BufferedBinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
     assert!(reader.is_buffered());
     assert_eq!(0x1234, reader.read_u16().unwrap());
@@ -119,8 +102,7 @@ fn buffered_binary_reader_accepts_input_without_std_read() {
 
 #[test]
 fn buffered_binary_writer_accepts_output_without_std_write() {
-    let mut writer =
-        BufferedBinaryWriter::<_, BigEndian>::new(QubitOutput::default());
+    let mut writer = BufferedBinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
     assert!(writer.is_buffered());
     writer.write_u16(0x1234).unwrap();
@@ -131,43 +113,25 @@ fn buffered_binary_writer_accepts_output_without_std_write() {
 
 #[test]
 fn buffered_wrappers_support_fallible_capacity_allocation() {
-    BufferedBinaryReader::<_, BigEndian>::try_with_capacity(
-        QubitInput::new(vec![]),
-        1,
-    )
-    .expect("binary reader buffer should allocate");
-    BufferedBinaryWriter::<_, BigEndian>::try_with_capacity(
-        QubitOutput::default(),
-        1,
-    )
-    .expect("binary writer buffer should allocate");
-    BufferedLeb128Reader::<_, NonStrict>::try_with_capacity(
-        QubitInput::new(vec![]),
-        1,
-    )
-    .expect("LEB128 reader buffer should allocate");
-    BufferedLeb128Writer::try_with_capacity(QubitOutput::default(), 1)
-        .expect("LEB128 writer buffer should allocate");
-    BufferedZigZagReader::<_, NonStrict>::try_with_capacity(
-        QubitInput::new(vec![]),
-        1,
-    )
-    .expect("ZigZag reader buffer should allocate");
-    BufferedZigZagWriter::try_with_capacity(QubitOutput::default(), 1)
-        .expect("ZigZag writer buffer should allocate");
+    BufferedBinaryReader::<_, BigEndian>::try_with_capacity(QubitInput::new(vec![]), 1)
+        .expect("binary reader buffer should allocate");
+    BufferedBinaryWriter::<_, BigEndian>::try_with_capacity(QubitOutput::default(), 1)
+        .expect("binary writer buffer should allocate");
+    BufferedLeb128Reader::<_, NonStrict>::try_with_capacity(QubitInput::new(vec![]), 1)
+        .expect("LEB128 reader buffer should allocate");
+    BufferedLeb128Writer::try_with_capacity(QubitOutput::default(), 1).expect("LEB128 writer buffer should allocate");
+    BufferedZigZagReader::<_, NonStrict>::try_with_capacity(QubitInput::new(vec![]), 1)
+        .expect("ZigZag reader buffer should allocate");
+    BufferedZigZagWriter::try_with_capacity(QubitOutput::default(), 1).expect("ZigZag writer buffer should allocate");
 }
 
 #[test]
 fn leb128_readers_accept_input_without_std_read() {
-    let mut reader =
-        Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
+    let mut reader = Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
     assert!(!reader.is_buffered());
     assert_eq!(300, reader.read_u16_non_strict().unwrap());
 
-    let mut reader =
-        BufferedLeb128Reader::<_, NonStrict>::new(QubitInput::new(vec![
-            0xac, 0x02,
-        ]));
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
     assert!(reader.is_buffered());
     assert_eq!(300, reader.read_u16_non_strict().unwrap());
 }
@@ -179,10 +143,7 @@ fn leb128_writers_accept_output_without_std_write() {
     writer.write_u16(300).unwrap();
     writer.write_utf8_string_usize("a").unwrap();
     writer.write_utf8_string_u64("b").unwrap();
-    assert_eq!(
-        vec![0xac, 0x02, 1, b'a', 1, b'b'],
-        writer.into_inner().bytes
-    );
+    assert_eq!(vec![0xac, 0x02, 1, b'a', 1, b'b'], writer.into_inner().bytes);
 
     let mut writer = BufferedLeb128Writer::new(QubitOutput::default());
     assert!(writer.is_buffered());
@@ -193,13 +154,11 @@ fn leb128_writers_accept_output_without_std_write() {
 
 #[test]
 fn zig_zag_readers_accept_input_without_std_read() {
-    let mut reader =
-        ZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
+    let mut reader = ZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
     assert!(!reader.is_buffered());
     assert_eq!(-1, reader.read_i16_non_strict().unwrap());
 
-    let mut reader =
-        BufferedZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
+    let mut reader = BufferedZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
     assert!(reader.is_buffered());
     assert_eq!(-1, reader.read_i16_non_strict().unwrap());
 }

@@ -160,11 +160,7 @@ struct ChunkedWriter {
 }
 
 impl ChunkedWriter {
-    fn new(
-        output: Rc<RefCell<Vec<u8>>>,
-        request_lengths: Rc<RefCell<Vec<usize>>>,
-        max_chunk_len: usize,
-    ) -> Self {
+    fn new(output: Rc<RefCell<Vec<u8>>>, request_lengths: Rc<RefCell<Vec<usize>>>, max_chunk_len: usize) -> Self {
         Self {
             output,
             request_lengths,
@@ -193,10 +189,7 @@ struct PartialErrorWriter {
 
 impl PartialErrorWriter {
     fn new(output: Rc<RefCell<Vec<u8>>>) -> Self {
-        Self {
-            output,
-            write_count: 0,
-        }
+        Self { output, write_count: 0 }
     }
 }
 
@@ -227,9 +220,7 @@ fn expected_values() -> Vec<u8> {
     bytes.write_u8(0xaa).expect("u8 should be encoded");
     bytes.write_i8(-2).expect("i8 should be encoded");
     bytes.write_u16_le(0x1234).expect("u16 should be encoded");
-    bytes
-        .write_u32_le(0x1234_5678)
-        .expect("u32 should be encoded");
+    bytes.write_u32_le(0x1234_5678).expect("u32 should be encoded");
     bytes
         .write_u64_le(0x0123_4567_89ab_cdef)
         .expect("u64 should be encoded");
@@ -237,9 +228,7 @@ fn expected_values() -> Vec<u8> {
         .write_u128_le(0x0123_4567_89ab_cdef_fedc_ba98_7654_3210)
         .expect("u128 should be encoded");
     bytes.write_i16_le(-0x1234).expect("i16 should be encoded");
-    bytes
-        .write_i32_le(-0x0123_4567)
-        .expect("i32 should be encoded");
+    bytes.write_i32_le(-0x0123_4567).expect("i32 should be encoded");
     bytes
         .write_i64_le(-0x0123_4567_89ab_cdef)
         .expect("i64 should be encoded");
@@ -253,29 +242,20 @@ fn expected_values() -> Vec<u8> {
 
 #[test]
 fn test_buffered_binary_writer_writes_scalars_across_buffer_boundaries() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 9);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 9);
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
     writer.write_u8(0xaa).expect("u8 should be written");
     writer.write_i8(-2).expect("i8 should be written");
     writer.write_u16(0x1234).expect("u16 should be written");
-    writer
-        .write_u32(0x1234_5678)
-        .expect("u32 should be written");
-    writer
-        .write_u64(0x0123_4567_89ab_cdef)
-        .expect("u64 should be written");
+    writer.write_u32(0x1234_5678).expect("u32 should be written");
+    writer.write_u64(0x0123_4567_89ab_cdef).expect("u64 should be written");
     writer
         .write_u128(0x0123_4567_89ab_cdef_fedc_ba98_7654_3210)
         .expect("u128 should be written");
     writer.write_i16(-0x1234).expect("i16 should be written");
-    writer
-        .write_i32(-0x0123_4567)
-        .expect("i32 should be written");
-    writer
-        .write_i64(-0x0123_4567_89ab_cdef)
-        .expect("i64 should be written");
+    writer.write_i32(-0x0123_4567).expect("i32 should be written");
+    writer.write_i64(-0x0123_4567_89ab_cdef).expect("i64 should be written");
     writer
         .write_i128(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210)
         .expect("i128 should be written");
@@ -288,35 +268,27 @@ fn test_buffered_binary_writer_writes_scalars_across_buffer_boundaries() {
 
 #[test]
 fn test_buffered_binary_writer_accessors_write_all_and_seek() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
 
     assert_eq!(ByteOrder::LittleEndian, writer.byte_order());
     assert_eq!(0, writer.inner().position());
     writer.write_u8(1).expect("u8 should be buffered");
-    assert_eq!(
-        2,
-        writer.write(&[2, 3]).expect("raw bytes should be buffered")
-    );
+    assert_eq!(2, writer.write(&[2, 3]).expect("raw bytes should be buffered"));
     assert_eq!(
         3,
         writer
             .seek_to(SeekFrom::End(0))
             .expect("seek should flush pending bytes")
     );
-    writer
-        .write_u8(4)
-        .expect("u8 should be buffered after seek");
+    writer.write_u8(4).expect("u8 should be buffered after seek");
 
     writer.flush().expect("flush should write all bytes");
     assert_eq!(vec![1, 2, 3, 4], writer.inner().clone().into_inner());
 }
 
 #[test]
-fn test_buffered_binary_writer_into_parts_returns_pending_bytes_without_flushing()
- {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
+fn test_buffered_binary_writer_into_parts_returns_pending_bytes_without_flushing() {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(Cursor::new(Vec::new()));
 
     writer.write_u16(0x1234).expect("u16 should be buffered");
     assert_eq!(0, writer.inner().position());
@@ -328,29 +300,17 @@ fn test_buffered_binary_writer_into_parts_returns_pending_bytes_without_flushing
 
 #[test]
 fn test_buffered_binary_writer_cursor_cold_paths_and_fixed_flush() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        Cursor::new(Vec::new()),
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Cursor::new(Vec::new()), 19);
 
-    writer
-        .write_fully(&[1; 14])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 14]).expect("initial bytes should be buffered");
     writer
         .write_fully(&[2; 5])
         .expect("exact spare write_all should stay buffered");
-    writer
-        .write_u16(0x0403)
-        .expect("fixed value should flush full buffer");
+    writer.write_u16(0x0403).expect("fixed value should flush full buffer");
     writer
         .write_fully(&[5; 16])
         .expect("bytes should fill most of the buffer");
-    assert_eq!(
-        5,
-        writer
-            .write(&[6; 5])
-            .expect("write should flush then buffer")
-    );
+    assert_eq!(5, writer.write(&[6; 5]).expect("write should flush then buffer"));
 
     writer.flush().expect("writer should flush");
     let cursor = writer.inner().clone();
@@ -365,19 +325,12 @@ fn test_buffered_binary_writer_cursor_cold_paths_and_fixed_flush() {
 
 #[test]
 fn test_buffered_binary_writer_write_all_direct_and_buffered_slow_paths() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
     let large: Vec<u8> = (0u8..32).collect();
 
-    writer
-        .write_fully(&large)
-        .expect("large write_all should delegate");
-    writer
-        .write_fully(&[1; 18])
-        .expect("small write_all should buffer");
-    writer
-        .write_fully(&[2; 5])
-        .expect("write_all should flush then buffer");
+    writer.write_fully(&large).expect("large write_all should delegate");
+    writer.write_fully(&[1; 18]).expect("small write_all should buffer");
+    writer.write_fully(&[2; 5]).expect("write_all should flush then buffer");
 
     let mut expected = large;
     expected.extend_from_slice(&[1; 18]);
@@ -388,12 +341,9 @@ fn test_buffered_binary_writer_write_all_direct_and_buffered_slow_paths() {
 
 #[test]
 fn test_buffered_binary_writer_write_all_exact_spare_uses_cold_no_flush_path() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
-    writer
-        .write_fully(&[1; 14])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 14]).expect("initial bytes should be buffered");
     writer
         .write_fully(&[2; 5])
         .expect("exact spare write_all should stay buffered");
@@ -406,18 +356,10 @@ fn test_buffered_binary_writer_write_all_exact_spare_uses_cold_no_flush_path() {
 
 #[test]
 fn test_buffered_binary_writer_write_flushes_then_buffers_small_input() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
-    assert_eq!(
-        5,
-        writer
-            .write(&[2; 5])
-            .expect("small write should flush then buffer")
-    );
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
+    assert_eq!(5, writer.write(&[2; 5]).expect("small write should flush then buffer"));
 
     let mut expected = vec![1; 18];
     expected.extend_from_slice(&[2; 5]);
@@ -427,17 +369,12 @@ fn test_buffered_binary_writer_write_flushes_then_buffers_small_input() {
 
 #[test]
 fn test_buffered_binary_writer_write_exact_spare_uses_cold_no_flush_path() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
-    writer
-        .write_fully(&[1; 14])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 14]).expect("initial bytes should be buffered");
     assert_eq!(
         5,
-        writer
-            .write(&[2; 5])
-            .expect("exact spare write should stay buffered")
+        writer.write(&[2; 5]).expect("exact spare write should stay buffered")
     );
 
     let mut expected = vec![1; 14];
@@ -448,15 +385,10 @@ fn test_buffered_binary_writer_write_exact_spare_uses_cold_no_flush_path() {
 
 #[test]
 fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
-    writer
-        .write_u16(0x0203)
-        .expect("fixed value should flush then buffer");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
+    writer.write_u16(0x0203).expect("fixed value should flush then buffer");
 
     let mut expected = vec![1; 18];
     expected.extend_from_slice(&[3, 2]);
@@ -466,14 +398,9 @@ fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
 
 #[test]
 fn test_buffered_binary_writer_defers_flush_error_for_fixed_value() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     writer
         .write_u16(0x0203)
         .expect("fixed value should grow the persistent buffer");
@@ -486,14 +413,9 @@ fn test_buffered_binary_writer_defers_flush_error_for_fixed_value() {
 
 #[test]
 fn test_buffered_binary_writer_write_all_reports_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     let error = writer
         .write_fully(&[2; 5])
         .expect_err("write_all should report flush error");
@@ -503,28 +425,17 @@ fn test_buffered_binary_writer_write_all_reports_flush_error() {
 
 #[test]
 fn test_buffered_binary_writer_write_reports_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
-    let error = writer
-        .write(&[2; 5])
-        .expect_err("write should report flush error");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
+    let error = writer.write(&[2; 5]).expect_err("write should report flush error");
 
     assert_eq!(ErrorKind::Other, error.kind());
 }
 
 #[test]
-fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_buffer()
- {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        19,
-    );
+fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_buffer() {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
 
     let write_error = writer
         .write(&[1; 19])
@@ -539,14 +450,9 @@ fn test_buffered_binary_writer_large_write_reports_inner_error_without_pending_b
 
 #[test]
 fn test_buffered_binary_writer_seek_reports_flush_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingSeekWriter,
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingSeekWriter, 19);
 
-    writer
-        .write_fully(&[1; 18])
-        .expect("initial bytes should be buffered");
+    writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     let error = writer
         .seek_to(SeekFrom::Start(0))
         .expect_err("seek should report flush error");
@@ -556,10 +462,7 @@ fn test_buffered_binary_writer_seek_reports_flush_error() {
 
 #[test]
 fn test_buffered_binary_writer_reports_inner_seek_error_after_flush() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        SeekErrorWriter::new(),
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(SeekErrorWriter::new(), 19);
 
     writer.write_u8(1).expect("value should be buffered");
     let error = writer
@@ -570,33 +473,20 @@ fn test_buffered_binary_writer_reports_inner_seek_error_after_flush() {
 }
 
 #[test]
-fn test_buffered_binary_writer_reports_inner_flush_error_without_pending_buffer()
- {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FlushErrorWriter,
-        19,
-    );
+fn test_buffered_binary_writer_reports_inner_flush_error_without_pending_buffer() {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FlushErrorWriter, 19);
 
-    let error = writer
-        .flush()
-        .expect_err("inner flush error should be returned");
+    let error = writer.flush().expect_err("inner flush error should be returned");
 
     assert_eq!(ErrorKind::Other, error.kind());
 }
 
 #[test]
 fn test_buffered_binary_writer_flush_error_leaves_writer_available_for_retry() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        8,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 8);
 
-    writer
-        .write_u32(0x0102_0304)
-        .expect("value should be buffered");
-    let error = writer
-        .flush()
-        .expect_err("flush should report write failure");
+    writer.write_u32(0x0102_0304).expect("value should be buffered");
+    let error = writer.flush().expect_err("flush should report write failure");
 
     assert_eq!(ErrorKind::Other, error.kind());
     let retry_error = writer
@@ -607,12 +497,9 @@ fn test_buffered_binary_writer_flush_error_leaves_writer_available_for_retry() {
 
 #[test]
 fn test_buffered_binary_writer_reports_write_zero_while_flushing() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(ZeroWriter, 8);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(ZeroWriter, 8);
 
-    writer
-        .write_u32(0x0102_0304)
-        .expect("value should be buffered");
+    writer.write_u32(0x0102_0304).expect("value should be buffered");
     let error = writer.flush().expect_err("zero write should fail");
 
     assert_eq!(ErrorKind::WriteZero, error.kind());
@@ -620,14 +507,9 @@ fn test_buffered_binary_writer_reports_write_zero_while_flushing() {
 
 #[test]
 fn test_buffered_binary_writer_retries_interrupted_flush() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        InterruptedOnceWriter::new(),
-        8,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(InterruptedOnceWriter::new(), 8);
 
-    writer
-        .write_u32(0x0102_0304)
-        .expect("value should be buffered");
+    writer.write_u32(0x0102_0304).expect("value should be buffered");
     writer.flush().expect("flush should retry interruption");
     let inner = writer.inner();
 
@@ -636,14 +518,9 @@ fn test_buffered_binary_writer_retries_interrupted_flush() {
 
 #[test]
 fn test_buffered_binary_writer_returns_error_after_interrupted_flush() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        InterruptedThenErrorWriter::new(),
-        8,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(InterruptedThenErrorWriter::new(), 8);
 
-    writer
-        .write_u32(0x0102_0304)
-        .expect("value should be buffered");
+    writer.write_u32(0x0102_0304).expect("value should be buffered");
     let error = writer
         .flush()
         .expect_err("non-interrupted write error should be returned");
@@ -653,10 +530,7 @@ fn test_buffered_binary_writer_returns_error_after_interrupted_flush() {
 
 #[test]
 fn test_buffered_binary_writer_returns_writer_error() {
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        8,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 8);
 
     writer.write_u64(0x1234).expect("value should be buffered");
     let error = writer.flush().expect_err("flush should fail");
@@ -668,10 +542,8 @@ fn test_buffered_binary_writer_returns_writer_error() {
 fn test_buffered_binary_writer_delegates_large_raw_write_once() {
     let output = Rc::new(RefCell::new(Vec::new()));
     let request_lengths = Rc::new(RefCell::new(Vec::new()));
-    let inner =
-        ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
+    let inner = ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
     let bytes: Vec<u8> = (0u8..32).collect();
 
     let count = writer.write(&bytes).expect("raw bytes should be written");
@@ -685,14 +557,10 @@ fn test_buffered_binary_writer_delegates_large_raw_write_once() {
 fn test_buffered_binary_writer_buffers_small_write_with_chunked_writer() {
     let output = Rc::new(RefCell::new(Vec::new()));
     let request_lengths = Rc::new(RefCell::new(Vec::new()));
-    let inner =
-        ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
+    let inner = ChunkedWriter::new(Rc::clone(&output), Rc::clone(&request_lengths), 8);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
 
-    writer
-        .write_fully(&[1, 2, 3])
-        .expect("small write should be buffered");
+    writer.write_fully(&[1, 2, 3]).expect("small write should be buffered");
     assert!(output.borrow().is_empty());
     assert!(request_lengths.borrow().is_empty());
     writer.flush().expect("flush should write buffered bytes");
@@ -705,15 +573,12 @@ fn test_buffered_binary_writer_buffers_small_write_with_chunked_writer() {
 fn test_buffered_binary_writer_drops_flushed_prefix_after_error() {
     let output = Rc::new(RefCell::new(Vec::new()));
     let inner = PartialErrorWriter::new(Rc::clone(&output));
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(inner, 19);
 
     writer.write_u32(0x0102_0304).expect("value should buffer");
     let error = writer.flush().expect_err("partial flush should fail");
     assert_eq!(ErrorKind::Other, error.kind());
-    writer
-        .flush()
-        .expect("remaining buffered bytes should flush");
+    writer.flush().expect("remaining buffered bytes should flush");
 
     assert_eq!([4, 3, 2, 1], output.borrow().as_slice());
 }
@@ -745,10 +610,7 @@ fn test_buffered_binary_writer_reports_string_length_and_prefix_errors() {
         .expect_err("oversized u16 string should fail");
     assert_eq!(ErrorKind::InvalidInput, error.kind());
 
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
     writer
         .write_fully(&[1; 18])
         .expect("the buffer should accept the initial bytes");
@@ -757,10 +619,7 @@ fn test_buffered_binary_writer_reports_string_length_and_prefix_errors() {
         .expect_err("u16 prefix flush error should be returned");
     assert_eq!(ErrorKind::Other, error.kind());
 
-    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        FailingWriter,
-        19,
-    );
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
     writer
         .write_fully(&[1; 18])
         .expect("the buffer should accept the initial bytes");
@@ -772,9 +631,6 @@ fn test_buffered_binary_writer_reports_string_length_and_prefix_errors() {
 
 #[test]
 fn test_buffered_binary_writer_rejects_impossible_capacity() {
-    let result = BufferedBinaryWriter::<_, LittleEndian>::try_with_capacity(
-        Vec::<u8>::new(),
-        usize::MAX,
-    );
+    let result = BufferedBinaryWriter::<_, LittleEndian>::try_with_capacity(Vec::<u8>::new(), usize::MAX);
     assert!(result.is_err());
 }

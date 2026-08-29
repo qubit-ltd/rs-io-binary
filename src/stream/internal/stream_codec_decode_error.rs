@@ -14,9 +14,7 @@ use std::io::ErrorKind;
 use qubit_codec_binary::Leb128DecodeError;
 
 /// Decode error behavior shared by codec stream decoders.
-pub(crate) trait StreamCodecDecodeError:
-    StdError + Send + Sync + 'static
-{
+pub(crate) trait StreamCodecDecodeError: StdError + Send + Sync + 'static {
     /// Returns the mapped I/O error kind for this codec decode error.
     ///
     /// # Returns

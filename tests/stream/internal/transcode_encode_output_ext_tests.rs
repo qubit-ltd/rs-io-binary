@@ -17,8 +17,7 @@ use qubit_io_binary::BufferedLeb128Writer;
 
 #[test]
 fn test_transcode_encode_output_ext_writes_scalar_and_raw_bytes() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 4);
 
     writer.write_u16(0x1234).expect("u16 should encode");
     writer
@@ -31,8 +30,7 @@ fn test_transcode_encode_output_ext_writes_scalar_and_raw_bytes() {
 
 #[test]
 fn test_transcode_encode_output_ext_writes_values_with_tiny_capacity() {
-    let mut writer =
-        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 1);
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 1);
 
     writer.write_u16(0x1234).expect("first u16 should encode");
     writer.write_u32(0x89AB_CDEF).expect("u32 should encode");
@@ -70,9 +68,7 @@ fn test_transcode_encode_output_ext_writes_public_utf8_payload() {
         .expect("UTF-8 string should encode");
     writer.flush().expect("encoded UTF-8 bytes should flush");
 
-    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(
-        writer.inner().clone(),
-    ));
+    let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(Cursor::new(writer.inner().clone()));
     assert_eq!(
         "hello",
         reader

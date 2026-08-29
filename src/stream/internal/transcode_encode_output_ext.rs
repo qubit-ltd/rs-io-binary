@@ -62,8 +62,6 @@ where
         C::EncodeError: StdError + Send + Sync + 'static,
     {
         let mut codec = C::default();
-        self.write_encoded_with(&mut codec, &value, |source| {
-            Error::new(ErrorKind::InvalidData, source)
-        })
+        self.write_encoded_with(&mut codec, &value, |source| Error::new(ErrorKind::InvalidData, source))
     }
 }

@@ -48,10 +48,7 @@ impl AsyncInput for NonSendAsyncInput {
     ) -> std::task::Poll<std::io::Result<usize>> {
         let this = self.get_mut();
         // SAFETY: The caller upholds the indexed output range contract.
-        unsafe {
-            Pin::new(&mut this.inner)
-                .poll_read_unchecked(cx, output, index, count)
-        }
+        unsafe { Pin::new(&mut this.inner).poll_read_unchecked(cx, output, index, count) }
     }
 }
 
@@ -69,12 +66,8 @@ fn scalar_fixture() -> Vec<u8> {
     bytes
         .write_u32(0x1357_9BDF, ByteOrder::BigEndian)
         .expect("u32 should encode");
-    bytes
-        .write_u64_be(0x0123_4567_89AB_CDEF)
-        .expect("u64 should encode");
-    bytes
-        .write_u64_le(0xFEDC_BA98_7654_3210)
-        .expect("u64 should encode");
+    bytes.write_u64_be(0x0123_4567_89AB_CDEF).expect("u64 should encode");
+    bytes.write_u64_le(0xFEDC_BA98_7654_3210).expect("u64 should encode");
     bytes
         .write_u128_be(0x0123_4567_89AB_CDEF_0011_2233_4455_6677)
         .expect("u128 should encode");
@@ -85,12 +78,8 @@ fn scalar_fixture() -> Vec<u8> {
     bytes.write_i16_le(2345).expect("i16 should encode");
     bytes.write_i32_be(-123_456).expect("i32 should encode");
     bytes.write_i32_le(234_567).expect("i32 should encode");
-    bytes
-        .write_i64_be(-1_234_567_890)
-        .expect("i64 should encode");
-    bytes
-        .write_i64_le(2_345_678_901)
-        .expect("i64 should encode");
+    bytes.write_i64_be(-1_234_567_890).expect("i64 should encode");
+    bytes.write_i64_le(2_345_678_901).expect("i64 should encode");
     bytes
         .write_i128_be(-12_345_678_901_234_567_890)
         .expect("i128 should encode");
@@ -118,24 +107,15 @@ fn async_binary_read_covers_scalars_and_byte_orders() {
     assert_eq!(-0x25, complete(input.read_i8_async()).unwrap());
     assert_eq!(0x1234, complete(input.read_u16_be_async()).unwrap());
     assert_eq!(0x5678, complete(input.read_u16_le_async()).unwrap());
-    assert_eq!(
-        0x9ABC,
-        complete(input.read_u16_async(ByteOrder::NativeEndian)).unwrap(),
-    );
+    assert_eq!(0x9ABC, complete(input.read_u16_async(ByteOrder::NativeEndian)).unwrap(),);
     assert_eq!(0x1234_5678, complete(input.read_u32_be_async()).unwrap(),);
     assert_eq!(0x9ABC_DEF0, complete(input.read_u32_le_async()).unwrap(),);
     assert_eq!(
         0x1357_9BDF,
         complete(input.read_u32_async(ByteOrder::BigEndian)).unwrap(),
     );
-    assert_eq!(
-        0x0123_4567_89AB_CDEF,
-        complete(input.read_u64_be_async()).unwrap(),
-    );
-    assert_eq!(
-        0xFEDC_BA98_7654_3210,
-        complete(input.read_u64_le_async()).unwrap(),
-    );
+    assert_eq!(0x0123_4567_89AB_CDEF, complete(input.read_u64_be_async()).unwrap(),);
+    assert_eq!(0xFEDC_BA98_7654_3210, complete(input.read_u64_le_async()).unwrap(),);
     assert_eq!(
         0x0123_4567_89AB_CDEF_0011_2233_4455_6677,
         complete(input.read_u128_be_async()).unwrap(),
@@ -166,13 +146,9 @@ fn async_binary_read_covers_scalars_and_byte_orders() {
 
 #[test]
 fn dropping_binary_read_future_retains_consumed_input() {
-    let mut input =
-        ChunkedAsyncInput::starts_ready(vec![0x12, 0x34, 0x56, 0x78]);
+    let mut input = ChunkedAsyncInput::starts_ready(vec![0x12, 0x34, 0x56, 0x78]);
 
-    assert!(matches!(
-        poll_once(input.read_u32_be_async()),
-        Poll::Pending,
-    ));
+    assert!(matches!(poll_once(input.read_u32_be_async()), Poll::Pending,));
 
     assert_eq!(2, input.position());
 }
@@ -181,8 +157,7 @@ fn dropping_binary_read_future_retains_consumed_input() {
 fn async_binary_read_reports_truncated_values() {
     let mut input = ChunkedAsyncInput::new(vec![0x12]);
 
-    let error = complete(input.read_u32_be_async())
-        .expect_err("truncated scalar should fail");
+    let error = complete(input.read_u32_be_async()).expect_err("truncated scalar should fail");
 
     assert_eq!(ErrorKind::UnexpectedEof, error.kind());
 }

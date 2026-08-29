@@ -24,9 +24,7 @@ fn string_fixture() -> Vec<u8> {
     bytes.write_utf8_string_uleb_usize("uleb-strict").unwrap();
     bytes.write_utf8_string_uleb_u64("uleb-u64").unwrap();
     bytes.write_utf8_string_uleb_u64("uleb-u64-strict").unwrap();
-    bytes
-        .write_string_with_u16_len("u16-be", ByteOrder::BigEndian)
-        .unwrap();
+    bytes.write_string_with_u16_len("u16-be", ByteOrder::BigEndian).unwrap();
     bytes.write_string_with_u16_len_be("fixed-u16-be").unwrap();
     bytes.write_string_with_u16_len_le("fixed-u16-le").unwrap();
     bytes
@@ -42,26 +40,22 @@ fn async_string_read_reuses_payload_buffer() {
     let mut input = ChunkedAsyncInput::new(b"hello world".to_vec());
     let mut payload = Vec::with_capacity(32);
 
-    complete(input.read_utf8_payload_into_async(&mut payload, 5, 32))
-        .expect("first payload should be read");
+    complete(input.read_utf8_payload_into_async(&mut payload, 5, 32)).expect("first payload should be read");
     let allocation = payload.as_ptr();
     assert_eq!(b"hello", payload.as_slice());
 
-    complete(input.read_utf8_payload_into_async(&mut payload, 6, 32))
-        .expect("second payload should be read");
+    complete(input.read_utf8_payload_into_async(&mut payload, 6, 32)).expect("second payload should be read");
     assert_eq!(allocation, payload.as_ptr());
     assert_eq!(b" world", payload.as_slice());
 
-    let error =
-        complete(input.read_utf8_payload_into_async(&mut payload, 1, 0))
-            .expect_err("payload over the configured limit should fail");
+    let error = complete(input.read_utf8_payload_into_async(&mut payload, 1, 0))
+        .expect_err("payload over the configured limit should fail");
     assert_eq!(ErrorKind::InvalidData, error.kind());
     assert_eq!(b" world", payload.as_slice());
 
     let mut input = ChunkedAsyncInput::new(vec![0xff]);
     let error =
-        complete(input.read_utf8_payload_into_async(&mut payload, 1, 1))
-            .expect_err("invalid UTF-8 should fail");
+        complete(input.read_utf8_payload_into_async(&mut payload, 1, 1)).expect_err("invalid UTF-8 should fail");
     assert_eq!(ErrorKind::InvalidData, error.kind());
     assert_eq!([0xff], payload.as_slice());
 }
@@ -74,28 +68,19 @@ fn async_string_read_covers_every_length_prefix() {
         "payload",
         complete(input.read_utf8_payload_async("payload".len(), 32)).unwrap(),
     );
-    assert_eq!(
-        "uleb",
-        complete(input.read_utf8_string_uleb_usize_async(32)).unwrap(),
-    );
+    assert_eq!("uleb", complete(input.read_utf8_string_uleb_usize_async(32)).unwrap(),);
     assert_eq!(
         "uleb-strict",
         complete(input.read_utf8_string_uleb_usize_strict_async(32)).unwrap(),
     );
-    assert_eq!(
-        "uleb-u64",
-        complete(input.read_utf8_string_uleb_u64_async(32)).unwrap(),
-    );
+    assert_eq!("uleb-u64", complete(input.read_utf8_string_uleb_u64_async(32)).unwrap(),);
     assert_eq!(
         "uleb-u64-strict",
         complete(input.read_utf8_string_uleb_u64_strict_async(32)).unwrap(),
     );
     assert_eq!(
         "u16-be",
-        complete(
-            input.read_string_with_u16_len_async(ByteOrder::BigEndian, 32,)
-        )
-        .unwrap(),
+        complete(input.read_string_with_u16_len_async(ByteOrder::BigEndian, 32,)).unwrap(),
     );
     assert_eq!(
         "fixed-u16-be",
@@ -107,10 +92,7 @@ fn async_string_read_covers_every_length_prefix() {
     );
     assert_eq!(
         "u32-le",
-        complete(
-            input.read_string_with_u32_len_async(ByteOrder::LittleEndian, 32,)
-        )
-        .unwrap(),
+        complete(input.read_string_with_u32_len_async(ByteOrder::LittleEndian, 32,)).unwrap(),
     );
     assert_eq!(
         "fixed-u32-be",
@@ -126,10 +108,7 @@ fn async_string_read_covers_every_length_prefix() {
 fn dropping_string_read_future_retains_consumed_input() {
     let mut input = ChunkedAsyncInput::starts_ready(b"payload".to_vec());
 
-    assert!(matches!(
-        poll_once(input.read_utf8_payload_async(7, 7)),
-        Poll::Pending,
-    ));
+    assert!(matches!(poll_once(input.read_utf8_payload_async(7, 7)), Poll::Pending,));
 
     assert_eq!(2, input.position());
 }
@@ -137,18 +116,15 @@ fn dropping_string_read_future_retains_consumed_input() {
 #[test]
 fn async_string_read_reports_prefix_payload_and_utf8_errors() {
     let mut input = ChunkedAsyncInput::new(Vec::new());
-    let prefix_error = complete(input.read_string_with_u32_len_be_async(32))
-        .expect_err("missing prefix should fail");
+    let prefix_error = complete(input.read_string_with_u32_len_be_async(32)).expect_err("missing prefix should fail");
     assert_eq!(ErrorKind::UnexpectedEof, prefix_error.kind());
 
     let mut input = ChunkedAsyncInput::new(Vec::new());
-    let length_error = complete(input.read_utf8_payload_async(2, 1))
-        .expect_err("oversized payload should fail");
+    let length_error = complete(input.read_utf8_payload_async(2, 1)).expect_err("oversized payload should fail");
     assert_eq!(ErrorKind::InvalidData, length_error.kind());
 
     let mut input = ChunkedAsyncInput::new(vec![0xFF]);
-    let utf8_error = complete(input.read_utf8_payload_async(1, 1))
-        .expect_err("invalid UTF-8 should fail");
+    let utf8_error = complete(input.read_utf8_payload_async(1, 1)).expect_err("invalid UTF-8 should fail");
     assert_eq!(ErrorKind::InvalidData, utf8_error.kind());
 
     let mut input = ChunkedAsyncInput::new(Vec::new());

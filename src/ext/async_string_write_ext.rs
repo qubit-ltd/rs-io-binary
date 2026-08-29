@@ -47,10 +47,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written payload prefix in the output.
     #[inline]
-    fn write_utf8_payload_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_utf8_payload_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
@@ -78,10 +75,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_uleb_usize_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_utf8_string_uleb_usize_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
@@ -112,10 +106,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_utf8_string_uleb_u64_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_utf8_string_uleb_u64_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
@@ -184,10 +175,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_string_with_u16_len_be_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_string_with_u16_len_be_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
@@ -219,10 +207,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_string_with_u16_len_le_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_string_with_u16_len_le_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
@@ -291,10 +276,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_string_with_u32_len_be_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_string_with_u32_len_be_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
@@ -326,10 +308,7 @@ pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// This operation is not cancellation safe; dropping the future leaves
     /// any already-written prefix or payload bytes in the output.
     #[inline]
-    fn write_string_with_u32_len_le_async<'a>(
-        &'a mut self,
-        value: &'a str,
-    ) -> impl Future<Output = Result<()>> + 'a
+    fn write_string_with_u32_len_le_async<'a>(&'a mut self, value: &'a str) -> impl Future<Output = Result<()>> + 'a
     where
         Self: Unpin,
     {
