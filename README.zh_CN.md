@@ -24,7 +24,7 @@
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.3"
+qubit-io-binary = "0.4"
 ```
 
 下面的快速开始示例只需要 `qubit-io-binary`。如果要导入字节序或解码策略

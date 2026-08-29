@@ -26,7 +26,7 @@ The core API does not depend on Tokio, `futures-io`, or another executor.
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.3"
+qubit-io-binary = "0.4"
 ```
 
 The quick start below needs only `qubit-io-binary`. Add `qubit-codec` or

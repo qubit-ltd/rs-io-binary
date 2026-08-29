@@ -1,6 +1,6 @@
 [package]
 name = "qubit-io-binary"
-version = "0.3.2"
+version = "0.4.0"
 edition = "2024"
 rust-version = "1.94"
 authors = ["Haixing Hu <starfish.hu@gmail.com>"]
@@ -32,10 +32,10 @@ miri = true
 sanitizers = ["address"]
 
 [dependencies]
-qubit-utils = "0.2"
-qubit-io = "0.15"
-qubit-codec = { version = "0.12", features = ["io"] }
-qubit-codec-binary = "0.4"
+qubit-utils = "0.3"
+qubit-io = "0.16"
+qubit-codec = { version = "0.13", features = ["io"] }
+qubit-codec-binary = "0.5"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(miri)'] }

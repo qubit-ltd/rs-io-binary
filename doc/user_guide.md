@@ -4,7 +4,7 @@
 [API reference](https://docs.rs/qubit-io-binary)
 
 This guide is for Rust applications that read or write structured values on a
-byte stream. It covers `qubit-io-binary` 0.3: a runtime-neutral bridge between
+byte stream. It covers `qubit-io-binary` 0.4: a runtime-neutral bridge between
 the buffer codecs in `qubit-codec-binary` and the stream abstractions in
 `qubit-io`. It does not open files, choose a transport, or select an async
 runtime.
@@ -37,7 +37,7 @@ successful result is the same values after a round trip.
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.3"
+qubit-io-binary = "0.4"
 qubit-codec = "0.12"
 qubit-codec-binary = "0.3"
 qubit-io = "0.15"
