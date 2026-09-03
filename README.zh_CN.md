@@ -149,7 +149,7 @@ benchmark 套件分为多个层次：`micro_binary_pipeline` 使用会产生短�
 - `qubit-io` 负责通用同步流和运行时无关的异步流；
 - `qubit-io-binary` 组合两者，不负责文件系统，也不绑定异步运行时。
 
-本 crate 适用于既有流上的二进制值，不负责打开文件，也不拥有异步运行时。需要贯穿
+本 crate 适用于既有流上的二进制值，不负责打开文件，也不拥有异步运行时。需要实战
 场景教程时，请参阅[中文用户指南](doc/user_guide.zh_CN.md)或
 [English user guide](doc/user_guide.md)；全部公开项目请参阅
 [API 文档](https://docs.rs/qubit-io-binary)。
