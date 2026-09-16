@@ -41,8 +41,8 @@ qubit-codec-binary = "0.7"
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(miri)'] }
 
 [dev-dependencies]
-criterion = { version = "0.8", default-features = false }
-tempfile = "3.27"
+criterion = { version = "^0.8", default-features = false }
+tempfile = "^3.27"
 
 [[bench]]
 name = "stream"
