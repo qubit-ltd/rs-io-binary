@@ -8,11 +8,11 @@
 
 #![no_main]
 
+use std::io;
 use std::io::Cursor;
 use std::io::ErrorKind;
 use std::io::Read;
 use std::io::Write;
-use std::io::{self};
 
 use libfuzzer_sys::fuzz_target;
 use qubit_codec::LittleEndian;
