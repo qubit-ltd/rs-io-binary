@@ -6,8 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::env;
+use std::fs;
 use std::fs::File;
-use std::fs::{self};
 use std::future::Future;
 use std::hint::black_box;
 use std::io::BufRead;
