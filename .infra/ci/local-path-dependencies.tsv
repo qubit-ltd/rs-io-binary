@@ -1,1 +1,3 @@
 # relative git root<TAB>repository URL<TAB>default branch
+../rs-codec	https://github.com/qubit-ltd/rs-codec	main
+../rs-codec-binary	https://github.com/qubit-ltd/rs-codec-binary	main
