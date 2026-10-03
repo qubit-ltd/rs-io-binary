@@ -22,6 +22,8 @@ test = false
 doc = false
 bench = false
 
+[workspace]
+
 [[bin]]
 name = "async_differential"
 path = "fuzz_targets/async_differential.rs"

@@ -47,3 +47,5 @@ tempfile = "^3.27"
 [[bench]]
 name = "stream"
 harness = false
+
+[workspace]
