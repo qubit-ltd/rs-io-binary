@@ -32,10 +32,10 @@ miri = true
 sanitizers = ["address"]
 
 [dependencies]
-qubit-utils = "0.3"
-qubit-io = "0.17"
-qubit-codec = { version = "0.16", features = ["io"] }
-qubit-codec-binary = "0.8"
+qubit-utils = "^0.3"
+qubit-io = "^0.17"
+qubit-codec = { version = "^0.16", features = ["io"] }
+qubit-codec-binary = "^0.8"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(coverage)', 'cfg(miri)'] }
