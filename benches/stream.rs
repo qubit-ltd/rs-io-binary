@@ -36,6 +36,8 @@ use qubit_io::AsyncBufferedInput;
 use qubit_io::AsyncBufferedOutput;
 use qubit_io::AsyncInput;
 use qubit_io::AsyncOutput;
+use qubit_io::Input;
+use qubit_io::Output;
 use qubit_io_binary::AsyncBinaryReadExt;
 use qubit_io_binary::AsyncBinaryWriteExt;
 use qubit_io_binary::BinaryReadExt;
@@ -418,7 +420,7 @@ fn write_micro_values_buffered(values: &[u64]) -> Vec<u8> {
     for &value in values {
         writer.write_u64(value).expect("buffered write should succeed");
     }
-    qubit_io::Output::flush(&mut writer).expect("buffered writer should flush");
+    Output::flush(&mut writer).expect("buffered writer should flush");
     let (output, pending) = writer.into_parts();
     assert!(pending.is_empty(), "flushed writer retained bytes");
     output.into_inner()
@@ -459,10 +461,8 @@ fn write_records_wrapper_file(records: &[Record], path: &Path) {
         writer.write_u64(value.ts_ms).unwrap();
     }
 
-    writer
-        .into_inner()
-        .flush()
-        .expect("binary wrapper output file should flush");
+    let mut inner = writer.into_inner();
+    Write::flush(&mut inner).expect("binary wrapper output file should flush");
 }
 
 #[inline]
@@ -480,7 +480,7 @@ fn write_records_ext_file(records: &[Record], path: &Path) {
         writer.write_u64_le(value.ts_ms).unwrap();
     }
 
-    writer.flush().expect("binary ext output file should flush");
+    Write::flush(&mut writer).expect("binary ext output file should flush");
 }
 
 #[inline]
@@ -498,7 +498,7 @@ fn write_records_std_native_file(records: &[Record], path: &Path) {
         writer.write_all(&value.ts_ms.to_le_bytes()).unwrap();
     }
 
-    writer.flush().expect("binary std native output file should flush");
+    Write::flush(&mut writer).expect("binary std native output file should flush");
 }
 
 #[inline]
@@ -516,7 +516,7 @@ fn write_records_buffered_file(records: &[Record], path: &Path) {
         writer.write_u64(value.ts_ms).unwrap();
     }
 
-    qubit_io::Output::flush(&mut writer).expect("binary buffered output file should flush");
+    Output::flush(&mut writer).expect("binary buffered output file should flush");
 }
 
 #[inline]
@@ -862,7 +862,7 @@ fn write_uleb_std_manual_file(fields: &[UlebField], path: &Path) {
         }
     }
 
-    writer.flush().expect("LEB128 std manual output file should flush");
+    Write::flush(&mut writer).expect("LEB128 std manual output file should flush");
 }
 
 #[inline]
@@ -881,7 +881,7 @@ fn write_uleb_ext_file(fields: &[UlebField], path: &Path) {
         }
     }
 
-    writer.flush().expect("LEB128 ext output file should flush");
+    Write::flush(&mut writer).expect("LEB128 ext output file should flush");
 }
 
 #[inline]
@@ -901,10 +901,8 @@ fn write_uleb_wrapper_file(fields: &[UlebField], path: &Path) {
         }
     }
 
-    writer
-        .into_inner()
-        .flush()
-        .expect("LEB128 wrapper output file should flush");
+    let mut inner = writer.into_inner();
+    Write::flush(&mut inner).expect("LEB128 wrapper output file should flush");
 }
 
 #[inline]
@@ -923,7 +921,7 @@ fn write_uleb_buffered_file(fields: &[UlebField], path: &Path) {
         }
     }
 
-    qubit_io::Output::flush(&mut writer).expect("LEB128 buffered output file should flush");
+    Output::flush(&mut writer).expect("LEB128 buffered output file should flush");
 }
 
 #[inline]
@@ -1024,7 +1022,7 @@ fn write_zigzag_std_manual_file(fields: &[ZigZagField], path: &Path) {
         write_uleb_std_manual(&mut writer, encoded).unwrap();
     }
 
-    writer.flush().expect("ZigZag std manual output file should flush");
+    Write::flush(&mut writer).expect("ZigZag std manual output file should flush");
 }
 
 #[inline]
@@ -1043,7 +1041,7 @@ fn write_zigzag_ext_file(fields: &[ZigZagField], path: &Path) {
         }
     }
 
-    writer.flush().expect("ZigZag ext output file should flush");
+    Write::flush(&mut writer).expect("ZigZag ext output file should flush");
 }
 
 #[inline]
@@ -1063,10 +1061,8 @@ fn write_zigzag_wrapper_file(fields: &[ZigZagField], path: &Path) {
         }
     }
 
-    writer
-        .into_inner()
-        .flush()
-        .expect("ZigZag wrapper output file should flush");
+    let mut inner = writer.into_inner();
+    Write::flush(&mut inner).expect("ZigZag wrapper output file should flush");
 }
 
 #[inline]
@@ -1085,7 +1081,7 @@ fn write_zigzag_buffered_file(fields: &[ZigZagField], path: &Path) {
         }
     }
 
-    qubit_io::Output::flush(&mut writer).expect("ZigZag buffered output file should flush");
+    Output::flush(&mut writer).expect("ZigZag buffered output file should flush");
 }
 
 #[inline]
@@ -1567,7 +1563,7 @@ fn build_mixed_binary_fields() -> Vec<MixedBinaryField> {
         .collect()
 }
 
-fn write_mixed_ext<W: qubit_io::Output<Item = u8>>(mut output: W, fields: &[MixedBinaryField]) {
+fn write_mixed_ext<W: Output<Item = u8>>(mut output: W, fields: &[MixedBinaryField]) {
     for field in fields {
         match field {
             MixedBinaryField::U8(value) => output.write_u8(*value).unwrap(),
@@ -1578,7 +1574,7 @@ fn write_mixed_ext<W: qubit_io::Output<Item = u8>>(mut output: W, fields: &[Mixe
                 .unwrap(),
         }
     }
-    qubit_io::Output::flush(&mut output).unwrap();
+    Output::flush(&mut output).unwrap();
 }
 
 fn write_mixed_buffered(path: &Path, fields: &[MixedBinaryField]) {
@@ -1592,10 +1588,10 @@ fn write_mixed_buffered(path: &Path, fields: &[MixedBinaryField]) {
             MixedBinaryField::String(value) => output.write_string_with_u16_len(value).unwrap(),
         }
     }
-    qubit_io::Output::flush(&mut output).unwrap();
+    Output::flush(&mut output).unwrap();
 }
 
-fn read_mixed_ext<R: qubit_io::Input<Item = u8>>(mut input: R, fields: &[MixedBinaryField]) -> u64 {
+fn read_mixed_ext<R: Input<Item = u8>>(mut input: R, fields: &[MixedBinaryField]) -> u64 {
     let mut digest = 0_u64;
     for field in fields {
         digest ^= match field {
@@ -1613,7 +1609,7 @@ fn read_mixed_ext<R: qubit_io::Input<Item = u8>>(mut input: R, fields: &[MixedBi
 
 fn read_mixed_reusing_payload<R>(mut input: R, fields: &[MixedBinaryField]) -> u64
 where
-    R: qubit_io::Input<Item = u8> + BinaryReadExt + StringReadExt,
+    R: Input<Item = u8> + BinaryReadExt + StringReadExt,
 {
     let mut payload = Vec::with_capacity(1024);
     let mut digest = 0_u64;
@@ -1663,7 +1659,7 @@ fn write_mixed_buffered_memory(fields: &[MixedBinaryField]) -> Vec<u8> {
             MixedBinaryField::String(value) => output.write_string_with_u16_len(value).unwrap(),
         }
     }
-    qubit_io::Output::flush(&mut output).unwrap();
+    Output::flush(&mut output).unwrap();
     let (bytes, pending) = output.into_parts();
     assert!(pending.is_empty(), "flushed writer retained bytes");
     bytes
