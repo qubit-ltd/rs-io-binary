@@ -20,7 +20,7 @@ use qubit_codec::LittleEndian;
 use qubit_codec::NativeEndian;
 use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::BinaryCodec;
-use qubit_io::Buffer;
+use qubit_io::BufferedOutputRecovery;
 use qubit_io::Output;
 use qubit_io::Seekable;
 
@@ -154,19 +154,20 @@ where
     pub const fn inner(&self) -> &W {
         self.output.inner()
     }
-
-    /// This method does not call [`Self::flush`] and performs no I/O. Pending
-    /// bytes in the returned buffer have already been accepted by this writer
-    /// but have not reached the returned writer. To complete a stream normally,
-    /// call [`Self::flush`] first; a successful flush leaves the returned
-    /// buffer empty.
+    /// Recovers the wrapped writer and the status of bytes retained by this writer.
+    ///
+    /// This method performs no I/O and does not call [`Self::flush`]. `Pending`
+    /// bytes were not reported as written and may be retried. `Indeterminate`
+    /// means an inner write panicked and may have produced an external prefix;
+    /// do not replay it automatically. Flush first for normal completion.
     ///
     /// # Returns
     ///
-    /// Returns the wrapped writer and pending bytes in logical write order.
-    #[must_use = "the returned inner writer and pending buffer must be handled"]
+    /// Returns the wrapped writer and pending or indeterminate bytes in logical
+    /// write order.
+    #[must_use = "the wrapped writer and recovery status must be handled"]
     #[inline(always)]
-    pub fn into_parts(self) -> (W, Buffer<u8>) {
+    pub fn into_parts(self) -> (W, BufferedOutputRecovery<u8>) {
         self.output.into_parts()
     }
 }

@@ -141,9 +141,12 @@ assert_eq!(300, reader.read_u16_non_strict()?);
 ```
 
 `Buffered*Reader::into_parts()` returns the wrapped input and unread prefetched
-bytes. `Buffered*Writer::into_parts()` returns the wrapped output and bytes not
-yet written. Neither method performs I/O: flush a writer first for normal
-completion, and retain it if a flush fails so that it can be retried.
+bytes. `Buffered*Writer::into_parts()` returns the wrapped output and a
+`BufferedOutputRecovery`: `Pending` bytes were not reported as written, while
+`Indeterminate` means a panicking write may have produced an external prefix
+and must not be replayed automatically. Neither method performs I/O: flush a
+writer first for normal completion, and retain it if a flush fails so that it
+can be retried.
 
 ## Async Workflow
 

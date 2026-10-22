@@ -108,9 +108,11 @@ the explicit `read_u64_non_strict` (and corresponding string) methods.
 
 Buffered readers provide `into_parts` to recover the wrapped input together
 with unread prefetched bytes. Buffered writers provide `into_parts` to recover
-the wrapped output together with bytes not yet written. These methods perform
-no I/O: flush first for normal completion, and retain the writer to retry a
-flush failure.
+the wrapped output and a `BufferedOutputRecovery`. `Pending` bytes were not
+reported as written; `Indeterminate` means a panicking inner write may have
+produced an external prefix, so do not replay it automatically. These methods
+perform no I/O: flush first for normal completion, and retain the writer to
+retry a flush failure.
 
 Strict LEB128 methods reject non-canonical encodings. String read methods accept
 a maximum payload length to bound allocation. For persistent formats, prefer

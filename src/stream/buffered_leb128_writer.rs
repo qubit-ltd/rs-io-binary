@@ -15,7 +15,7 @@ use std::io::SeekFrom;
 use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::NonStrict;
-use qubit_io::Buffer;
+use qubit_io::BufferedOutputRecovery;
 use qubit_io::Output;
 use qubit_io::Seekable;
 
@@ -136,26 +136,20 @@ where
     pub const fn inner(&self) -> &W {
         self.output.inner()
     }
-
-    /// Provides access to the underlying writer.
+    /// Recovers the wrapped writer and the status of bytes retained by this writer.
     ///
-    /// Direct writes through the returned writer bypass pending bytes in this
-    /// wrapper and can reorder the physical byte stream. Flush this wrapper
-    /// before using the returned writer directly.
-    ///
-    /// Returns the underlying writer and every encoded byte still pending.
-    ///
-    /// This method does not call [`Self::flush`] and performs no I/O. Call
-    /// [`Self::flush`] first for normal completion; a successful flush leaves
-    /// the returned buffer empty. Otherwise, the returned buffer transfers
-    /// responsibility for pending bytes to the caller.
+    /// This method performs no I/O and does not call [`Self::flush`]. `Pending`
+    /// bytes were not reported as written and may be retried. `Indeterminate`
+    /// means an inner write panicked and may have produced an external prefix;
+    /// do not replay it automatically. Flush first for normal completion.
     ///
     /// # Returns
     ///
-    /// Returns the wrapped writer and pending bytes in logical write order.
-    #[must_use = "the returned inner writer and pending buffer must be handled"]
+    /// Returns the wrapped writer and pending or indeterminate bytes in logical
+    /// write order.
+    #[must_use = "the wrapped writer and recovery status must be handled"]
     #[inline(always)]
-    pub fn into_parts(self) -> (W, Buffer<u8>) {
+    pub fn into_parts(self) -> (W, BufferedOutputRecovery<u8>) {
         self.output.into_parts()
     }
 

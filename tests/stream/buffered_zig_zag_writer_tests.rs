@@ -10,6 +10,7 @@ use std::io::Error;
 use std::io::ErrorKind;
 use std::io::Write;
 
+use qubit_io::Output;
 use qubit_io_binary::BufferedZigZagWriter;
 use qubit_io_binary::ZigZagWriteExt;
 
@@ -18,6 +19,26 @@ struct FailingWriter;
 impl Write for FailingWriter {
     fn write(&mut self, _buffer: &[u8]) -> std::io::Result<usize> {
         Err(Error::other("write failed"))
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
+
+#[derive(Default)]
+struct PanicOutput {
+    bytes: Vec<u8>,
+}
+
+impl Output for PanicOutput {
+    type Item = u8;
+
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> std::io::Result<usize> {
+        let committed = count.min(1);
+        self.bytes.extend_from_slice(&input[index..index + committed]);
+        panic!("scripted output panic after committing a prefix");
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
@@ -83,6 +104,10 @@ fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushin
     assert_eq!(0, writer.inner().position());
 
     let (inner, pending) = writer.into_parts();
+    let pending = match pending {
+        qubit_io::BufferedOutputRecovery::Pending(buffer) => buffer,
+        qubit_io::BufferedOutputRecovery::Indeterminate(_) => panic!("unexpected indeterminate recovery"),
+    };
     assert_eq!(b"\xD7\x04", pending.readable());
     assert!(inner.into_inner().is_empty());
 }
@@ -122,4 +147,18 @@ fn test_buffered_zig_zag_writer_flushes_before_encoded_value_when_full() {
     expected.push(1);
     writer.flush().expect("writer should flush");
     assert_eq!(expected, writer.inner().clone());
+}
+
+#[test]
+fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
+    let mut writer = BufferedZigZagWriter::new(PanicOutput::default());
+    writer.write_i64(-300).expect("the encoded value should be buffered");
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        qubit_io::Output::flush(&mut writer)
+    }));
+    assert!(result.is_err());
+
+    let (inner, recovery) = writer.into_parts();
+    assert_eq!([0xD7], inner.bytes.as_slice());
+    assert!(matches!(recovery, qubit_io::BufferedOutputRecovery::Indeterminate(_)));
 }

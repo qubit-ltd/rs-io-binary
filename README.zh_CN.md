@@ -103,8 +103,7 @@ future 会在输出中留下已经写入的前缀。
 `read_u64_non_strict`（字符串方法同样如此）。
 
 缓冲 reader 可通过 `into_parts` 同时取回底层输入与尚未消费的预取字节；缓冲 writer
-可通过 `into_parts` 同时取回底层输出与尚未写出的字节。这些方法不执行 I/O：正常
-完成时先刷新，刷新失败时保留 writer 以便检查或重试。
+可通过 `into_parts` 同时取回底层输出与 `BufferedOutputRecovery`。`Pending` 表示尚未被报告写出的字节；`Indeterminate` 表示底层写入 panic，可能已产生外部前缀，不应自动重放。这些方法不执行 I/O：正常完成时先刷新，刷新失败时保留 writer 以便检查或重试。
 
 Strict LEB128 方法会拒绝非 canonical 编码。字符串读取方法要求传入最大
 payload 长度，以限制内存分配。持久化格式应优先使用固定宽度长度字段或

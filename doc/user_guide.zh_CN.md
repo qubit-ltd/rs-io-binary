@@ -131,8 +131,7 @@ assert_eq!(300, reader.read_u16_non_strict()?);
 ```
 
 `Buffered*Reader::into_parts()` 返回被包装的输入和预取后尚未消费的字节；
-`Buffered*Writer::into_parts()` 返回被包装的输出和尚未写出的字节。两者都不执行 I/O：
-正常完成时先 flush writer；flush 失败时应保留它，以便重试。
+`Buffered*Writer::into_parts()` 返回被包装的输出和 `BufferedOutputRecovery`：`Pending` 表示尚未被报告写出的字节；`Indeterminate` 表示写入 panic 时可能已产生外部前缀，不应自动重放。两者都不执行 I/O：正常完成时先 flush writer；flush 失败时应保留它，以便重试。
 
 ## 异步流程
 

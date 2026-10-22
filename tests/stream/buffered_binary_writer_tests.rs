@@ -16,6 +16,7 @@ use std::rc::Rc;
 
 use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
+use qubit_io::Output;
 use qubit_io_binary::BinaryWriteExt;
 use qubit_io_binary::BufferedBinaryWriter;
 
@@ -240,6 +241,26 @@ fn expected_values() -> Vec<u8> {
     bytes
 }
 
+
+#[derive(Default)]
+struct PanicOutput {
+    bytes: Vec<u8>,
+}
+
+impl Output for PanicOutput {
+    type Item = u8;
+
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> std::io::Result<usize> {
+        let committed = count.min(1);
+        self.bytes.extend_from_slice(&input[index..index + committed]);
+        panic!("scripted output panic after committing a prefix");
+    }
+
+    fn flush(&mut self) -> std::io::Result<()> {
+        Ok(())
+    }
+}
+
 #[test]
 fn test_buffered_binary_writer_writes_scalars_across_buffer_boundaries() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 9);
@@ -294,6 +315,10 @@ fn test_buffered_binary_writer_into_parts_returns_pending_bytes_without_flushing
     assert_eq!(0, writer.inner().position());
 
     let (inner, pending) = writer.into_parts();
+    let pending = match pending {
+        qubit_io::BufferedOutputRecovery::Pending(buffer) => buffer,
+        qubit_io::BufferedOutputRecovery::Indeterminate(_) => panic!("unexpected indeterminate recovery"),
+    };
     assert_eq!(b"\x34\x12", pending.readable());
     assert!(inner.into_inner().is_empty());
 }
@@ -633,4 +658,18 @@ fn test_buffered_binary_writer_reports_string_length_and_prefix_errors() {
 fn test_buffered_binary_writer_rejects_impossible_capacity() {
     let result = BufferedBinaryWriter::<_, LittleEndian>::try_with_capacity(Vec::<u8>::new(), usize::MAX);
     assert!(result.is_err());
+}
+
+#[test]
+fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(PanicOutput::default());
+    writer.write_u16(0x1234).expect("the encoded value should be buffered");
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        qubit_io::Output::flush(&mut writer)
+    }));
+    assert!(result.is_err());
+
+    let (inner, recovery) = writer.into_parts();
+    assert_eq!([0x34], inner.bytes.as_slice());
+    assert!(matches!(recovery, qubit_io::BufferedOutputRecovery::Indeterminate(_)));
 }
