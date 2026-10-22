@@ -21,8 +21,7 @@ use qubit_codec_binary::Leb128DecodeError;
 use qubit_codec_binary::NonStrict;
 use qubit_io::Input;
 use qubit_io::Output;
-
-use super::try_reserve_vec;
+use qubit_utils::try_reserve_vec;
 
 /// Error message used when a UTF-8 byte length does not fit in `u32`.
 const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 length";

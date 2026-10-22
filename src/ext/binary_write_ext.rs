@@ -19,6 +19,7 @@ use qubit_io::Output;
 use crate::util::encode_infallible_unchecked;
 use crate::util::write_all;
 
+/// Encodes a scalar into a fixed-width buffer and writes the bytes.
 macro_rules! write_binary_value {
     ($writer:expr, $value:expr, $ty:ty, $order:ty) => {
         write_binary::<{ BinaryCodec::<$ty, $order>::MAX_ENCODE_UNITS_PER_VALUE }, _, _, _>(
@@ -57,6 +58,17 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Extension methods for writing fixed-width binary values to byte streams.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::BinaryWriteExt;
+///
+/// let mut output = Vec::new();
+/// output.write_u16_be(0x1234)?;
+/// assert_eq!(output, [0x12, 0x34]);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub trait BinaryWriteExt: Output<Item = u8> {
     /// Writes an unsigned 8-bit integer.
     ///

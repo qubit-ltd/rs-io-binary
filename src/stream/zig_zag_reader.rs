@@ -34,6 +34,17 @@ use crate::util::read_leb128_from_reader;
 ///
 /// - `R`: Underlying byte input.
 /// - `P`: LEB128 canonicality policy applied after ZigZag decoding.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_codec_binary::NonStrict;
+/// use qubit_io_binary::ZigZagReader;
+/// use std::io::Cursor;
+///
+/// let mut reader = ZigZagReader::<_, NonStrict>::new(Cursor::new(vec![1]));
+/// assert_eq!(reader.read_i8_non_strict().unwrap(), -1);
+/// ```
 pub struct ZigZagReader<R, P> {
     /// Wrapped byte input.
     inner: R,
@@ -242,3 +253,6 @@ where
         self.inner.seek_to(position)
     }
 }
+
+impl_input_methods!(ZigZagReader<R, P> where R: Input<Item = u8>);
+impl_seekable_methods!(ZigZagReader<R, P> where R: Seekable<Unit = u8>);

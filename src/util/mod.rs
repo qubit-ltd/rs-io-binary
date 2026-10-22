@@ -9,7 +9,6 @@
 
 mod async_streams;
 mod streams;
-pub(crate) use qubit_utils::try_reserve_vec;
 
 pub(crate) use self::async_streams::read_exactly_async;
 pub(crate) use self::async_streams::read_leb128_payload_async;

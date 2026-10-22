@@ -18,12 +18,12 @@ use qubit_io::AsyncInput;
 use qubit_io::AsyncOutput;
 use qubit_io::PinnedAsyncInputExt;
 use qubit_io::WriteFullyFuture;
+use qubit_utils::try_reserve_vec;
 
 use super::streams::decode_leb128_unchecked;
 use super::streams::invalid_utf8_error;
 use super::streams::length_exceeded_error;
 use super::streams::map_leb128_decode_error;
-use super::try_reserve_vec;
 
 /// Reads exactly enough bytes to fill `output`.
 ///

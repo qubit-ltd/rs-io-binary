@@ -21,6 +21,20 @@ use crate::util::write_utf8_string_with_u16_len;
 use crate::util::write_utf8_string_with_u32_len;
 
 /// Extension methods for writing length-prefixed UTF-8 strings.
+///
+/// A failed write can leave the prefix or payload bytes already written to the
+/// output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::StringWriteExt;
+///
+/// let mut output = Vec::new();
+/// output.write_string_with_u16_len_be("Ada")?;
+/// assert_eq!(output, [0, 3, b'A', b'd', b'a']);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub trait StringWriteExt: Output<Item = u8> {
     /// Writes a UTF-8 payload without a length prefix.
     ///

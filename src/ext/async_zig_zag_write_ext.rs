@@ -62,6 +62,20 @@ macro_rules! zig_zag_write_method {
 ///
 /// These writes are not cancellation safe. Dropping a pending future leaves
 /// an already-written prefix in the output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io::AsyncOutput;
+/// use qubit_io_binary::AsyncZigZagWriteExt;
+///
+/// async fn write_value<O>(output: &mut O) -> std::io::Result<()>
+/// where
+///     O: AsyncOutput<Item = u8> + Unpin,
+/// {
+///     output.write_zig_zag_i32_async(-150).await
+/// }
+/// ```
 pub trait AsyncZigZagWriteExt: AsyncOutput<Item = u8> {
     zig_zag_write_method!("Asynchronously writes ZigZag `i8`.", write_zig_zag_i8_async, i8);
     zig_zag_write_method!("Asynchronously writes ZigZag `i16`.", write_zig_zag_i16_async, i16);

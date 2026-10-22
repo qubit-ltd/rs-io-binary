@@ -46,6 +46,19 @@ use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 ///
 /// - `R`: Underlying byte input.
 /// - `P`: LEB128 canonicality policy applied after ZigZag decoding.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_codec_binary::Strict;
+/// use qubit_io_binary::BufferedZigZagReader;
+///
+/// let mut reader = BufferedZigZagReader::<_, Strict>::new(
+///     std::io::Cursor::new([0xAC, 0x02]),
+/// );
+/// assert_eq!(reader.read_i32()?, 150);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct BufferedZigZagReader<R, P>
 where
     R: Input<Item = u8>,
@@ -105,6 +118,10 @@ where
     ///
     /// Returns an allocation error when the requested buffer cannot be
     /// allocated.
+    ///
+    /// # Returns
+    ///
+    /// Returns the reader when allocation succeeds.
     #[inline]
     pub fn try_with_capacity(inner: R, capacity: usize) -> std::result::Result<Self, TryReserveError> {
         Ok(Self {
@@ -152,6 +169,9 @@ where
         self.input.into_parts()
     }
 }
+
+impl_input_methods!(BufferedZigZagReader<R, P> where R: Input<Item = u8>);
+impl_seekable_methods!(BufferedZigZagReader<R, P> where R: Input<Item = u8> + Seekable<Unit = u8>);
 
 macro_rules! impl_read_value {
     ($policy:ty, $method:ident, $ty:ty, $doc:literal) => {

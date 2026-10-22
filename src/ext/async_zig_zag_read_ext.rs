@@ -57,6 +57,19 @@ macro_rules! zig_zag_read_method {
 ///
 /// These reads are not cancellation safe. Dropping a pending future leaves
 /// bytes already consumed from the input consumed.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::AsyncZigZagReadExt;
+///
+/// async fn read_i32<R>(input: &mut R) -> std::io::Result<i32>
+/// where
+///     R: AsyncZigZagReadExt + Unpin,
+/// {
+///     input.read_zig_zag_i32_strict_async().await
+/// }
+/// ```
 pub trait AsyncZigZagReadExt: AsyncInput<Item = u8> {
     zig_zag_read_method!(
         "Asynchronously reads non-strict ZigZag `i8`.",

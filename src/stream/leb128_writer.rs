@@ -298,3 +298,6 @@ where
         self.inner.seek_to(position)
     }
 }
+
+impl_output_methods!(Leb128Writer<W> where W: Output<Item = u8>);
+impl_seekable_methods!(Leb128Writer<W> where W: Seekable<Unit = u8>);

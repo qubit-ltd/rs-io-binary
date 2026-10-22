@@ -62,6 +62,20 @@ macro_rules! leb128_write_method {
 ///
 /// These writes are not cancellation safe. Dropping a pending future leaves
 /// an already-written prefix in the output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io::AsyncOutput;
+/// use qubit_io_binary::AsyncLeb128WriteExt;
+///
+/// async fn write_value<O>(output: &mut O) -> std::io::Result<()>
+/// where
+///     O: AsyncOutput<Item = u8> + Unpin,
+/// {
+///     output.write_uleb_u32_async(300).await
+/// }
+/// ```
 pub trait AsyncLeb128WriteExt: AsyncOutput<Item = u8> {
     leb128_write_method!("Asynchronously writes LEB128 `u8`.", write_uleb_u8_async, u8);
     leb128_write_method!("Asynchronously writes LEB128 `u16`.", write_uleb_u16_async, u16);

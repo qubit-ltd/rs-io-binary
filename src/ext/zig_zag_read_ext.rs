@@ -17,6 +17,8 @@ use qubit_io::Input;
 
 use crate::util::read_leb128_payload;
 
+/// Decodes one ZigZag value using the selected integer type and canonicality
+/// policy.
 macro_rules! read_zig_zag_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
         read_leb128_payload::<

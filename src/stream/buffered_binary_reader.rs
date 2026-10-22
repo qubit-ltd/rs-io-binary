@@ -45,6 +45,17 @@ use crate::util::usize_from_u32_len;
 ///
 /// - `R`: Underlying byte input.
 /// - `O`: Compile-time byte-order specification.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_codec::BigEndian;
+/// use qubit_io_binary::BufferedBinaryReader;
+///
+/// let mut reader = BufferedBinaryReader::<_, BigEndian>::new(std::io::Cursor::new([0x12, 0x34]));
+/// assert_eq!(reader.read_u16()?, 0x1234);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct BufferedBinaryReader<R, O = BigEndian>
 where
     R: Input<Item = u8>,
@@ -54,6 +65,9 @@ where
     /// Associates the selected byte order without storing a value.
     marker: PhantomData<fn() -> O>,
 }
+
+impl_input_methods!(BufferedBinaryReader<R, O> where R: Input<Item = u8>);
+impl_seekable_methods!(BufferedBinaryReader<R, O> where R: Input<Item = u8> + Seekable<Unit = u8>);
 
 impl<R, O> BufferedBinaryReader<R, O>
 where

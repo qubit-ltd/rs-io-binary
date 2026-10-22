@@ -49,6 +49,19 @@ use crate::util::usize_from_u64_len;
 ///
 /// - `R`: Underlying byte input.
 /// - `P`: LEB128 canonicality policy.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_codec_binary::NonStrict;
+/// use qubit_io_binary::BufferedLeb128Reader;
+///
+/// let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(
+///     std::io::Cursor::new([0xAC, 0x02]),
+/// );
+/// assert_eq!(reader.read_u32_non_strict()?, 300);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct BufferedLeb128Reader<R, P>
 where
     R: Input<Item = u8>,
@@ -58,6 +71,9 @@ where
     /// Associates the selected decoding policy without storing a value.
     marker: PhantomData<fn() -> P>,
 }
+
+impl_input_methods!(BufferedLeb128Reader<R, P> where R: Input<Item = u8>);
+impl_seekable_methods!(BufferedLeb128Reader<R, P> where R: Input<Item = u8> + Seekable<Unit = u8>);
 
 impl<R, P> BufferedLeb128Reader<R, P>
 where

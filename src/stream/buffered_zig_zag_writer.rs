@@ -45,6 +45,19 @@ use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 /// # Type Parameters
 ///
 /// - `W`: Underlying byte output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io::Output;
+/// use qubit_io_binary::BufferedZigZagWriter;
+///
+/// let mut writer = BufferedZigZagWriter::new(Vec::new());
+/// writer.write_i32(-123)?;
+/// writer.flush()?;
+/// assert_eq!(writer.inner(), &[0xF5, 0x01]);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct BufferedZigZagWriter<W>
 where
     W: Output<Item = u8>,
@@ -52,6 +65,9 @@ where
     /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
 }
+
+impl_output_methods!(BufferedZigZagWriter<W> where W: Output<Item = u8>);
+impl_seekable_methods!(BufferedZigZagWriter<W> where W: Output<Item = u8> + Seekable<Unit = u8>);
 
 impl<W> BufferedZigZagWriter<W>
 where

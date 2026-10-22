@@ -39,6 +39,16 @@ macro_rules! write_zig_zag_value {
 /// `isize` methods use the current Rust target's pointer width. Prefer
 /// fixed-width integer methods such as [`Self::write_zig_zag_i64`] for
 /// persistent files and cross-platform protocols.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::ZigZagWriteExt;
+///
+/// let mut bytes = Vec::new();
+/// bytes.write_zig_zag_i32(-300).expect("value should be written");
+/// assert_eq!(bytes, [0xD7, 0x04]);
+/// ```
 pub trait ZigZagWriteExt: Output<Item = u8> {
     /// Writes a ZigZag `i8`.
     ///

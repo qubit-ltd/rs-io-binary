@@ -50,6 +50,17 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 }
 
 /// Extension methods for reading fixed-width binary values from byte streams.
+///
+/// # Examples
+///
+/// ```
+/// use std::io::Cursor;
+///
+/// use qubit_io_binary::BinaryReadExt;
+///
+/// let mut input = Cursor::new([0x12, 0x34]);
+/// assert_eq!(input.read_u16_be().unwrap(), 0x1234);
+/// ```
 pub trait BinaryReadExt: Input<Item = u8> {
     /// Reads an unsigned 8-bit integer.
     ///

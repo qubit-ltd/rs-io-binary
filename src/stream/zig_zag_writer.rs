@@ -31,6 +31,16 @@ use crate::util::write_all;
 /// # Type Parameters
 ///
 /// - `W`: Underlying byte output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::ZigZagWriter;
+///
+/// let mut writer = ZigZagWriter::new(Vec::new());
+/// writer.write_i8(-1).expect("value should be written");
+/// assert_eq!(writer.into_inner(), vec![1]);
+/// ```
 pub struct ZigZagWriter<W> {
     /// Wrapped byte output.
     inner: W,
@@ -241,3 +251,6 @@ where
         self.inner.seek_to(position)
     }
 }
+
+impl_output_methods!(ZigZagWriter<W> where W: Output<Item = u8>);
+impl_seekable_methods!(ZigZagWriter<W> where W: Seekable<Unit = u8>);

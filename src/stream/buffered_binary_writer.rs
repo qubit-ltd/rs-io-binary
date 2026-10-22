@@ -49,6 +49,18 @@ use crate::util::write_all;
 ///
 /// - `W`: Underlying byte output.
 /// - `O`: Compile-time byte-order specification.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_codec::BigEndian;
+/// use qubit_io_binary::BufferedBinaryWriter;
+///
+/// let mut writer = BufferedBinaryWriter::<_, BigEndian>::new(Vec::new());
+/// writer.write_u16(0x1234)?;
+/// writer.flush()?;
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct BufferedBinaryWriter<W, O = BigEndian>
 where
     W: Output<Item = u8>,
@@ -58,6 +70,9 @@ where
     /// Associates the selected byte order without storing a value.
     marker: PhantomData<fn() -> O>,
 }
+
+impl_output_methods!(BufferedBinaryWriter<W, O> where W: Output<Item = u8>);
+impl_seekable_methods!(BufferedBinaryWriter<W, O> where W: Output<Item = u8> + Seekable<Unit = u8>);
 
 impl<W, O> BufferedBinaryWriter<W, O>
 where

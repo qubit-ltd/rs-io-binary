@@ -7,6 +7,9 @@
 // =============================================================================
 //! Reader and writer wrapper types for codec-oriented I/O.
 
+#[macro_use]
+mod methods;
+
 mod binary_reader;
 mod binary_writer;
 mod buffered_binary_reader;
@@ -18,7 +21,6 @@ mod buffered_zig_zag_writer;
 mod internal;
 mod leb128_reader;
 mod leb128_writer;
-mod methods;
 mod zig_zag_reader;
 mod zig_zag_writer;
 

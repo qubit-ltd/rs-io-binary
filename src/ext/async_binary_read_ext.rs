@@ -121,6 +121,19 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 /// These reads are not cancellation safe. Dropping a pending future leaves
 /// bytes already consumed from the input consumed; retrying starts at the
 /// input's new position.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::AsyncBinaryReadExt;
+///
+/// async fn read_u16<R>(input: &mut R) -> std::io::Result<u16>
+/// where
+///     R: AsyncBinaryReadExt + Unpin,
+/// {
+///     input.read_u16_be_async().await
+/// }
+/// ```
 pub trait AsyncBinaryReadExt: AsyncInput<Item = u8> {
     fixed_read_method!(
         "Asynchronously reads an unsigned 8-bit integer.",

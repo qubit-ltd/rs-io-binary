@@ -26,6 +26,20 @@ use crate::util::write_all_async;
 ///
 /// These writes are not cancellation safe. Dropping a pending future leaves
 /// any already-written prefix or payload bytes in the output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io::AsyncOutput;
+/// use qubit_io_binary::AsyncStringWriteExt;
+///
+/// async fn write_name<O>(output: &mut O) -> std::io::Result<()>
+/// where
+///     O: AsyncOutput<Item = u8> + Unpin,
+/// {
+///     output.write_string_with_u16_len_be_async("Ada").await
+/// }
+/// ```
 pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {
     /// Asynchronously writes a UTF-8 payload without a length prefix.
     ///

@@ -47,6 +47,19 @@ use crate::util::write_all;
 /// # Type Parameters
 ///
 /// - `W`: Underlying byte output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io::Output;
+/// use qubit_io_binary::BufferedLeb128Writer;
+///
+/// let mut writer = BufferedLeb128Writer::new(Vec::new());
+/// writer.write_u32(300)?;
+/// writer.flush()?;
+/// assert_eq!(writer.inner(), &[0xAC, 0x02]);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub struct BufferedLeb128Writer<W>
 where
     W: Output<Item = u8>,
@@ -54,6 +67,9 @@ where
     /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
 }
+
+impl_output_methods!(BufferedLeb128Writer<W> where W: Output<Item = u8>);
+impl_seekable_methods!(BufferedLeb128Writer<W> where W: Output<Item = u8> + Seekable<Unit = u8>);
 
 impl<W> BufferedLeb128Writer<W>
 where

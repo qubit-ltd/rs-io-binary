@@ -8,6 +8,7 @@
 
 //! Conversion helpers for codec decode failures exposed as I/O errors.
 
+use std::convert::Infallible;
 use std::error::Error as StdError;
 use std::io::ErrorKind;
 
@@ -23,7 +24,7 @@ pub(crate) trait StreamCodecDecodeError: StdError + Send + Sync + 'static {
     fn io_error_kind(&self) -> ErrorKind;
 }
 
-impl StreamCodecDecodeError for core::convert::Infallible {
+impl StreamCodecDecodeError for Infallible {
     #[inline(always)]
     fn io_error_kind(&self) -> ErrorKind {
         match *self {}
