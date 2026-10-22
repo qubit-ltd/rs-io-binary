@@ -253,7 +253,6 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     );
 }
 
-#[cfg(all(unix, target_pointer_width = "64"))]
 #[cfg(all(not(miri), unix, target_pointer_width = "64"))]
 #[test]
 fn test_string_write_ext_reports_u32_length_overflow() {

@@ -18,7 +18,7 @@ use super::internal::async_io_test_support_tests::complete;
 use super::internal::async_io_test_support_tests::poll_once;
 
 #[test]
-fn async_zig_zag_write_covers_supported_integer_widths() {
+fn test_async_zig_zag_write_covers_supported_integer_widths() {
     let mut output = ChunkedAsyncOutput::new();
     complete(async {
         output.write_zig_zag_i8_async(-100).await?;
@@ -32,18 +32,18 @@ fn async_zig_zag_write_covers_supported_integer_widths() {
     .expect("all ZigZag values should write");
 
     let mut expected = Vec::new();
-    expected.write_zig_zag_i8(-100).unwrap();
-    expected.write_zig_zag_i16(-20_000).unwrap();
-    expected.write_zig_zag_i32(-2_000_000).unwrap();
-    expected.write_zig_zag_i64(-20_000_000_000).unwrap();
-    expected.write_zig_zag_i128(i128::MIN).unwrap();
-    expected.write_zig_zag_isize(isize::MIN).unwrap();
+    expected.write_zig_zag_i8(-100).expect("i8 should encode");
+    expected.write_zig_zag_i16(-20_000).expect("i16 should encode");
+    expected.write_zig_zag_i32(-2_000_000).expect("i32 should encode");
+    expected.write_zig_zag_i64(-20_000_000_000).expect("i64 should encode");
+    expected.write_zig_zag_i128(i128::MIN).expect("i128 should encode");
+    expected.write_zig_zag_isize(isize::MIN).expect("isize should encode");
 
     assert_eq!(expected, output.bytes());
 }
 
 #[test]
-fn dropping_zig_zag_write_future_retains_partial_output() {
+fn test_dropping_zig_zag_write_future_retains_partial_output() {
     let mut output = ChunkedAsyncOutput::starts_ready();
 
     assert!(matches!(
@@ -55,7 +55,7 @@ fn dropping_zig_zag_write_future_retains_partial_output() {
 }
 
 #[test]
-fn async_zig_zag_write_propagates_output_errors() {
+fn test_async_zig_zag_write_propagates_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
 
     let error = complete(output.write_zig_zag_i64_async(-42)).expect_err("scripted output should fail");

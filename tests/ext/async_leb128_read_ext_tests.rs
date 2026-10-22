@@ -18,23 +18,23 @@ use super::internal::async_io_test_support_tests::poll_once;
 
 fn leb128_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();
-    bytes.write_uleb_u8(200).unwrap();
-    bytes.write_uleb_u16(30_000).unwrap();
-    bytes.write_uleb_u32(3_000_000).unwrap();
-    bytes.write_uleb_u64(30_000_000_000).unwrap();
-    bytes.write_uleb_u128(u128::MAX).unwrap();
-    bytes.write_uleb_usize(usize::MAX).unwrap();
-    bytes.write_sleb_i8(-100).unwrap();
-    bytes.write_sleb_i16(-20_000).unwrap();
-    bytes.write_sleb_i32(-2_000_000).unwrap();
-    bytes.write_sleb_i64(-20_000_000_000).unwrap();
-    bytes.write_sleb_i128(i128::MIN).unwrap();
-    bytes.write_sleb_isize(isize::MIN).unwrap();
+    bytes.write_uleb_u8(200).expect("u8 should encode");
+    bytes.write_uleb_u16(30_000).expect("u16 should encode");
+    bytes.write_uleb_u32(3_000_000).expect("u32 should encode");
+    bytes.write_uleb_u64(30_000_000_000).expect("u64 should encode");
+    bytes.write_uleb_u128(u128::MAX).expect("u128 should encode");
+    bytes.write_uleb_usize(usize::MAX).expect("usize should encode");
+    bytes.write_sleb_i8(-100).expect("i8 should encode");
+    bytes.write_sleb_i16(-20_000).expect("i16 should encode");
+    bytes.write_sleb_i32(-2_000_000).expect("i32 should encode");
+    bytes.write_sleb_i64(-20_000_000_000).expect("i64 should encode");
+    bytes.write_sleb_i128(i128::MIN).expect("i128 should encode");
+    bytes.write_sleb_isize(isize::MIN).expect("isize should encode");
     bytes
 }
 
 #[test]
-fn async_leb128_read_covers_supported_integer_widths() {
+fn test_async_leb128_read_covers_supported_integer_widths() {
     let mut input = ChunkedAsyncInput::new(leb128_fixture());
 
     assert_eq!(200, complete(input.read_uleb_u8_strict_async()).unwrap());
@@ -58,9 +58,9 @@ fn async_leb128_read_covers_supported_integer_widths() {
 }
 
 #[test]
-fn dropping_leb128_read_future_retains_consumed_input() {
+fn test_dropping_leb128_read_future_retains_consumed_input() {
     let mut bytes = Vec::new();
-    bytes.write_uleb_u128(u128::MAX).unwrap();
+    bytes.write_uleb_u128(u128::MAX).expect("u128 should encode");
     let mut input = ChunkedAsyncInput::starts_ready(bytes);
 
     assert!(matches!(
@@ -72,7 +72,7 @@ fn dropping_leb128_read_future_retains_consumed_input() {
 }
 
 #[test]
-fn async_leb128_read_reports_invalid_and_truncated_payloads() {
+fn test_async_leb128_read_reports_invalid_and_truncated_payloads() {
     let mut input = ChunkedAsyncInput::new(vec![0x80; 19]);
     let invalid =
         complete(input.read_uleb_u128_non_strict_async()).expect_err("unterminated maximum payload should fail");

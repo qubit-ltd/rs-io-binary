@@ -6,3 +6,5 @@ publish = false
 
 [dependencies]
 qubit-io-binary = { path = "../../.." }
+
+[workspace]

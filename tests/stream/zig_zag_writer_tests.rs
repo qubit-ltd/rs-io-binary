@@ -30,7 +30,6 @@ fn test_zig_zag_writer_writes_all_methods_and_exposes_accessors() {
     let mut writer = ZigZagWriter::new(Vec::new());
 
     assert_eq!(0, writer.inner().len());
-    writer.inner_mut().extend_from_slice(&[]);
     writer.write_i8(i8::MIN).expect("i8 should be written");
     writer.write_i16(-300).expect("i16 should be written");
     writer.write_i32(-0x1f600).expect("i32 should be written");
@@ -38,7 +37,23 @@ fn test_zig_zag_writer_writes_all_methods_and_exposes_accessors() {
     writer.write_i128(i128::MIN).expect("i128 should be written");
     writer.write_isize(isize::MIN).expect("isize should be written");
 
-    assert!(!writer.into_inner().is_empty());
+    let mut expected = vec![
+        0xff, 0x01, // i8::MIN
+        0xd7, 0x04, // -300
+        0xff, 0xd7, 0x0f, // -0x1f600
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x01, // i64::MIN
+        0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+        0x03, // i128::MIN
+    ];
+    if usize::BITS == 64 {
+        expected.extend([0xff; 9]);
+        expected.push(0x01);
+    } else {
+        expected.extend([0xff; 4]);
+        expected.push(0x0f);
+    }
+
+    assert_eq!(expected, writer.into_inner());
 }
 
 #[test]

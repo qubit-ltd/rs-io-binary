@@ -29,6 +29,8 @@ struct PartialAsyncInput {
 }
 
 impl PartialAsyncInput {
+    #[must_use]
+    #[inline]
     fn new(bytes: Vec<u8>) -> Self {
         Self {
             bytes,
@@ -71,6 +73,8 @@ struct PartialAsyncOutput {
 }
 
 impl PartialAsyncOutput {
+    #[must_use]
+    #[inline]
     const fn new() -> Self {
         Self {
             bytes: Vec::new(),
@@ -120,7 +124,7 @@ where
 }
 
 #[test]
-fn async_stream_drivers_handle_pending_and_partial_io() {
+fn test_async_stream_drivers_handle_pending_and_partial_io() {
     let mut output = PartialAsyncOutput::new();
     complete(output.write_u32_be_async(0x1234_5678)).expect("fixed-width payload should write");
     complete(output.write_uleb_u64_async(300)).expect("LEB128 payload should write");

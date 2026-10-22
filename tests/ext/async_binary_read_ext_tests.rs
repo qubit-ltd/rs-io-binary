@@ -94,13 +94,13 @@ fn scalar_fixture() -> Vec<u8> {
 }
 
 #[test]
-fn async_binary_read_accepts_non_send_input() {
+fn test_async_binary_read_accepts_non_send_input() {
     let mut input = NonSendAsyncInput::new(vec![0x12, 0x34]);
     assert_eq!(0x1234, complete(input.read_u16_be_async()).unwrap());
 }
 
 #[test]
-fn async_binary_read_covers_scalars_and_byte_orders() {
+fn test_async_binary_read_covers_scalars_and_byte_orders() {
     let mut input = ChunkedAsyncInput::new(scalar_fixture());
 
     assert_eq!(0xA5, complete(input.read_u8_async()).unwrap());
@@ -145,7 +145,7 @@ fn async_binary_read_covers_scalars_and_byte_orders() {
 }
 
 #[test]
-fn dropping_binary_read_future_retains_consumed_input() {
+fn test_dropping_binary_read_future_retains_consumed_input() {
     let mut input = ChunkedAsyncInput::starts_ready(vec![0x12, 0x34, 0x56, 0x78]);
 
     assert!(matches!(poll_once(input.read_u32_be_async()), Poll::Pending,));
@@ -154,7 +154,7 @@ fn dropping_binary_read_future_retains_consumed_input() {
 }
 
 #[test]
-fn async_binary_read_reports_truncated_values() {
+fn test_async_binary_read_reports_truncated_values() {
     let mut input = ChunkedAsyncInput::new(vec![0x12]);
 
     let error = complete(input.read_u32_be_async()).expect_err("truncated scalar should fail");

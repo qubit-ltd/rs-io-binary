@@ -59,14 +59,14 @@ impl AsyncOutput for NonSendAsyncOutput {
 }
 
 #[test]
-fn async_binary_write_accepts_non_send_output() {
+fn test_async_binary_write_accepts_non_send_output() {
     let mut output = NonSendAsyncOutput::new();
     complete(output.write_u16_be_async(0x1234)).expect("value should write");
     assert_eq!(vec![0x12, 0x34], output.inner.bytes());
 }
 
 #[test]
-fn async_binary_write_covers_scalars_and_byte_orders() {
+fn test_async_binary_write_covers_scalars_and_byte_orders() {
     let mut output = ChunkedAsyncOutput::new();
     complete(async {
         output.write_u8_async(0xA5).await?;
@@ -143,7 +143,7 @@ fn async_binary_write_covers_scalars_and_byte_orders() {
 }
 
 #[test]
-fn dropping_binary_write_future_retains_partial_output() {
+fn test_dropping_binary_write_future_retains_partial_output() {
     let mut output = ChunkedAsyncOutput::starts_ready();
 
     assert!(matches!(
@@ -155,7 +155,7 @@ fn dropping_binary_write_future_retains_partial_output() {
 }
 
 #[test]
-fn async_binary_write_propagates_output_errors() {
+fn test_async_binary_write_propagates_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
 
     let error = complete(output.write_u32_be_async(0x1234_5678)).expect_err("scripted output should fail");

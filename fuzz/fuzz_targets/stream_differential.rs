@@ -15,9 +15,11 @@ use std::io::Read;
 use std::io::Write;
 
 use libfuzzer_sys::fuzz_target;
+use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
+use qubit_io::Output;
 use qubit_io_binary::BinaryReadExt;
 use qubit_io_binary::BinaryReader;
 use qubit_io_binary::BinaryWriteExt;
@@ -69,9 +71,7 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
 
     let mut buffered =
         BufferedBinaryWriter::<_, LittleEndian>::with_capacity(ScriptedWriter::new(chunk_size, None), 16);
-    let buffered_result = buffered
-        .write_u64(value)
-        .and_then(|()| qubit_io::Output::flush(&mut buffered));
+    let buffered_result = buffered.write_u64(value).and_then(|()| Output::flush(&mut buffered));
     let (buffered_inner, pending) = buffered.into_parts();
     let buffered_bytes = buffered_inner.into_bytes();
 
@@ -93,9 +93,7 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
         ScriptedWriter::new(chunk_size, Some(failure_limit)),
         16,
     );
-    let buffered_result = buffered
-        .write_u64(value)
-        .and_then(|()| qubit_io::Output::flush(&mut buffered));
+    let buffered_result = buffered.write_u64(value).and_then(|()| Output::flush(&mut buffered));
 
     assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
     assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
@@ -149,12 +147,12 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
     let value = String::from_utf8_lossy(payload);
     let mut encoded = Vec::new();
     encoded
-        .write_string_with_u16_len(&value, qubit_codec::ByteOrder::LittleEndian)
+        .write_string_with_u16_len(&value, ByteOrder::LittleEndian)
         .expect("UTF-8 string should encode");
 
     let mut extension = ChunkedReader::new(&encoded, chunk_size);
     let extension_result = extension
-        .read_string_with_u16_len(qubit_codec::ByteOrder::LittleEndian, MAX_FUZZ_INPUT_LEN)
+        .read_string_with_u16_len(ByteOrder::LittleEndian, MAX_FUZZ_INPUT_LEN)
         .map(|text| text.into_bytes());
     let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
     let wrapper_result = wrapper
@@ -228,7 +226,7 @@ fn fuzz_malformed_strings(payload: &[u8], chunk_size: usize) {
     for (encoded, max_len, expected_kind) in cases {
         let mut extension = ChunkedReader::new(&encoded, chunk_size);
         let extension_result = extension
-            .read_string_with_u16_len(qubit_codec::ByteOrder::LittleEndian, max_len)
+            .read_string_with_u16_len(ByteOrder::LittleEndian, max_len)
             .map(String::into_bytes);
         let extension_position = extension.position();
 

@@ -66,7 +66,7 @@ impl Output for QubitOutput {
 }
 
 #[test]
-fn binary_reader_accepts_input_without_std_read() {
+fn test_binary_reader_accepts_input_without_std_read() {
     let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
     assert!(!reader.is_buffered());
@@ -78,7 +78,7 @@ fn binary_reader_accepts_input_without_std_read() {
 }
 
 #[test]
-fn binary_writer_accepts_output_without_std_write() {
+fn test_binary_writer_accepts_output_without_std_write() {
     let mut writer = BinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
     assert!(!writer.is_buffered());
@@ -93,7 +93,7 @@ fn binary_writer_accepts_output_without_std_write() {
 }
 
 #[test]
-fn buffered_binary_reader_accepts_input_without_std_read() {
+fn test_buffered_binary_reader_accepts_input_without_std_read() {
     let mut reader = BufferedBinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
     assert!(reader.is_buffered());
@@ -101,7 +101,7 @@ fn buffered_binary_reader_accepts_input_without_std_read() {
 }
 
 #[test]
-fn buffered_binary_writer_accepts_output_without_std_write() {
+fn test_buffered_binary_writer_accepts_output_without_std_write() {
     let mut writer = BufferedBinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
     assert!(writer.is_buffered());
@@ -112,7 +112,7 @@ fn buffered_binary_writer_accepts_output_without_std_write() {
 }
 
 #[test]
-fn buffered_wrappers_support_fallible_capacity_allocation() {
+fn test_buffered_wrappers_support_fallible_capacity_allocation() {
     BufferedBinaryReader::<_, BigEndian>::try_with_capacity(QubitInput::new(vec![]), 1)
         .expect("binary reader buffer should allocate");
     BufferedBinaryWriter::<_, BigEndian>::try_with_capacity(QubitOutput::default(), 1)
@@ -126,7 +126,7 @@ fn buffered_wrappers_support_fallible_capacity_allocation() {
 }
 
 #[test]
-fn leb128_readers_accept_input_without_std_read() {
+fn test_leb128_readers_accept_input_without_std_read() {
     let mut reader = Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
     assert!(!reader.is_buffered());
     assert_eq!(300, reader.read_u16_non_strict().unwrap());
@@ -137,7 +137,7 @@ fn leb128_readers_accept_input_without_std_read() {
 }
 
 #[test]
-fn leb128_writers_accept_output_without_std_write() {
+fn test_leb128_writers_accept_output_without_std_write() {
     let mut writer = Leb128Writer::new(QubitOutput::default());
     assert!(!writer.is_buffered());
     writer.write_u16(300).unwrap();
@@ -153,7 +153,7 @@ fn leb128_writers_accept_output_without_std_write() {
 }
 
 #[test]
-fn zig_zag_readers_accept_input_without_std_read() {
+fn test_zig_zag_readers_accept_input_without_std_read() {
     let mut reader = ZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
     assert!(!reader.is_buffered());
     assert_eq!(-1, reader.read_i16_non_strict().unwrap());
@@ -164,7 +164,7 @@ fn zig_zag_readers_accept_input_without_std_read() {
 }
 
 #[test]
-fn zig_zag_writers_accept_output_without_std_write() {
+fn test_zig_zag_writers_accept_output_without_std_write() {
     let mut writer = ZigZagWriter::new(QubitOutput::default());
     assert!(!writer.is_buffered());
     writer.write_i16(-1).unwrap();

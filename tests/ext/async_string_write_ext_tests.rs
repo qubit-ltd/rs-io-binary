@@ -19,7 +19,7 @@ use super::internal::async_io_test_support_tests::complete;
 use super::internal::async_io_test_support_tests::poll_once;
 
 #[test]
-fn async_string_write_covers_every_length_prefix() {
+fn test_async_string_write_covers_every_length_prefix() {
     let mut output = ChunkedAsyncOutput::new();
     complete(async {
         output.write_utf8_payload_async("payload").await?;
@@ -58,7 +58,7 @@ fn async_string_write_covers_every_length_prefix() {
 }
 
 #[test]
-fn dropping_string_write_future_retains_partial_output() {
+fn test_dropping_string_write_future_retains_partial_output() {
     let mut output = ChunkedAsyncOutput::starts_ready();
 
     assert!(matches!(
@@ -70,7 +70,7 @@ fn dropping_string_write_future_retains_partial_output() {
 }
 
 #[test]
-fn async_string_write_reports_length_and_output_errors() {
+fn test_async_string_write_reports_length_and_output_errors() {
     let mut output = ChunkedAsyncOutput::failing(ErrorKind::BrokenPipe);
     let output_error =
         complete(output.write_utf8_string_uleb_usize_async("x")).expect_err("scripted output should fail");

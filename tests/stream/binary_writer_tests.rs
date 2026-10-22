@@ -7,6 +7,7 @@
 // =============================================================================
 use std::io::Cursor;
 use std::io::ErrorKind;
+use std::io::SeekFrom;
 
 use qubit_codec::BigEndian;
 use qubit_codec::ByteOrder;
@@ -15,6 +16,28 @@ use qubit_codec::NativeEndian;
 use qubit_io::Output;
 use qubit_io::Seekable;
 use qubit_io_binary::BinaryWriter;
+
+fn expected_big_endian_bytes() -> Vec<u8> {
+    let mut expected = Vec::new();
+    expected.extend_from_slice(&[0xaa, 0xbb]);
+    expected.push(0x12);
+    expected.push((-2_i8) as u8);
+    expected.extend_from_slice(&0x1234_u16.to_be_bytes());
+    expected.extend_from_slice(&0x1234_5678_u32.to_be_bytes());
+    expected.extend_from_slice(&0x0123_4567_89ab_cdef_u64.to_be_bytes());
+    expected.extend_from_slice(&0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_u128.to_be_bytes());
+    expected.extend_from_slice(&(-0x1234_i16).to_be_bytes());
+    expected.extend_from_slice(&(-0x0123_4567_i32).to_be_bytes());
+    expected.extend_from_slice(&(-0x0123_4567_89ab_cdef_i64).to_be_bytes());
+    expected.extend_from_slice(&(-0x0123_4567_89ab_cdef_fedc_ba98_7654_3210_i128).to_be_bytes());
+    expected.extend_from_slice(&12.5_f32.to_bits().to_be_bytes());
+    expected.extend_from_slice(&(-25.25_f64).to_bits().to_be_bytes());
+    expected.extend_from_slice(&2_u16.to_be_bytes());
+    expected.extend_from_slice(b"hi");
+    expected.extend_from_slice(&2_u32.to_be_bytes());
+    expected.extend_from_slice(b"ok");
+    expected
+}
 
 #[test]
 fn test_binary_writer_supports_native_endian() {
@@ -52,7 +75,7 @@ fn test_binary_writer_writes_all_big_endian_methods() {
         .write_string_with_u32_len("ok")
         .expect("u32 string should be written");
 
-    assert!(!writer.into_inner().is_empty());
+    assert_eq!(expected_big_endian_bytes(), writer.into_inner());
 }
 
 #[test]
@@ -121,9 +144,9 @@ fn test_binary_writer_reports_length_errors() {
 
 #[test]
 fn test_binary_writer_write_and_seek_delegate_to_inner_writer() {
-    let mut writer = BinaryWriter::<_, LittleEndian>::new(std::io::Cursor::new(vec![0; 4]));
+    let mut writer = BinaryWriter::<_, LittleEndian>::new(Cursor::new(vec![0; 4]));
 
-    Seekable::seek_to(&mut writer, std::io::SeekFrom::Start(1)).expect("seeking through BinaryWriter should succeed");
+    Seekable::seek_to(&mut writer, SeekFrom::Start(1)).expect("seeking through BinaryWriter should succeed");
     Output::write_fully(&mut writer, b"xy").expect("writing through BinaryWriter should succeed");
     Output::flush(&mut writer).expect("flushing through BinaryWriter should succeed");
 

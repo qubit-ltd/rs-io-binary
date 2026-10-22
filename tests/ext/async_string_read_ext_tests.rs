@@ -36,7 +36,7 @@ fn string_fixture() -> Vec<u8> {
 }
 
 #[test]
-fn async_string_read_reuses_payload_buffer() {
+fn test_async_string_read_reuses_payload_buffer() {
     let mut input = ChunkedAsyncInput::new(b"hello world".to_vec());
     let mut payload = Vec::with_capacity(32);
 
@@ -61,7 +61,7 @@ fn async_string_read_reuses_payload_buffer() {
 }
 
 #[test]
-fn async_string_read_covers_every_length_prefix() {
+fn test_async_string_read_covers_every_length_prefix() {
     let mut input = ChunkedAsyncInput::new(string_fixture());
 
     assert_eq!(
@@ -105,7 +105,7 @@ fn async_string_read_covers_every_length_prefix() {
 }
 
 #[test]
-fn dropping_string_read_future_retains_consumed_input() {
+fn test_dropping_string_read_future_retains_consumed_input() {
     let mut input = ChunkedAsyncInput::starts_ready(b"payload".to_vec());
 
     assert!(matches!(poll_once(input.read_utf8_payload_async(7, 7)), Poll::Pending,));
@@ -114,7 +114,7 @@ fn dropping_string_read_future_retains_consumed_input() {
 }
 
 #[test]
-fn async_string_read_reports_prefix_payload_and_utf8_errors() {
+fn test_async_string_read_reports_prefix_payload_and_utf8_errors() {
     let mut input = ChunkedAsyncInput::new(Vec::new());
     let prefix_error = complete(input.read_string_with_u32_len_be_async(32)).expect_err("missing prefix should fail");
     assert_eq!(ErrorKind::UnexpectedEof, prefix_error.kind());

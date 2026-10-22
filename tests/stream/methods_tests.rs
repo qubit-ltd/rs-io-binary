@@ -121,14 +121,29 @@ macro_rules! exercise_output_methods {
 macro_rules! exercise_seek_method {
     ($constructor:expr) => {{
         let mut stream = $constructor;
-        assert_eq!(0, stream.seek_to(SeekFrom::Start(0)).unwrap());
-        assert_eq!(1, stream.seek_to(SeekFrom::Current(1)).unwrap());
-        assert_eq!(0, stream.seek_to(SeekFrom::Start(0)).unwrap());
+        assert_eq!(
+            0,
+            stream
+                .seek_to(SeekFrom::Start(0))
+                .expect("seeking to the start should succeed")
+        );
+        assert_eq!(
+            1,
+            stream
+                .seek_to(SeekFrom::Current(1))
+                .expect("seeking one byte forward should succeed")
+        );
+        assert_eq!(
+            0,
+            stream
+                .seek_to(SeekFrom::Start(0))
+                .expect("seeking back to the start should succeed")
+        );
     }};
 }
 
 #[test]
-fn reader_forwarding_methods_delegate_for_every_reader_wrapper() {
+fn test_reader_forwarding_methods_delegate_for_every_reader_wrapper() {
     exercise_input_methods!(|bytes| BinaryReader::<_, BigEndian>::new(Cursor::new(bytes)), false);
     exercise_input_methods!(
         |bytes| BufferedBinaryReader::<_, BigEndian>::new(Cursor::new(bytes)),
@@ -147,7 +162,7 @@ fn reader_forwarding_methods_delegate_for_every_reader_wrapper() {
 }
 
 #[test]
-fn writer_forwarding_methods_delegate_for_every_writer_wrapper() {
+fn test_writer_forwarding_methods_delegate_for_every_writer_wrapper() {
     exercise_output_methods!(BinaryWriter::<_, BigEndian>::new, false);
     exercise_output_methods!(BufferedBinaryWriter::<_, BigEndian>::new, true);
     exercise_output_methods!(Leb128Writer::new, false);
@@ -157,7 +172,7 @@ fn writer_forwarding_methods_delegate_for_every_writer_wrapper() {
 }
 
 #[test]
-fn seek_forwarding_methods_delegate_for_every_seekable_wrapper() {
+fn test_seek_forwarding_methods_delegate_for_every_seekable_wrapper() {
     exercise_seek_method!(BinaryReader::<_, BigEndian>::new(Cursor::new(vec![0, 1, 2,])));
     exercise_seek_method!(BufferedBinaryReader::<_, BigEndian>::new(Cursor::new(vec![0, 1, 2])));
     exercise_seek_method!(Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0, 1, 2,])));

@@ -18,37 +18,49 @@ use super::internal::async_io_test_support_tests::poll_once;
 
 fn zig_zag_fixture() -> Vec<u8> {
     let mut bytes = Vec::new();
-    bytes.write_zig_zag_i8(-100).unwrap();
-    bytes.write_zig_zag_i16(-20_000).unwrap();
-    bytes.write_zig_zag_i32(-2_000_000).unwrap();
-    bytes.write_zig_zag_i64(-20_000_000_000).unwrap();
-    bytes.write_zig_zag_i128(i128::MIN).unwrap();
-    bytes.write_zig_zag_isize(isize::MIN).unwrap();
+    bytes.write_zig_zag_i8(-100).expect("i8 should encode");
+    bytes.write_zig_zag_i16(-20_000).expect("i16 should encode");
+    bytes.write_zig_zag_i32(-2_000_000).expect("i32 should encode");
+    bytes.write_zig_zag_i64(-20_000_000_000).expect("i64 should encode");
+    bytes.write_zig_zag_i128(i128::MIN).expect("i128 should encode");
+    bytes.write_zig_zag_isize(isize::MIN).expect("isize should encode");
     bytes
 }
 
 #[test]
-fn async_zig_zag_read_covers_supported_integer_widths() {
+fn test_async_zig_zag_read_covers_supported_integer_widths() {
     let mut input = ChunkedAsyncInput::new(zig_zag_fixture());
 
-    assert_eq!(-100, complete(input.read_zig_zag_i8_strict_async()).unwrap(),);
-    assert_eq!(-20_000, complete(input.read_zig_zag_i16_non_strict_async()).unwrap(),);
-    assert_eq!(-2_000_000, complete(input.read_zig_zag_i32_strict_async()).unwrap(),);
+    assert_eq!(
+        -100,
+        complete(input.read_zig_zag_i8_strict_async()).expect("i8 should decode"),
+    );
+    assert_eq!(
+        -20_000,
+        complete(input.read_zig_zag_i16_non_strict_async()).expect("i16 should decode"),
+    );
+    assert_eq!(
+        -2_000_000,
+        complete(input.read_zig_zag_i32_strict_async()).expect("i32 should decode"),
+    );
     assert_eq!(
         -20_000_000_000,
-        complete(input.read_zig_zag_i64_non_strict_async()).unwrap(),
+        complete(input.read_zig_zag_i64_non_strict_async()).expect("i64 should decode"),
     );
-    assert_eq!(i128::MIN, complete(input.read_zig_zag_i128_strict_async()).unwrap(),);
+    assert_eq!(
+        i128::MIN,
+        complete(input.read_zig_zag_i128_strict_async()).expect("i128 should decode"),
+    );
     assert_eq!(
         isize::MIN,
-        complete(input.read_zig_zag_isize_non_strict_async()).unwrap(),
+        complete(input.read_zig_zag_isize_non_strict_async()).expect("isize should decode"),
     );
 }
 
 #[test]
-fn dropping_zig_zag_read_future_retains_consumed_input() {
+fn test_dropping_zig_zag_read_future_retains_consumed_input() {
     let mut bytes = Vec::new();
-    bytes.write_zig_zag_i128(i128::MIN).unwrap();
+    bytes.write_zig_zag_i128(i128::MIN).expect("i128 should encode");
     let mut input = ChunkedAsyncInput::starts_ready(bytes);
 
     assert!(matches!(
@@ -56,11 +68,11 @@ fn dropping_zig_zag_read_future_retains_consumed_input() {
         Poll::Pending,
     ));
 
-    assert_eq!(1, input.position());
+    assert_eq!(1, input.position(), "polling should consume one byte");
 }
 
 #[test]
-fn async_zig_zag_read_reports_invalid_and_truncated_payloads() {
+fn test_async_zig_zag_read_reports_invalid_and_truncated_payloads() {
     let mut input = ChunkedAsyncInput::new(vec![0x80; 19]);
     let invalid =
         complete(input.read_zig_zag_i128_non_strict_async()).expect_err("unterminated maximum payload should fail");
