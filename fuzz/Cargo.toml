@@ -9,10 +9,10 @@ publish = false
 cargo-fuzz = true
 
 [dependencies]
-libfuzzer-sys = "0.4"
-qubit-codec = { version = "0.16", features = ["io"] }
-qubit-codec-binary = "0.8"
-qubit-io = "0.17"
+libfuzzer-sys = "^0.4"
+qubit-codec = { version = "^0.16", features = ["io"] }
+qubit-codec-binary = "^0.8"
+qubit-io = "^0.17"
 qubit-io-binary = { path = ".." }
 
 [[bin]]
