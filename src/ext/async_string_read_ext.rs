@@ -60,6 +60,16 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// - `len`: Encoded payload length in bytes.
     /// - `max_len`: Maximum accepted payload length in bytes.
     ///
+    /// If `len` exceeds `max_len`, `bytes` is left unchanged. Once the length
+    /// is accepted, its previous contents may be cleared even if allocation or
+    /// reading fails. After an I/O error or after a polled future is cancelled,
+    /// `bytes` is not a complete payload: its length does not report how many
+    /// bytes were received, and it may contain zero-filled bytes that were
+    /// never read.
+    /// Invalid UTF-8 is reported only after the complete payload has been
+    /// received, so all payload bytes remain available in `bytes` for
+    /// diagnostics.
+    ///
     /// # Returns
     ///
     /// Returns a future that completes after `bytes` contains one valid UTF-8
@@ -72,9 +82,9 @@ pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     ///
     /// # Cancellation safety
     ///
-    /// This operation is not cancellation safe; dropping the future retains
-    /// bytes already consumed from the input and modifications already made
-    /// to `bytes`.
+    /// This operation is not cancellation safe. Dropping a future before it is
+    /// polled performs no read. Dropping it after polling does not roll back
+    /// bytes consumed from the input or modifications made to `bytes`.
     #[inline]
     fn read_utf8_payload_into_async<'a>(
         &'a mut self,

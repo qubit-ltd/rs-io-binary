@@ -59,6 +59,14 @@ pub trait StringReadExt: ByteInput {
     /// - `len`: UTF-8 payload length in bytes.
     /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     ///
+    /// If `len` exceeds `max_len`, `bytes` is left unchanged. Once the length
+    /// is accepted, its previous contents may be cleared even if allocation or
+    /// reading fails. After an I/O error, `bytes` is not a complete payload:
+    /// its length does not report how many bytes were received, and it may
+    /// contain zero-filled bytes that were never read. Invalid UTF-8 is
+    /// reported only after the complete payload has been received, so all
+    /// payload bytes remain available in `bytes` for diagnostics.
+    ///
     /// # Returns
     ///
     /// Returns after `bytes` contains one valid UTF-8 payload.

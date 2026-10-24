@@ -124,6 +124,10 @@ payload 长度，以限制内存分配。持久化格式应优先使用固定宽
 [`benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md`](benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md)。
 它用于比较缓冲策略，不构成可移植的性能承诺。
 
+缓冲的主要收益来自减少高成本底层流上的小读写。对于 `Cursor` 等内存流或已经带缓冲的流，
+应先比较 extension 路径，再决定是否增加一层缓冲。链接中的[内存修正报告](benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md)
+显示，该次测量中 buffered 路径更慢；这不构成普遍性能排名。具体选型见[用户指南](doc/user_guide.zh_CN.md)。
+
 benchmark 套件分为多个层次：`micro_binary_pipeline` 使用会产生短写的内存流，
 `memory_mixed_binary_pipeline` 在不引入文件系统影响的情况下比较混合记录，
 `prod_*` 系列测量基于文件的端到端流水线，`async_binary_pipeline` 则单独测量

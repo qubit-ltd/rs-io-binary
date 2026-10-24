@@ -27,6 +27,12 @@ typed reader and writer families when a stream has one enduring byte order or
 decode policy. Their buffered variants preserve unread or unwritten bytes and
 are useful for many small operations.
 
+| Stream | Starting point | Reason |
+| --- | --- | --- |
+| Unbuffered files or other costly underlying I/O | Evaluate a buffered wrapper or external buffering | Amortize the cost of small underlying reads and writes. |
+| In-memory input such as `Cursor` or an existing memory slice | Start with an extension or a typed wrapper without internal buffering | Avoid an unnecessary extra buffering copy. |
+| Already-buffered input or output | Reuse the existing buffering layer | Many small operations alone do not justify another buffer. |
+
 ## Scenario: Write and Read a Small Record
 
 Imagine a file format with a big-endian format marker, a compact unsigned
@@ -104,6 +110,12 @@ assert_eq!(payload, b"hello world");
 
 The reusable API clears the buffer only after the length passes `max_len`; on
 an invalid UTF-8 error it retains the received bytes for diagnostics.
+After an I/O error or after a polled async read is cancelled, the reusable
+buffer is not a complete payload. Its length does not report the number of
+bytes received, and it may include zero-filled bytes that were never read. The
+storage can be reused for a new, independently framed payload; this does not
+make retrying the failed field safe. A complete invalid UTF-8 payload remains
+available for diagnostics.
 
 For fixed byte order, use `_be` and `_le` methods. For example,
 `write_i64_le(-42)` writes a little-endian integer. `uleb` methods handle

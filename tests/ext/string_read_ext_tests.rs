@@ -44,6 +44,27 @@ fn test_string_read_ext_reuses_payload_buffer() {
 }
 
 #[test]
+fn test_reusable_payload_eof_then_independent_input() {
+    let mut input = Cursor::new(b"ab".to_vec());
+    let mut payload = Vec::with_capacity(16);
+    payload.extend_from_slice(b"old");
+
+    let error = input
+        .read_utf8_payload_into(&mut payload, 5, 5)
+        .expect_err("partial payload must report EOF");
+    assert_eq!(ErrorKind::UnexpectedEof, error.kind());
+    assert_eq!(2, input.position());
+    assert!(payload.starts_with(b"ab"), "received prefix must be observable");
+
+    let mut next_frame = Cursor::new(b"new".to_vec());
+    next_frame
+        .read_utf8_payload_into(&mut payload, 3, 5)
+        .expect("storage must be reusable on an independent frame");
+    assert_eq!(b"new", payload.as_slice());
+    assert_eq!(3, next_frame.position());
+}
+
+#[test]
 fn test_string_read_ext_reads_all_length_prefix_kinds() {
     let mut input = Cursor::new(b"raw".to_vec());
     assert_eq!(

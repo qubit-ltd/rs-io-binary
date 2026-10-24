@@ -213,3 +213,77 @@ fn test_async_string_read_reports_prefix_payload_and_utf8_errors() {
             .kind(),
     );
 }
+
+#[test]
+fn test_async_payload_eof_then_independent_input() {
+    let mut input = ChunkedAsyncInput::new(b"ab".to_vec());
+    let mut payload = Vec::with_capacity(16);
+    payload.extend_from_slice(b"old");
+    let error =
+        complete(input.read_utf8_payload_into_async(&mut payload, 5, 5)).expect_err("partial payload must report EOF");
+    assert_eq!(ErrorKind::UnexpectedEof, error.kind());
+    assert_eq!(2, input.position());
+    assert!(payload.starts_with(b"ab"), "received prefix must be observable");
+
+    let mut next_frame = ChunkedAsyncInput::new(b"new".to_vec());
+    complete(next_frame.read_utf8_payload_into_async(&mut payload, 3, 5))
+        .expect("storage must be reusable on an independent frame");
+    assert_eq!(b"new", payload.as_slice());
+    assert_eq!(3, next_frame.position());
+}
+
+#[test]
+fn test_async_payload_cancel_then_independent_input() {
+    let mut input = ChunkedAsyncInput::starts_ready(b"abcde".to_vec());
+    let mut payload = Vec::with_capacity(16);
+    payload.extend_from_slice(b"old");
+    assert!(matches!(
+        poll_once(input.read_utf8_payload_into_async(&mut payload, 5, 5)),
+        Poll::Pending
+    ));
+    assert_eq!(2, input.position());
+    assert!(payload.starts_with(b"ab"), "cancelled read retains received bytes");
+
+    let mut next_frame = ChunkedAsyncInput::new(b"new".to_vec());
+    complete(next_frame.read_utf8_payload_into_async(&mut payload, 3, 5))
+        .expect("reuse must replace cancelled payload contents");
+    assert_eq!(b"new", payload.as_slice());
+    assert_eq!(3, next_frame.position());
+}
+
+#[test]
+fn test_async_payload_length_policy_and_positions() {
+    macro_rules! check_policy {
+        ($permissive:ident, $strict:ident) => {{
+            let mut input = ChunkedAsyncInput::new(vec![0x81, 0x00, b'a', b'!']);
+            assert_eq!("a", complete(input.$permissive(1)).expect("permissive prefix"));
+            assert_eq!(3, input.position());
+
+            let mut input = ChunkedAsyncInput::new(vec![0x81, 0x00, b'a', b'!']);
+            let error = complete(input.$strict(1)).expect_err("overlong prefix");
+            assert_eq!(ErrorKind::InvalidData, error.kind());
+            assert_eq!(2, input.position(), "strict failure must leave payload unread");
+
+            let mut input = ChunkedAsyncInput::new(vec![1, b'a', b'!']);
+            assert_eq!("a", complete(input.$permissive(1)).expect("canonical prefix"));
+            assert_eq!(2, input.position());
+            let mut input = ChunkedAsyncInput::new(vec![1, b'a', b'!']);
+            assert_eq!("a", complete(input.$strict(1)).expect("canonical strict prefix"));
+            assert_eq!(2, input.position());
+
+            let mut input = ChunkedAsyncInput::new(vec![2, b'a', b'b', b'!']);
+            let error = complete(input.$permissive(1)).expect_err("length limit");
+            assert_eq!(ErrorKind::InvalidData, error.kind());
+            assert_eq!(1, input.position(), "excessive payload must remain unread");
+            let mut input = ChunkedAsyncInput::new(vec![2, b'a', b'b', b'!']);
+            let error = complete(input.$strict(1)).expect_err("strict length limit");
+            assert_eq!(ErrorKind::InvalidData, error.kind());
+            assert_eq!(1, input.position(), "excessive payload must remain unread");
+        }};
+    }
+    check_policy!(
+        read_utf8_string_uleb_usize_async,
+        read_utf8_string_uleb_usize_strict_async
+    );
+    check_policy!(read_utf8_string_uleb_u64_async, read_utf8_string_uleb_u64_strict_async);
+}

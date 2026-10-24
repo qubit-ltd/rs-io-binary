@@ -136,6 +136,13 @@ The in-memory mixed-pipeline comparison is recorded in
 Treat these values as a comparison of buffering strategies, not as portable
 performance guarantees.
 
+Buffering is most useful when small operations would otherwise reach a costly
+underlying stream. For in-memory streams such as `Cursor`, or streams that are
+already buffered, start by comparing the extension path before adding another
+buffer. The [linked in-memory correction report](benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md)
+shows that the buffered path was slower in that run; it is not a universal
+ranking. See the [user guide](doc/user_guide.md) for selection guidance.
+
 The benchmark suite is split into layers: `micro_binary_pipeline` uses
 short-write in-memory streams, `memory_mixed_binary_pipeline` compares mixed
 records without filesystem effects, and the `prod_*` groups measure file-backed
