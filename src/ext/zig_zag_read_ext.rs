@@ -41,6 +41,19 @@ macro_rules! read_zig_zag_value {
 /// A failed synchronous read may have consumed part of the current value.
 /// Do not blindly retry the same operation; resume only from a framing
 /// boundary or a trusted seek checkpoint.
+///
+/// # Examples
+///
+/// Decode a strict ZigZag value from a byte slice:
+///
+/// ```
+/// use std::io::Cursor;
+/// use qubit_io_binary::ZigZagReadExt;
+///
+/// let mut input = Cursor::new([0x53]);
+/// assert_eq!(input.read_zig_zag_i64_strict()?, -42);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub trait ZigZagReadExt: ByteInput {
     /// Reads a non-strict ZigZag `i8`.
     ///

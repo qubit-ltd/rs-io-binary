@@ -39,6 +39,19 @@ macro_rules! write_leb128_value {
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as [`Self::write_uleb_u64`] or
 /// [`Self::write_sleb_i64`] for persistent files and cross-platform protocols.
+///
+/// # Examples
+///
+/// Write a canonical unsigned LEB128 value:
+///
+/// ```
+/// use qubit_io_binary::Leb128WriteExt;
+///
+/// let mut bytes = Vec::new();
+/// bytes.write_uleb_u64(300)?;
+/// assert_eq!(bytes, [0xac, 0x02]);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub trait Leb128WriteExt: ByteOutput {
     /// Writes an unsigned LEB128 `u8`.
     ///

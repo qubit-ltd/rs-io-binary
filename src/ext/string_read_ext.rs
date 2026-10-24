@@ -30,6 +30,24 @@ use crate::util::usize_from_u64_len;
 /// max_len, the prefix is consumed but the payload is left unread. If UTF-8
 /// validation fails, both the prefix and the complete payload are consumed.
 /// Do not continue parsing the same record from the current position.
+///
+/// # Examples
+///
+/// Read a length-prefixed string and observe that an oversized length consumes
+/// its prefix while leaving the payload unread:
+///
+/// ```
+/// use std::io::Cursor;
+/// use std::io::ErrorKind;
+/// use qubit_io_binary::StringReadExt;
+///
+/// let mut input = Cursor::new([3, b'a', b'b', b'c']);
+/// assert_eq!(input.read_utf8_string_uleb_u64_strict(3)?, "abc");
+/// let mut oversized = Cursor::new([3, b'a', b'b', b'c']);
+/// assert_eq!(oversized.read_utf8_string_uleb_u64_strict(2).unwrap_err().kind(), ErrorKind::InvalidData);
+/// assert_eq!(oversized.position(), 1);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub trait StringReadExt: ByteInput {
     /// Reads and validates a UTF-8 payload into reusable byte storage.
     ///

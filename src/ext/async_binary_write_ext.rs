@@ -134,6 +134,22 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 /// These writes are not cancellation safe. Dropping a pending future leaves
 /// any already-written prefix in the output; retrying can duplicate that
 /// prefix.
+///
+/// # Examples
+///
+/// Define a generic async helper that writes a big-endian marker:
+///
+/// ```
+/// use qubit_io::AsyncOutput;
+/// use qubit_io_binary::AsyncBinaryWriteExt;
+///
+/// async fn write_marker<O>(output: &mut O) -> std::io::Result<()>
+/// where
+///     O: AsyncOutput<Item = u8> + Unpin,
+/// {
+///     output.write_u32_be_async(0x5142_4954).await
+/// }
+/// ```
 pub trait AsyncBinaryWriteExt: AsyncOutput<Item = u8> {
     fixed_write_method!(
         "Asynchronously writes an unsigned 8-bit integer.",

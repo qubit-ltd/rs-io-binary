@@ -40,6 +40,23 @@ macro_rules! read_leb128_value {
 /// A failed synchronous read may have consumed part of the current value.
 /// Do not blindly retry the same operation; resume only from a framing
 /// boundary or a trusted seek checkpoint.
+///
+/// # Examples
+///
+/// A non-strict read accepts an overlong encoding that the strict method
+/// rejects:
+///
+/// ```
+/// use std::io::Cursor;
+/// use std::io::ErrorKind;
+/// use qubit_io_binary::Leb128ReadExt;
+///
+/// let mut permissive = Cursor::new([0x80, 0x00]);
+/// assert_eq!(permissive.read_uleb_u64_non_strict()?, 0);
+/// let mut strict = Cursor::new([0x80, 0x00]);
+/// assert_eq!(strict.read_uleb_u64_strict().unwrap_err().kind(), ErrorKind::InvalidData);
+/// # Ok::<(), std::io::Error>(())
+/// ```
 pub trait Leb128ReadExt: ByteInput {
     /// Reads a non-strict unsigned LEB128 `u8`.
     ///

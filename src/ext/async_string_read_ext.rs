@@ -32,6 +32,22 @@ use crate::util::usize_from_u64_len;
 /// A length above max_len consumes its prefix but leaves the payload unread;
 /// invalid UTF-8 is reported after the complete payload has been consumed.
 /// Neither failure rolls back the input.
+///
+/// # Examples
+///
+/// Define a generic async helper that reads a bounded, length-prefixed label:
+///
+/// ```
+/// use qubit_io::AsyncInput;
+/// use qubit_io_binary::AsyncStringReadExt;
+///
+/// async fn read_label<I>(input: &mut I) -> std::io::Result<String>
+/// where
+///     I: AsyncInput<Item = u8> + Unpin,
+/// {
+///     input.read_utf8_string_uleb_u64_strict_async(64).await
+/// }
+/// ```
 pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// Asynchronously reads and validates a UTF-8 payload into reusable byte
     /// storage.

@@ -64,6 +64,22 @@ macro_rules! leb128_read_method {
 ///
 /// These reads are not cancellation safe. Dropping a pending future leaves
 /// bytes already consumed from the input consumed.
+///
+/// # Examples
+///
+/// Define a generic async helper that reads a strict unsigned LEB128 value:
+///
+/// ```
+/// use qubit_io::AsyncInput;
+/// use qubit_io_binary::AsyncLeb128ReadExt;
+///
+/// async fn read_id<I>(input: &mut I) -> std::io::Result<u64>
+/// where
+///     I: AsyncInput<Item = u8> + Unpin,
+/// {
+///     input.read_uleb_u64_strict_async().await
+/// }
+/// ```
 pub trait AsyncLeb128ReadExt: AsyncInput<Item = u8> {
     leb128_read_method!(
         "Asynchronously reads a non-strict LEB128 `u8`.",
