@@ -69,8 +69,12 @@ assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
 # Ok::<(), std::io::Error>(())
 ```
 
-宽松 extension 方法刻意使用 `_non_strict` 后缀。需要规范 LEB128 编码时应使用对应的
-`_strict` 方法；typed reader 同样必须显式指定 `Strict` 或 `NonStrict` 策略类型。
+整数 LEB128 扩展方法会在名称中明确标出解码策略：`_non_strict` 接受非规范前缀，
+`_strict` 则要求前缀编码规范。读取 `u64` 或 `usize` ULEB128 长度的字符串方法若没有
+策略后缀，例如 `read_utf8_string_uleb_u64`，默认采用宽松模式；对应的异步方法也一样。
+需要规范长度前缀时，使用带 `_strict` 或 `_strict_async` 后缀的字符串方法。这里的严格性
+只约束长度前缀的编码方式：所有字符串读取方法仍会检查 `max_len`，并验证 payload 是否为
+合法 UTF-8。typed LEB128 reader 必须显式指定 `Strict` 或 `NonStrict` 策略类型。
 
 `max_len` 是输入校验边界：它限制返回 `String` 前可接受的 payload 长度。应根据文件
 格式或协议限制设置，而不要根据当前预期数据设置。

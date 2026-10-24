@@ -73,10 +73,15 @@ assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
 # Ok::<(), std::io::Error>(())
 ```
 
-The non-strict extension methods are intentionally named with a
-`_non_strict` suffix. Use the corresponding `_strict` methods when canonical
-LEB128 encodings are required; typed readers likewise require an explicit
-`Strict` or `NonStrict` policy type.
+Integer LEB128 extension methods name their decoding policy explicitly:
+`_non_strict` accepts non-canonical prefixes, while `_strict` requires a
+canonical prefix. String methods that read a `u64` or `usize` ULEB128 length
+without a policy suffix, such as `read_utf8_string_uleb_u64`, are non-strict;
+their async counterparts are also non-strict. Use the `_strict` and
+`_strict_async` string methods to require a canonical length prefix. This
+strictness choice applies only to the prefix encoding: every string-reading
+variant still checks `max_len` and validates the payload as UTF-8. Typed
+LEB128 readers require an explicit `Strict` or `NonStrict` policy type.
 
 The `max_len` argument is an input-validation boundary: it limits the payload
 length accepted before allocating the returned `String`. Pick it from the file
