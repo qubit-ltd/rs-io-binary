@@ -23,6 +23,39 @@ use super::internal::async_io_test_support_tests::ChunkedAsyncOutput;
 use super::internal::async_io_test_support_tests::complete;
 use super::internal::async_io_test_support_tests::poll_once;
 
+macro_rules! assert_async_write_float_bits {
+    ($runtime:ident, $be:ident, $le:ident, $float:ty, $bits:expr) => {{
+        let bits: <$float as FloatBits>::Bits = $bits;
+        let value = <$float>::from_bits(bits);
+        let mut output = ChunkedAsyncOutput::new();
+        complete(output.$runtime(value, ByteOrder::BigEndian)).expect("runtime BE float should write");
+        assert_eq!(bits.to_be_bytes().as_slice(), output.bytes().as_slice());
+        let mut output = ChunkedAsyncOutput::new();
+        complete(output.$runtime(value, ByteOrder::LittleEndian)).expect("runtime LE float should write");
+        assert_eq!(bits.to_le_bytes().as_slice(), output.bytes().as_slice());
+        let mut output = ChunkedAsyncOutput::new();
+        complete(output.$runtime(value, ByteOrder::NativeEndian)).expect("runtime native float should write");
+        assert_eq!(bits.to_ne_bytes().as_slice(), output.bytes().as_slice());
+        let mut output = ChunkedAsyncOutput::new();
+        complete(output.$be(value)).expect("fixed BE float should write");
+        assert_eq!(bits.to_be_bytes().as_slice(), output.bytes().as_slice());
+        let mut output = ChunkedAsyncOutput::new();
+        complete(output.$le(value)).expect("fixed LE float should write");
+        assert_eq!(bits.to_le_bytes().as_slice(), output.bytes().as_slice());
+    }};
+}
+
+trait FloatBits {
+    type Bits: Copy + std::fmt::Debug + PartialEq;
+}
+
+impl FloatBits for f32 {
+    type Bits = u32;
+}
+impl FloatBits for f64 {
+    type Bits = u64;
+}
+
 struct NonSendAsyncOutput {
     inner: ChunkedAsyncOutput,
     _not_send: PhantomData<Rc<()>>,
@@ -140,6 +173,22 @@ fn test_async_binary_write_covers_scalars_and_byte_orders() {
     expected.write_f64_le(-20.5).expect("f64 should encode");
 
     assert_eq!(expected, output.bytes());
+}
+
+#[test]
+fn test_async_binary_write_float_bits() {
+    for bits in [0x8000_0000_u32, 0x7f80_0000, 0xff80_0000, 0x7fc1_2345, 0xffc5_4321] {
+        assert_async_write_float_bits!(write_f32_async, write_f32_be_async, write_f32_le_async, f32, bits);
+    }
+    for bits in [
+        0x8000_0000_0000_0000_u64,
+        0x7ff0_0000_0000_0000,
+        0xfff0_0000_0000_0000,
+        0x7ff8_1234_5678_9abc,
+        0xfff8_abcd_ef01_2345,
+    ] {
+        assert_async_write_float_bits!(write_f64_async, write_f64_be_async, write_f64_le_async, f64, bits);
+    }
 }
 
 #[test]

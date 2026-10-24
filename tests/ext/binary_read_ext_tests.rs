@@ -35,19 +35,47 @@ macro_rules! assert_read_ordered_float {
     ($method:ident, $be:ident, $le:ident, $ty:ty, $value:expr) => {{
         let value: $ty = $value;
         let mut input = Cursor::new(value.to_bits().to_be_bytes());
-        assert_eq!(value, input.$method(ByteOrder::BigEndian).expect("runtime BE read"));
+        assert_eq!(
+            value.to_bits(),
+            input.$method(ByteOrder::BigEndian).expect("runtime BE read").to_bits()
+        );
         let mut input = Cursor::new(value.to_bits().to_le_bytes());
-        assert_eq!(value, input.$method(ByteOrder::LittleEndian).expect("runtime LE read"));
+        assert_eq!(
+            value.to_bits(),
+            input
+                .$method(ByteOrder::LittleEndian)
+                .expect("runtime LE read")
+                .to_bits()
+        );
         let mut input = Cursor::new(value.to_bits().to_ne_bytes());
         assert_eq!(
-            value,
-            input.$method(ByteOrder::NativeEndian).expect("runtime native read")
+            value.to_bits(),
+            input
+                .$method(ByteOrder::NativeEndian)
+                .expect("runtime native read")
+                .to_bits()
         );
         let mut input = Cursor::new(value.to_bits().to_be_bytes());
-        assert_eq!(value, input.$be().expect("fixed BE read"));
+        assert_eq!(value.to_bits(), input.$be().expect("fixed BE read").to_bits());
         let mut input = Cursor::new(value.to_bits().to_le_bytes());
-        assert_eq!(value, input.$le().expect("fixed LE read"));
+        assert_eq!(value.to_bits(), input.$le().expect("fixed LE read").to_bits());
     }};
+}
+
+#[test]
+fn test_binary_read_ext_float_bits() {
+    for bits in [0x8000_0000_u32, 0x7f80_0000, 0xff80_0000, 0x7fc1_2345, 0xffc5_4321] {
+        assert_read_ordered_float!(read_f32, read_f32_be, read_f32_le, f32, f32::from_bits(bits));
+    }
+    for bits in [
+        0x8000_0000_0000_0000_u64,
+        0x7ff0_0000_0000_0000,
+        0xfff0_0000_0000_0000,
+        0x7ff8_1234_5678_9abc,
+        0xfff8_abcd_ef01_2345,
+    ] {
+        assert_read_ordered_float!(read_f64, read_f64_be, read_f64_le, f64, f64::from_bits(bits));
+    }
 }
 
 #[test]

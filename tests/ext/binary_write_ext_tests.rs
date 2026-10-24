@@ -107,6 +107,22 @@ fn test_binary_write_ext_writes_all_scalar_methods() {
 }
 
 #[test]
+fn test_binary_write_ext_float_bits() {
+    for bits in [0x8000_0000_u32, 0x7f80_0000, 0xff80_0000, 0x7fc1_2345, 0xffc5_4321] {
+        assert_write_ordered_float!(write_f32, write_f32_be, write_f32_le, f32, f32::from_bits(bits));
+    }
+    for bits in [
+        0x8000_0000_0000_0000_u64,
+        0x7ff0_0000_0000_0000,
+        0xfff0_0000_0000_0000,
+        0x7ff8_1234_5678_9abc,
+        0xfff8_abcd_ef01_2345,
+    ] {
+        assert_write_ordered_float!(write_f64, write_f64_be, write_f64_le, f64, f64::from_bits(bits));
+    }
+}
+
+#[test]
 fn test_binary_write_ext_reports_errors() {
     let mut writer = FailingWriter;
     assert_eq!(

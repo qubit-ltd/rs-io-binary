@@ -22,6 +22,54 @@ use super::internal::async_io_test_support_tests::ChunkedAsyncInput;
 use super::internal::async_io_test_support_tests::complete;
 use super::internal::async_io_test_support_tests::poll_once;
 
+macro_rules! assert_async_read_float_bits {
+    ($runtime:ident, $be:ident, $le:ident, $float:ty, $bits:expr) => {{
+        let bits: <$float as FloatBits>::Bits = $bits;
+        let mut input = ChunkedAsyncInput::new(bits.to_be_bytes().to_vec());
+        assert_eq!(
+            bits,
+            complete(input.$runtime(ByteOrder::BigEndian))
+                .expect("runtime BE float should read")
+                .to_bits()
+        );
+        let mut input = ChunkedAsyncInput::new(bits.to_le_bytes().to_vec());
+        assert_eq!(
+            bits,
+            complete(input.$runtime(ByteOrder::LittleEndian))
+                .expect("runtime LE float should read")
+                .to_bits()
+        );
+        let mut input = ChunkedAsyncInput::new(bits.to_ne_bytes().to_vec());
+        assert_eq!(
+            bits,
+            complete(input.$runtime(ByteOrder::NativeEndian))
+                .expect("runtime native float should read")
+                .to_bits()
+        );
+        let mut input = ChunkedAsyncInput::new(bits.to_be_bytes().to_vec());
+        assert_eq!(
+            bits,
+            complete(input.$be()).expect("fixed BE float should read").to_bits()
+        );
+        let mut input = ChunkedAsyncInput::new(bits.to_le_bytes().to_vec());
+        assert_eq!(
+            bits,
+            complete(input.$le()).expect("fixed LE float should read").to_bits()
+        );
+    }};
+}
+
+trait FloatBits {
+    type Bits: Copy + std::fmt::Debug + PartialEq;
+}
+
+impl FloatBits for f32 {
+    type Bits = u32;
+}
+impl FloatBits for f64 {
+    type Bits = u64;
+}
+
 struct NonSendAsyncInput {
     inner: ChunkedAsyncInput,
     _not_send: PhantomData<Rc<()>>,
@@ -142,6 +190,22 @@ fn test_async_binary_read_covers_scalars_and_byte_orders() {
     assert_eq!(-2.5, complete(input.read_f32_le_async()).unwrap());
     assert_eq!(10.25, complete(input.read_f64_be_async()).unwrap());
     assert_eq!(-20.5, complete(input.read_f64_le_async()).unwrap());
+}
+
+#[test]
+fn test_async_binary_read_float_bits() {
+    for bits in [0x8000_0000_u32, 0x7f80_0000, 0xff80_0000, 0x7fc1_2345, 0xffc5_4321] {
+        assert_async_read_float_bits!(read_f32_async, read_f32_be_async, read_f32_le_async, f32, bits);
+    }
+    for bits in [
+        0x8000_0000_0000_0000_u64,
+        0x7ff0_0000_0000_0000,
+        0xfff0_0000_0000_0000,
+        0x7ff8_1234_5678_9abc,
+        0xfff8_abcd_ef01_2345,
+    ] {
+        assert_async_read_float_bits!(read_f64_async, read_f64_be_async, read_f64_le_async, f64, bits);
+    }
 }
 
 #[test]
