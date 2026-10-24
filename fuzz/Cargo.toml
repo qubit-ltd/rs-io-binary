@@ -10,11 +10,11 @@ cargo-fuzz = true
 
 [dependencies]
 libfuzzer-sys = "^0.4"
-qubit-codec = { path = "../../rs-codec", version = "0.16", features = ["io"] }
+qubit-codec = { path = "../../rs-codec", version = "0.17", features = ["io"] }
 
-qubit-codec-binary = { path = "../../rs-codec-binary", version = "0.8" }
+qubit-codec-binary = { path = "../../rs-codec-binary", version = "0.9" }
 
-qubit-io = { path = "../../rs-io", version = "0.19" }
+qubit-io = "0.19"
 
 qubit-io-binary = { path = ".." }
 
