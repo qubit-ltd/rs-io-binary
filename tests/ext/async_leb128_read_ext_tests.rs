@@ -58,6 +58,30 @@ fn test_async_leb128_read_covers_supported_integer_widths() {
 }
 
 #[test]
+fn test_async_sleb_noncanonical_zero_distinguishes_policies() {
+    macro_rules! check_policy {
+        ($strict:ident, $non_strict:ident) => {{
+            let mut strict = ChunkedAsyncInput::new(vec![0x80, 0x00, 0x55]);
+            let error = complete(strict.$strict()).expect_err("strict must reject noncanonical zero");
+            assert_eq!(ErrorKind::InvalidData, error.kind(), stringify!($strict));
+            assert_eq!(2, strict.position(), "strict must not consume the sentinel");
+            let mut non_strict = ChunkedAsyncInput::new(vec![0x80, 0x00, 0x55]);
+            assert_eq!(
+                0,
+                complete(non_strict.$non_strict()).expect("non-strict must accept zero")
+            );
+            assert_eq!(2, non_strict.position(), "non-strict must not consume the sentinel");
+        }};
+    }
+    check_policy!(read_sleb_i8_strict_async, read_sleb_i8_non_strict_async);
+    check_policy!(read_sleb_i16_strict_async, read_sleb_i16_non_strict_async);
+    check_policy!(read_sleb_i32_strict_async, read_sleb_i32_non_strict_async);
+    check_policy!(read_sleb_i64_strict_async, read_sleb_i64_non_strict_async);
+    check_policy!(read_sleb_i128_strict_async, read_sleb_i128_non_strict_async);
+    check_policy!(read_sleb_isize_strict_async, read_sleb_isize_non_strict_async);
+}
+
+#[test]
 fn test_dropping_leb128_read_future_retains_consumed_input() {
     let mut bytes = Vec::new();
     bytes.write_uleb_u128(u128::MAX).expect("u128 should encode");
