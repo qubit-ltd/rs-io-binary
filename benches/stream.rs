@@ -524,13 +524,16 @@ fn write_records_buffered_file(records: &[Record], path: &Path) {
 }
 
 #[inline]
-fn read_records_wrapper_file(path: &Path) {
+fn read_records_wrapper_file<const VALIDATE: bool>(path: &Path, expected: &[Record]) {
     let file = File::open(path).expect("binary wrapper input file should open");
     let buffer = BufReader::new(file);
     let mut reader = BinaryReader::<_, LittleEndian>::new(buffer);
     let mut digest = 0u64;
+    if VALIDATE {
+        assert_eq!(expected.len(), BINARY_BATCH);
+    }
 
-    for _ in 0..BINARY_BATCH {
+    for index in 0..BINARY_BATCH {
         let id = reader.read_u64().unwrap();
         let user_id = reader.read_u32().unwrap();
         let flag = reader.read_u8().unwrap();
@@ -539,6 +542,27 @@ fn read_records_wrapper_file(path: &Path) {
         let weight = reader.read_f64().unwrap();
         let ts_ms = reader.read_u64().unwrap();
 
+        if VALIDATE {
+            let value = expected.get(index).expect("validated record count");
+            assert_eq!(id, value.id, "{} record {index}: id", path.display());
+            assert_eq!(user_id, value.user_id, "{} record {index}: user_id", path.display());
+            assert_eq!(flag, value.flag, "{} record {index}: flag", path.display());
+            assert_eq!(delta, value.delta, "{} record {index}: delta", path.display());
+            assert_eq!(
+                score.to_bits(),
+                value.score.to_bits(),
+                "{} record {index}: score",
+                path.display()
+            );
+            assert_eq!(
+                weight.to_bits(),
+                value.weight.to_bits(),
+                "{} record {index}: weight",
+                path.display()
+            );
+            assert_eq!(ts_ms, value.ts_ms, "{} record {index}: ts_ms", path.display());
+        }
+
         digest ^= id;
         digest ^= user_id as u64;
         digest ^= u64::from(flag);
@@ -552,12 +576,15 @@ fn read_records_wrapper_file(path: &Path) {
 }
 
 #[inline]
-fn read_records_ext_file(path: &Path) {
+fn read_records_ext_file<const VALIDATE: bool>(path: &Path, expected: &[Record]) {
     let file = File::open(path).expect("binary ext input file should open");
     let mut reader = BufReader::new(file);
     let mut digest = 0u64;
+    if VALIDATE {
+        assert_eq!(expected.len(), BINARY_BATCH);
+    }
 
-    for _ in 0..BINARY_BATCH {
+    for index in 0..BINARY_BATCH {
         let id = reader.read_u64_le().unwrap();
         let user_id = reader.read_u32_le().unwrap();
         let flag = reader.read_u8().unwrap();
@@ -566,6 +593,27 @@ fn read_records_ext_file(path: &Path) {
         let weight = reader.read_f64_le().unwrap();
         let ts_ms = reader.read_u64_le().unwrap();
 
+        if VALIDATE {
+            let value = expected.get(index).expect("validated record count");
+            assert_eq!(id, value.id, "{} record {index}: id", path.display());
+            assert_eq!(user_id, value.user_id, "{} record {index}: user_id", path.display());
+            assert_eq!(flag, value.flag, "{} record {index}: flag", path.display());
+            assert_eq!(delta, value.delta, "{} record {index}: delta", path.display());
+            assert_eq!(
+                score.to_bits(),
+                value.score.to_bits(),
+                "{} record {index}: score",
+                path.display()
+            );
+            assert_eq!(
+                weight.to_bits(),
+                value.weight.to_bits(),
+                "{} record {index}: weight",
+                path.display()
+            );
+            assert_eq!(ts_ms, value.ts_ms, "{} record {index}: ts_ms", path.display());
+        }
+
         digest ^= id;
         digest ^= user_id as u64;
         digest ^= u64::from(flag);
@@ -579,15 +627,18 @@ fn read_records_ext_file(path: &Path) {
 }
 
 #[inline]
-fn read_records_std_native_file(path: &Path) {
+fn read_records_std_native_file<const VALIDATE: bool>(path: &Path, expected: &[Record]) {
     let file = File::open(path).expect("binary std native input file should open");
     let mut reader = BufReader::new(file);
     let mut digest = 0u64;
+    if VALIDATE {
+        assert_eq!(expected.len(), BINARY_BATCH);
+    }
     let mut u64_buffer = [0u8; 8];
     let mut u32_buffer = [0u8; 4];
     let mut u8_buffer = [0u8; 1];
 
-    for _ in 0..BINARY_BATCH {
+    for index in 0..BINARY_BATCH {
         reader.read_exact(&mut u64_buffer).unwrap();
         let id = u64::from_le_bytes(u64_buffer);
         reader.read_exact(&mut u32_buffer).unwrap();
@@ -603,6 +654,27 @@ fn read_records_std_native_file(path: &Path) {
         reader.read_exact(&mut u64_buffer).unwrap();
         let ts_ms = u64::from_le_bytes(u64_buffer);
 
+        if VALIDATE {
+            let value = expected.get(index).expect("validated record count");
+            assert_eq!(id, value.id, "{} record {index}: id", path.display());
+            assert_eq!(user_id, value.user_id, "{} record {index}: user_id", path.display());
+            assert_eq!(flag, value.flag, "{} record {index}: flag", path.display());
+            assert_eq!(delta, value.delta, "{} record {index}: delta", path.display());
+            assert_eq!(
+                score.to_bits(),
+                value.score.to_bits(),
+                "{} record {index}: score",
+                path.display()
+            );
+            assert_eq!(
+                weight.to_bits(),
+                value.weight.to_bits(),
+                "{} record {index}: weight",
+                path.display()
+            );
+            assert_eq!(ts_ms, value.ts_ms, "{} record {index}: ts_ms", path.display());
+        }
+
         digest ^= id;
         digest ^= user_id as u64;
         digest ^= u64::from(flag);
@@ -616,12 +688,15 @@ fn read_records_std_native_file(path: &Path) {
 }
 
 #[inline]
-fn read_records_buffered_file(path: &Path) {
+fn read_records_buffered_file<const VALIDATE: bool>(path: &Path, expected: &[Record]) {
     let file = File::open(path).expect("binary buffered input file should open");
     let mut reader = BufferedBinaryReader::<_, LittleEndian>::new(file);
     let mut digest = 0u64;
+    if VALIDATE {
+        assert_eq!(expected.len(), BINARY_BATCH);
+    }
 
-    for _ in 0..BINARY_BATCH {
+    for index in 0..BINARY_BATCH {
         let id = reader.read_u64().unwrap();
         let user_id = reader.read_u32().unwrap();
         let flag = reader.read_u8().unwrap();
@@ -629,6 +704,27 @@ fn read_records_buffered_file(path: &Path) {
         let score = reader.read_f32().unwrap();
         let weight = reader.read_f64().unwrap();
         let ts_ms = reader.read_u64().unwrap();
+
+        if VALIDATE {
+            let value = expected.get(index).expect("validated record count");
+            assert_eq!(id, value.id, "{} record {index}: id", path.display());
+            assert_eq!(user_id, value.user_id, "{} record {index}: user_id", path.display());
+            assert_eq!(flag, value.flag, "{} record {index}: flag", path.display());
+            assert_eq!(delta, value.delta, "{} record {index}: delta", path.display());
+            assert_eq!(
+                score.to_bits(),
+                value.score.to_bits(),
+                "{} record {index}: score",
+                path.display()
+            );
+            assert_eq!(
+                weight.to_bits(),
+                value.weight.to_bits(),
+                "{} record {index}: weight",
+                path.display()
+            );
+            assert_eq!(ts_ms, value.ts_ms, "{} record {index}: ts_ms", path.display());
+        }
 
         digest ^= id;
         digest ^= user_id as u64;
@@ -660,6 +756,28 @@ enum ZigZagField {
     I64(i64),
     Isize(isize),
     I128(i128),
+}
+
+fn uleb_field_value(field: &UlebField) -> u128 {
+    match *field {
+        UlebField::U8(value) => u128::from(value),
+        UlebField::U16(value) => u128::from(value),
+        UlebField::U32(value) => u128::from(value),
+        UlebField::U64(value) => u128::from(value),
+        UlebField::Usize(value) => value as u128,
+        UlebField::U128(value) => value,
+    }
+}
+
+fn zigzag_field_value(field: &ZigZagField) -> i128 {
+    match *field {
+        ZigZagField::I8(value) => i128::from(value),
+        ZigZagField::I16(value) => i128::from(value),
+        ZigZagField::I32(value) => i128::from(value),
+        ZigZagField::I64(value) => i128::from(value),
+        ZigZagField::Isize(value) => value as i128,
+        ZigZagField::I128(value) => value,
+    }
 }
 
 #[inline]
@@ -929,86 +1047,90 @@ fn write_uleb_buffered_file(fields: &[UlebField], path: &Path) {
 }
 
 #[inline]
-fn read_uleb_ext_file(path: &Path, fields: &[UlebField]) {
+fn read_uleb_ext_file<const VALIDATE: bool>(path: &Path, fields: &[UlebField]) {
     let file = File::open(path).expect("LEB128 ext input file should open");
     let mut reader = BufReader::new(file);
     let mut checksum = 0u128;
-
-    for field in fields {
-        match *field {
-            UlebField::U8(_) => checksum ^= u128::from(reader.read_uleb_u8_non_strict().unwrap()),
-            UlebField::U16(_) => checksum ^= u128::from(reader.read_uleb_u16_non_strict().unwrap()),
-            UlebField::U32(_) => checksum ^= u128::from(reader.read_uleb_u32_non_strict().unwrap()),
-            UlebField::U64(_) => checksum ^= u128::from(reader.read_uleb_u64_non_strict().unwrap()),
-            UlebField::Usize(_) => checksum ^= reader.read_uleb_usize_non_strict().unwrap() as u128,
-            UlebField::U128(_) => checksum ^= reader.read_uleb_u128_non_strict().unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            UlebField::U8(_) => u128::from(reader.read_uleb_u8_non_strict().unwrap()),
+            UlebField::U16(_) => u128::from(reader.read_uleb_u16_non_strict().unwrap()),
+            UlebField::U32(_) => u128::from(reader.read_uleb_u32_non_strict().unwrap()),
+            UlebField::U64(_) => u128::from(reader.read_uleb_u64_non_strict().unwrap()),
+            UlebField::Usize(_) => reader.read_uleb_usize_non_strict().unwrap() as u128,
+            UlebField::U128(_) => reader.read_uleb_u128_non_strict().unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, uleb_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
-
     black_box(checksum);
 }
-
 #[inline]
-fn read_uleb_std_manual_file(path: &Path, fields: &[UlebField]) {
+fn read_uleb_std_manual_file<const VALIDATE: bool>(path: &Path, fields: &[UlebField]) {
     let file = File::open(path).expect("LEB128 std manual input file should open");
     let mut reader = BufReader::new(file);
     let mut checksum = 0u128;
-
-    for field in fields {
-        match *field {
-            UlebField::U8(_) => checksum ^= read_uleb_std_manual(&mut reader, u128::from(u8::MAX)).unwrap(),
-            UlebField::U16(_) => checksum ^= read_uleb_std_manual(&mut reader, u128::from(u16::MAX)).unwrap(),
-            UlebField::U32(_) => checksum ^= read_uleb_std_manual(&mut reader, u128::from(u32::MAX)).unwrap(),
-            UlebField::U64(_) => checksum ^= read_uleb_std_manual(&mut reader, u128::from(u64::MAX)).unwrap(),
-            UlebField::Usize(_) => checksum ^= read_uleb_std_manual(&mut reader, usize::MAX as u128).unwrap(),
-            UlebField::U128(_) => checksum ^= read_uleb_std_manual(&mut reader, u128::MAX).unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            UlebField::U8(_) => read_uleb_std_manual(&mut reader, u128::from(u8::MAX)).unwrap(),
+            UlebField::U16(_) => read_uleb_std_manual(&mut reader, u128::from(u16::MAX)).unwrap(),
+            UlebField::U32(_) => read_uleb_std_manual(&mut reader, u128::from(u32::MAX)).unwrap(),
+            UlebField::U64(_) => read_uleb_std_manual(&mut reader, u128::from(u64::MAX)).unwrap(),
+            UlebField::Usize(_) => read_uleb_std_manual(&mut reader, usize::MAX as u128).unwrap(),
+            UlebField::U128(_) => read_uleb_std_manual(&mut reader, u128::MAX).unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, uleb_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
-
     black_box(checksum);
 }
-
 #[inline]
-fn read_uleb_wrapper_file(path: &Path, fields: &[UlebField]) {
+fn read_uleb_wrapper_file<const VALIDATE: bool>(path: &Path, fields: &[UlebField]) {
     let file = File::open(path).expect("LEB128 wrapper input file should open");
     let buffer = BufReader::new(file);
     let mut reader = Leb128Reader::<_, NonStrict>::new(buffer);
     let mut checksum = 0u128;
-
-    for field in fields {
-        match *field {
-            UlebField::U8(_) => checksum ^= u128::from(reader.read_u8_non_strict().unwrap()),
-            UlebField::U16(_) => checksum ^= u128::from(reader.read_u16_non_strict().unwrap()),
-            UlebField::U32(_) => checksum ^= u128::from(reader.read_u32_non_strict().unwrap()),
-            UlebField::U64(_) => checksum ^= u128::from(reader.read_u64_non_strict().unwrap()),
-            UlebField::Usize(_) => checksum ^= reader.read_usize_non_strict().unwrap() as u128,
-            UlebField::U128(_) => checksum ^= reader.read_u128_non_strict().unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            UlebField::U8(_) => u128::from(reader.read_u8_non_strict().unwrap()),
+            UlebField::U16(_) => u128::from(reader.read_u16_non_strict().unwrap()),
+            UlebField::U32(_) => u128::from(reader.read_u32_non_strict().unwrap()),
+            UlebField::U64(_) => u128::from(reader.read_u64_non_strict().unwrap()),
+            UlebField::Usize(_) => reader.read_usize_non_strict().unwrap() as u128,
+            UlebField::U128(_) => reader.read_u128_non_strict().unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, uleb_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
-
     black_box(checksum);
 }
-
 #[inline]
-fn read_uleb_buffered_file(path: &Path, fields: &[UlebField]) {
+fn read_uleb_buffered_file<const VALIDATE: bool>(path: &Path, fields: &[UlebField]) {
     let file = File::open(path).expect("LEB128 buffered input file should open");
     let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(file);
     let mut checksum = 0u128;
-
-    for field in fields {
-        match *field {
-            UlebField::U8(_) => checksum ^= u128::from(reader.read_u8_non_strict().unwrap()),
-            UlebField::U16(_) => checksum ^= u128::from(reader.read_u16_non_strict().unwrap()),
-            UlebField::U32(_) => checksum ^= u128::from(reader.read_u32_non_strict().unwrap()),
-            UlebField::U64(_) => checksum ^= u128::from(reader.read_u64_non_strict().unwrap()),
-            UlebField::Usize(_) => checksum ^= reader.read_usize_non_strict().unwrap() as u128,
-            UlebField::U128(_) => checksum ^= reader.read_u128_non_strict().unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            UlebField::U8(_) => u128::from(reader.read_u8_non_strict().unwrap()),
+            UlebField::U16(_) => u128::from(reader.read_u16_non_strict().unwrap()),
+            UlebField::U32(_) => u128::from(reader.read_u32_non_strict().unwrap()),
+            UlebField::U64(_) => u128::from(reader.read_u64_non_strict().unwrap()),
+            UlebField::Usize(_) => reader.read_usize_non_strict().unwrap() as u128,
+            UlebField::U128(_) => reader.read_u128_non_strict().unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, uleb_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
-
     black_box(checksum);
 }
-
 #[inline]
 fn write_zigzag_std_manual_file(fields: &[ZigZagField], path: &Path) {
     let file = File::create(path).expect("ZigZag std manual output file should be created");
@@ -1089,32 +1211,36 @@ fn write_zigzag_buffered_file(fields: &[ZigZagField], path: &Path) {
 }
 
 #[inline]
-fn read_zigzag_ext_file(path: &Path, fields: &[ZigZagField]) {
+fn read_zigzag_ext_file<const VALIDATE: bool>(path: &Path, fields: &[ZigZagField]) {
     let file = File::open(path).expect("ZigZag ext input file should open");
     let mut reader = BufReader::new(file);
     let mut checksum = 0i128;
 
-    for field in fields {
-        match *field {
-            ZigZagField::I8(_) => checksum ^= i128::from(reader.read_zig_zag_i8_non_strict().unwrap()),
-            ZigZagField::I16(_) => checksum ^= i128::from(reader.read_zig_zag_i16_non_strict().unwrap()),
-            ZigZagField::I32(_) => checksum ^= i128::from(reader.read_zig_zag_i32_non_strict().unwrap()),
-            ZigZagField::I64(_) => checksum ^= i128::from(reader.read_zig_zag_i64_non_strict().unwrap()),
-            ZigZagField::Isize(_) => checksum ^= reader.read_zig_zag_isize_non_strict().unwrap() as i128,
-            ZigZagField::I128(_) => checksum ^= reader.read_zig_zag_i128_non_strict().unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            ZigZagField::I8(_) => i128::from(reader.read_zig_zag_i8_non_strict().unwrap()),
+            ZigZagField::I16(_) => i128::from(reader.read_zig_zag_i16_non_strict().unwrap()),
+            ZigZagField::I32(_) => i128::from(reader.read_zig_zag_i32_non_strict().unwrap()),
+            ZigZagField::I64(_) => i128::from(reader.read_zig_zag_i64_non_strict().unwrap()),
+            ZigZagField::Isize(_) => reader.read_zig_zag_isize_non_strict().unwrap() as i128,
+            ZigZagField::I128(_) => reader.read_zig_zag_i128_non_strict().unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, zigzag_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
 
     black_box(checksum);
 }
 
 #[inline]
-fn read_zigzag_std_manual_file(path: &Path, fields: &[ZigZagField]) {
+fn read_zigzag_std_manual_file<const VALIDATE: bool>(path: &Path, fields: &[ZigZagField]) {
     let file = File::open(path).expect("ZigZag std manual input file should open");
     let mut reader = BufReader::new(file);
     let mut checksum = 0i128;
 
-    for field in fields {
+    for (index, field) in fields.iter().enumerate() {
         let decoded = match *field {
             ZigZagField::I8(_) => {
                 zigzag_decode_std_manual(read_uleb_std_manual(&mut reader, u128::from(u8::MAX)).unwrap())
@@ -1133,6 +1259,9 @@ fn read_zigzag_std_manual_file(path: &Path, fields: &[ZigZagField]) {
             }
             ZigZagField::I128(_) => zigzag_decode_std_manual(read_uleb_std_manual(&mut reader, u128::MAX).unwrap()),
         };
+        if VALIDATE {
+            assert_eq!(decoded, zigzag_field_value(field), "{} field {index}", path.display());
+        }
         checksum ^= decoded;
     }
 
@@ -1140,41 +1269,49 @@ fn read_zigzag_std_manual_file(path: &Path, fields: &[ZigZagField]) {
 }
 
 #[inline]
-fn read_zigzag_wrapper_file(path: &Path, fields: &[ZigZagField]) {
+fn read_zigzag_wrapper_file<const VALIDATE: bool>(path: &Path, fields: &[ZigZagField]) {
     let file = File::open(path).expect("ZigZag wrapper input file should open");
     let buffer = BufReader::new(file);
     let mut reader = ZigZagReader::<_, NonStrict>::new(buffer);
     let mut checksum = 0i128;
 
-    for field in fields {
-        match *field {
-            ZigZagField::I8(_) => checksum ^= i128::from(reader.read_i8_non_strict().unwrap()),
-            ZigZagField::I16(_) => checksum ^= i128::from(reader.read_i16_non_strict().unwrap()),
-            ZigZagField::I32(_) => checksum ^= i128::from(reader.read_i32_non_strict().unwrap()),
-            ZigZagField::I64(_) => checksum ^= i128::from(reader.read_i64_non_strict().unwrap()),
-            ZigZagField::Isize(_) => checksum ^= reader.read_isize_non_strict().unwrap() as i128,
-            ZigZagField::I128(_) => checksum ^= reader.read_i128_non_strict().unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            ZigZagField::I8(_) => i128::from(reader.read_i8_non_strict().unwrap()),
+            ZigZagField::I16(_) => i128::from(reader.read_i16_non_strict().unwrap()),
+            ZigZagField::I32(_) => i128::from(reader.read_i32_non_strict().unwrap()),
+            ZigZagField::I64(_) => i128::from(reader.read_i64_non_strict().unwrap()),
+            ZigZagField::Isize(_) => reader.read_isize_non_strict().unwrap() as i128,
+            ZigZagField::I128(_) => reader.read_i128_non_strict().unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, zigzag_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
 
     black_box(checksum);
 }
 
 #[inline]
-fn read_zigzag_buffered_file(path: &Path, fields: &[ZigZagField]) {
+fn read_zigzag_buffered_file<const VALIDATE: bool>(path: &Path, fields: &[ZigZagField]) {
     let file = File::open(path).expect("ZigZag buffered input file should open");
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(file);
     let mut checksum = 0i128;
 
-    for field in fields {
-        match *field {
-            ZigZagField::I8(_) => checksum ^= i128::from(reader.read_i8_non_strict().unwrap()),
-            ZigZagField::I16(_) => checksum ^= i128::from(reader.read_i16_non_strict().unwrap()),
-            ZigZagField::I32(_) => checksum ^= i128::from(reader.read_i32_non_strict().unwrap()),
-            ZigZagField::I64(_) => checksum ^= i128::from(reader.read_i64_non_strict().unwrap()),
-            ZigZagField::Isize(_) => checksum ^= reader.read_isize_non_strict().unwrap() as i128,
-            ZigZagField::I128(_) => checksum ^= reader.read_i128_non_strict().unwrap(),
+    for (index, field) in fields.iter().enumerate() {
+        let decoded = match *field {
+            ZigZagField::I8(_) => i128::from(reader.read_i8_non_strict().unwrap()),
+            ZigZagField::I16(_) => i128::from(reader.read_i16_non_strict().unwrap()),
+            ZigZagField::I32(_) => i128::from(reader.read_i32_non_strict().unwrap()),
+            ZigZagField::I64(_) => i128::from(reader.read_i64_non_strict().unwrap()),
+            ZigZagField::Isize(_) => reader.read_isize_non_strict().unwrap() as i128,
+            ZigZagField::I128(_) => reader.read_i128_non_strict().unwrap(),
+        };
+        if VALIDATE {
+            assert_eq!(decoded, zigzag_field_value(field), "{} field {index}", path.display());
         }
+        checksum ^= decoded;
     }
 
     black_box(checksum);
@@ -1246,6 +1383,10 @@ fn bench_prod_binary_pipeline(c: &mut Criterion) {
         fs::read(&wrapper_source_path).expect("binary wrapper source should be readable"),
         fs::read(&buffered_source_path).expect("binary buffered source should be readable")
     );
+    read_records_wrapper_file::<true>(&wrapper_source_path, &records);
+    read_records_ext_file::<true>(&wrapper_source_path, &records);
+    read_records_std_native_file::<true>(&wrapper_source_path, &records);
+    read_records_buffered_file::<true>(&wrapper_source_path, &records);
     let bytes_processed = (BINARY_BATCH * BINARY_REPEAT * BINARY_RECORD_BYTES) as u64;
 
     let mut group = c.benchmark_group("prod_binary_pipeline");
@@ -1293,7 +1434,7 @@ fn bench_prod_binary_pipeline(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("ext_read_record_batch"), |b| {
         b.iter(|| {
             for _ in 0..BINARY_REPEAT {
-                read_records_ext_file(&wrapper_source_path);
+                read_records_ext_file::<false>(&wrapper_source_path, &[]);
             }
         })
     });
@@ -1301,7 +1442,7 @@ fn bench_prod_binary_pipeline(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("std_native_read_record_batch"), |b| {
         b.iter(|| {
             for _ in 0..BINARY_REPEAT {
-                read_records_std_native_file(&wrapper_source_path);
+                read_records_std_native_file::<false>(&wrapper_source_path, &[]);
             }
         })
     });
@@ -1309,7 +1450,7 @@ fn bench_prod_binary_pipeline(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("wrapper_read_record_batch"), |b| {
         b.iter(|| {
             for _ in 0..BINARY_REPEAT {
-                read_records_wrapper_file(&wrapper_source_path);
+                read_records_wrapper_file::<false>(&wrapper_source_path, &[]);
             }
         })
     });
@@ -1317,7 +1458,7 @@ fn bench_prod_binary_pipeline(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("buffered_read_record_batch"), |b| {
         b.iter(|| {
             for _ in 0..BINARY_REPEAT {
-                read_records_buffered_file(&wrapper_source_path);
+                read_records_buffered_file::<false>(&wrapper_source_path, &[]);
             }
         })
     });
@@ -1354,6 +1495,10 @@ fn bench_prod_varints(c: &mut Criterion) {
         encoded,
         fs::read(&buffered_source_path).expect("LEB128 buffered source should be readable")
     );
+    read_uleb_ext_file::<true>(&ext_source_path, &fields);
+    read_uleb_std_manual_file::<true>(&ext_source_path, &fields);
+    read_uleb_wrapper_file::<true>(&ext_source_path, &fields);
+    read_uleb_buffered_file::<true>(&ext_source_path, &fields);
     let bytes_processed = (encoded.len() * VARINT_REPEAT) as u64;
 
     let mut group = c.benchmark_group("prod_varints");
@@ -1404,7 +1549,7 @@ fn bench_prod_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("ext_leb128_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_uleb_ext_file(&ext_source_path, &fields);
+                read_uleb_ext_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1412,7 +1557,7 @@ fn bench_prod_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("std_manual_leb128_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_uleb_std_manual_file(&ext_source_path, &fields);
+                read_uleb_std_manual_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1420,7 +1565,7 @@ fn bench_prod_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("wrapper_leb128_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_uleb_wrapper_file(&ext_source_path, &fields);
+                read_uleb_wrapper_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1428,7 +1573,7 @@ fn bench_prod_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("buffered_leb128_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_uleb_buffered_file(&ext_source_path, &fields);
+                read_uleb_buffered_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1465,6 +1610,10 @@ fn bench_prod_signed_varints(c: &mut Criterion) {
         encoded,
         fs::read(&buffered_source_path).expect("ZigZag buffered source should be readable")
     );
+    read_zigzag_ext_file::<true>(&ext_source_path, &fields);
+    read_zigzag_std_manual_file::<true>(&ext_source_path, &fields);
+    read_zigzag_wrapper_file::<true>(&ext_source_path, &fields);
+    read_zigzag_buffered_file::<true>(&ext_source_path, &fields);
     let bytes_processed = (encoded.len() * VARINT_REPEAT) as u64;
 
     let mut group = c.benchmark_group("prod_signed_varints");
@@ -1515,7 +1664,7 @@ fn bench_prod_signed_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("ext_zigzag_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_zigzag_ext_file(&ext_source_path, &fields);
+                read_zigzag_ext_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1523,7 +1672,7 @@ fn bench_prod_signed_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("std_manual_zigzag_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_zigzag_std_manual_file(&ext_source_path, &fields);
+                read_zigzag_std_manual_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1531,7 +1680,7 @@ fn bench_prod_signed_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("wrapper_zigzag_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_zigzag_wrapper_file(&ext_source_path, &fields);
+                read_zigzag_wrapper_file::<false>(&ext_source_path, &fields);
             }
         })
     });
@@ -1539,7 +1688,7 @@ fn bench_prod_signed_varints(c: &mut Criterion) {
     group.bench_function(BenchmarkId::from_parameter("buffered_zigzag_read_mixed_batch"), |b| {
         b.iter(|| {
             for _ in 0..VARINT_REPEAT {
-                read_zigzag_buffered_file(&ext_source_path, &fields);
+                read_zigzag_buffered_file::<false>(&ext_source_path, &fields);
             }
         })
     });
