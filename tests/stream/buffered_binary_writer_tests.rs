@@ -16,6 +16,7 @@ use std::rc::Rc;
 
 use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
+use qubit_io::BufferedOutputRecovery;
 use qubit_io::Output;
 use qubit_io_binary::BinaryWriteExt;
 use qubit_io_binary::BufferedBinaryWriter;
@@ -369,9 +370,11 @@ fn test_buffered_binary_writer_write_all_exact_spare_uses_cold_no_flush_path() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer.write_fully(&[1; 14]).expect("initial bytes should be buffered");
+    assert!(writer.inner().is_empty());
     writer
         .write_fully(&[2; 5])
         .expect("exact spare write_all should stay buffered");
+    assert!(writer.inner().is_empty());
 
     let mut expected = vec![1; 14];
     expected.extend_from_slice(&[2; 5]);
@@ -385,6 +388,7 @@ fn test_buffered_binary_writer_write_flushes_then_buffers_small_input() {
 
     writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     assert_eq!(5, writer.write(&[2; 5]).expect("small write should flush then buffer"));
+    assert_eq!(&[1; 18], writer.inner().as_slice());
 
     let mut expected = vec![1; 18];
     expected.extend_from_slice(&[2; 5]);
@@ -397,10 +401,12 @@ fn test_buffered_binary_writer_write_exact_spare_uses_cold_no_flush_path() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19);
 
     writer.write_fully(&[1; 14]).expect("initial bytes should be buffered");
+    assert!(writer.inner().is_empty());
     assert_eq!(
         5,
         writer.write(&[2; 5]).expect("exact spare write should stay buffered")
     );
+    assert!(writer.inner().is_empty());
 
     let mut expected = vec![1; 14];
     expected.extend_from_slice(&[2; 5]);
@@ -414,6 +420,7 @@ fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
 
     writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     writer.write_u16(0x0203).expect("fixed value should flush then buffer");
+    assert_eq!(&[1; 18], writer.inner().as_slice());
 
     let mut expected = vec![1; 18];
     expected.extend_from_slice(&[3, 2]);
@@ -422,18 +429,32 @@ fn test_buffered_binary_writer_flushes_before_fixed_value_when_full() {
 }
 
 #[test]
-fn test_buffered_binary_writer_defers_flush_error_for_fixed_value() {
+fn test_buffered_binary_writer_reports_automatic_flush_error_before_fixed_value() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(FailingWriter, 19);
 
     writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
-    writer
-        .write_u16(0x0203)
-        .expect("fixed value should grow the persistent buffer");
-    let error = writer
-        .flush()
-        .expect_err("explicit flush should report the writer error");
+    let error = writer.write_u16(0x0203).expect_err("automatic flush should fail");
 
     assert_eq!(ErrorKind::Other, error.kind());
+    let (_, recovery) = writer.into_parts();
+    match recovery {
+        BufferedOutputRecovery::Pending(buffer) => assert_eq!(&[1; 18], buffer.readable()),
+        BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("I/O error must retain determinate pending bytes")
+        }
+    }
+}
+
+#[test]
+fn test_buffered_binary_writer_grows_for_value_larger_than_initial_capacity() {
+    let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 1);
+
+    writer
+        .write_u16(0x1234)
+        .expect("a complete value should fit after growth");
+    assert!(writer.inner().is_empty());
+    writer.flush().expect("flush should succeed");
+    assert_eq!(&[0x34, 0x12], writer.inner().as_slice());
 }
 
 #[test]

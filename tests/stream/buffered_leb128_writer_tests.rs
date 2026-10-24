@@ -10,6 +10,7 @@ use std::io::Error;
 use std::io::ErrorKind;
 use std::io::Write;
 
+use qubit_io::BufferedOutputRecovery;
 use qubit_io::Output;
 use qubit_io_binary::BufferedLeb128Writer;
 use qubit_io_binary::Leb128WriteExt;
@@ -160,6 +161,7 @@ fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
 
     writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
     writer.write_u8(1).expect("encoded value should flush then buffer");
+    assert_eq!(&[1; 18], writer.inner().as_slice());
 
     let mut expected = vec![1; 18];
     expected.push(1);
@@ -168,18 +170,22 @@ fn test_buffered_leb128_writer_flushes_before_encoded_value_when_full() {
 }
 
 #[test]
-fn test_buffered_leb128_writer_defers_utf8_string_flush_error() {
+fn test_buffered_leb128_writer_reports_automatic_flush_error_before_string_prefix() {
     let mut writer = BufferedLeb128Writer::with_capacity(FailingWriter, 19);
 
     writer.write_fully(&[1; 18]).expect("initial bytes should be buffered");
-    writer
-        .write_utf8_string_usize("a")
-        .expect("length-prefixed string should grow the persistent buffer");
     let error = writer
-        .flush()
-        .expect_err("explicit flush should report the writer error");
+        .write_utf8_string_usize("a")
+        .expect_err("automatic flush should fail before the prefix");
 
     assert_eq!(ErrorKind::Other, error.kind());
+    let (_, recovery) = writer.into_parts();
+    match recovery {
+        BufferedOutputRecovery::Pending(buffer) => assert_eq!(&[1; 18], buffer.readable()),
+        BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("I/O error must retain determinate pending bytes")
+        }
+    }
 }
 
 #[test]
