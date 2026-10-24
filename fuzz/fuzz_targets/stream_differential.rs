@@ -98,20 +98,25 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
     assert_eq!(extension_bytes, buffered_bytes);
 
     let failure_limit = usize::from(payload.first().copied().unwrap_or_default() % 8);
+    let expected = value.to_le_bytes();
     let mut extension = ScriptedWriter::new(chunk_size, Some(failure_limit));
     let extension_result = extension.write_u64_le(value);
+    let extension_bytes = extension.into_bytes();
 
     let mut wrapper =
         BinaryWriter::<_, LittleEndian>::new(ScriptedWriter::new(chunk_size, Some(failure_limit)));
     let wrapper_result = wrapper.write_u64(value);
+    let wrapper_bytes = wrapper.into_inner().into_bytes();
 
     let mut buffered = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
         ScriptedWriter::new(chunk_size, Some(failure_limit)),
         16,
     );
-    let buffered_result = buffered
-        .write_u64(value)
-        .and_then(|()| Output::flush(&mut buffered));
+    let buffered_write_result = buffered.write_u64(value);
+    buffered_write_result.expect("buffered writer should accept the value before flushing");
+    let buffered_result = Output::flush(&mut buffered);
+    let (buffered_inner, pending) = buffered.into_parts();
+    let buffered_bytes = buffered_inner.into_bytes();
 
     assert_eq!(
         result_signature(&extension_result),
@@ -121,6 +126,18 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
         result_signature(&extension_result),
         result_signature(&buffered_result)
     );
+    assert_eq!(&expected[..failure_limit], extension_bytes);
+    assert_eq!(&expected[..failure_limit], wrapper_bytes);
+    assert_eq!(&expected[..failure_limit], buffered_bytes);
+    let pending_bytes = match pending {
+        BufferedOutputRecovery::Pending(buffer) => buffer.readable().to_vec(),
+        BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("scripted I/O error must preserve determinate pending bytes")
+        }
+    };
+    assert_eq!(&expected[failure_limit..], pending_bytes);
+    assert_eq!(8, buffered_bytes.len() + pending_bytes.len());
+    assert_eq!(expected.as_slice(), [buffered_bytes, pending_bytes].concat());
 }
 
 /// Compares fixed-width extension and wrapper readers across short reads.
