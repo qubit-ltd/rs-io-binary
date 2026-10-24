@@ -36,6 +36,7 @@ qubit-io-binary = "0.7"
 标准库 `Read`、`Write` 实现（包括 `Cursor` 和 `Vec<u8>`）可通过 adapter
 实现 `qubit-io` 抽象。
 
+<!-- readme-quick-start:start -->
 ```rust
 use std::io::Cursor;
 
@@ -55,6 +56,7 @@ assert_eq!(0x0102_0304, input.read_u32_le()?);
 assert_eq!(300, input.read_uleb_u64_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
+<!-- readme-quick-start:end -->
 
 ## 运行时无关的异步 API
 

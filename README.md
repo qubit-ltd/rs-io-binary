@@ -38,6 +38,7 @@ and add `qubit-io` when writing generic `ByteInput` or `ByteOutput` bounds.
 Standard `Read` and `Write` implementations, including `Cursor` and `Vec<u8>`,
 implement the `qubit-io` abstractions through adapters.
 
+<!-- readme-quick-start:start -->
 ```rust
 use std::io::Cursor;
 
@@ -57,6 +58,7 @@ assert_eq!(0x0102_0304, input.read_u32_le()?);
 assert_eq!(300, input.read_uleb_u64_non_strict()?);
 # Ok::<(), std::io::Error>(())
 ```
+<!-- readme-quick-start:end -->
 
 ## Runtime-Neutral Async
 
