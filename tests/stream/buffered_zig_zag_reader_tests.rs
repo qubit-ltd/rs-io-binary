@@ -7,12 +7,50 @@
 // =============================================================================
 use std::io::Cursor;
 use std::io::ErrorKind;
+use std::io::SeekFrom;
 
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
 use qubit_codec_binary::ZigZagCodec;
 use qubit_io_binary::BufferedZigZagReader;
 use qubit_io_binary::ZigZagWriteExt;
+
+use crate::stream::internal::seek_test_support_tests::RejectingCurrentSeekReader;
+
+#[test]
+fn test_seek_window_failure_preserves_unread() {
+    for (consume_count, offset, expected_unread) in [(1, 1, &[2, 3, 4, 5][..]), (2, -1, &[3, 4, 5][..])] {
+        let mut reader = BufferedZigZagReader::<_, NonStrict>::with_capacity(
+            RejectingCurrentSeekReader::new(vec![1, 2, 3, 4, 5]),
+            5,
+        );
+        let mut consumed = vec![0; consume_count];
+        reader.read_exactly(&mut consumed).expect("bytes should be consumed");
+        let error = reader
+            .seek_to(SeekFrom::Current(offset))
+            .expect_err("current query must fail");
+        assert_eq!(ErrorKind::Other, error.kind());
+        let (_, unread): (_, qubit_io::Buffer<u8>) = reader.into_parts();
+        assert_eq!(expected_unread, unread.readable());
+    }
+
+    for (consume_count, offset, expected_next) in [(1, 1, 2), (2, -1, 3)] {
+        let mut reader = BufferedZigZagReader::<_, NonStrict>::with_capacity(
+            RejectingCurrentSeekReader::new(vec![1, 2, 3, 4, 5]),
+            5,
+        );
+        let mut consumed = vec![0; consume_count];
+        reader.read_exactly(&mut consumed).expect("bytes should be consumed");
+        reader
+            .seek_to(SeekFrom::Current(offset))
+            .expect_err("current query must fail");
+        let mut next = [0];
+        reader
+            .read_exactly(&mut next)
+            .expect("unread byte should remain readable");
+        assert_eq!([expected_next], next);
+    }
+}
 
 #[test]
 fn test_buffered_zig_zag_reader_reads_values_across_buffer_boundaries() {

@@ -10,7 +10,6 @@ use std::io::Cursor;
 use std::io::Error;
 use std::io::ErrorKind;
 use std::io::Read;
-use std::io::Seek;
 use std::io::SeekFrom;
 use std::rc::Rc;
 
@@ -18,6 +17,8 @@ use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
 use qubit_io_binary::BinaryWriteExt;
 use qubit_io_binary::BufferedBinaryReader;
+
+use crate::stream::internal::seek_test_support_tests::RejectingCurrentSeekReader;
 
 fn encoded_values() -> Vec<u8> {
     let mut bytes = Vec::new();
@@ -70,17 +71,6 @@ impl Read for ChunkedReader {
         buffer[..count].copy_from_slice(&self.bytes[self.position..self.position + count]);
         self.position += count;
         Ok(count)
-    }
-}
-
-struct RejectingCurrentSeekReader {
-    bytes: Vec<u8>,
-    position: usize,
-}
-
-impl RejectingCurrentSeekReader {
-    fn new(bytes: Vec<u8>) -> Self {
-        Self { bytes, position: 0 }
     }
 }
 
@@ -161,30 +151,6 @@ impl Read for ByteThenErrorReader {
 impl Read for ErrorReader {
     fn read(&mut self, _buffer: &mut [u8]) -> std::io::Result<usize> {
         Err(Error::other("read failed"))
-    }
-}
-
-impl Read for RejectingCurrentSeekReader {
-    fn read(&mut self, buffer: &mut [u8]) -> std::io::Result<usize> {
-        let remaining = self.bytes.len() - self.position;
-        let count = remaining.min(buffer.len());
-        buffer[..count].copy_from_slice(&self.bytes[self.position..self.position + count]);
-        self.position += count;
-        Ok(count)
-    }
-}
-
-impl Seek for RejectingCurrentSeekReader {
-    fn seek(&mut self, position: SeekFrom) -> std::io::Result<u64> {
-        match position {
-            SeekFrom::Start(position) => {
-                self.position = usize::try_from(position)
-                    .map_err(|_| Error::new(ErrorKind::InvalidInput, "seek position exceeds usize"))?;
-                Ok(position)
-            }
-            SeekFrom::Current(_) => Err(Error::other("current seek rejected")),
-            SeekFrom::End(_) => Err(Error::new(ErrorKind::Unsupported, "unsupported seek")),
-        }
     }
 }
 
@@ -416,6 +382,41 @@ fn test_buffered_binary_reader_preserves_buffer_when_seek_fails() {
 
     assert_eq!(ErrorKind::Other, error.kind());
     assert_eq!(2, reader.read_u8().expect("unread buffered byte should be preserved"));
+}
+
+#[test]
+fn test_seek_window_failure_preserves_unread() {
+    for (consume_count, offset, expected_unread) in [(1, 1, &[2, 3, 4, 5][..]), (2, -1, &[3, 4, 5][..])] {
+        let mut reader = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+            RejectingCurrentSeekReader::new(vec![1, 2, 3, 4, 5]),
+            5,
+        );
+        let mut consumed = vec![0; consume_count];
+        reader.read_exactly(&mut consumed).expect("bytes should be consumed");
+        let error = reader
+            .seek_to(SeekFrom::Current(offset))
+            .expect_err("current query must fail");
+        assert_eq!(ErrorKind::Other, error.kind());
+        let (_, unread): (_, qubit_io::Buffer<u8>) = reader.into_parts();
+        assert_eq!(expected_unread, unread.readable());
+    }
+
+    for (consume_count, offset, expected_next) in [(1, 1, 2), (2, -1, 3)] {
+        let mut reader = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
+            RejectingCurrentSeekReader::new(vec![1, 2, 3, 4, 5]),
+            5,
+        );
+        let mut consumed = vec![0; consume_count];
+        reader.read_exactly(&mut consumed).expect("bytes should be consumed");
+        reader
+            .seek_to(SeekFrom::Current(offset))
+            .expect_err("current query must fail");
+        let mut next = [0];
+        reader
+            .read_exactly(&mut next)
+            .expect("unread byte should remain readable");
+        assert_eq!([expected_next], next);
+    }
 }
 
 #[test]

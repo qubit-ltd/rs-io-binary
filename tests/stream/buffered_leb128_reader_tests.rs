@@ -9,6 +9,7 @@ use std::io::Cursor;
 use std::io::Error;
 use std::io::ErrorKind;
 use std::io::Read;
+use std::io::SeekFrom;
 
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::Leb128DecodeError;
@@ -16,6 +17,8 @@ use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
 use qubit_io_binary::BufferedLeb128Reader;
 use qubit_io_binary::Leb128WriteExt;
+
+use crate::stream::internal::seek_test_support_tests::RejectingCurrentSeekReader;
 
 struct ByteThenErrorReader {
     byte: u8,
@@ -32,6 +35,41 @@ struct ChunkedReader {
     bytes: Vec<u8>,
     position: usize,
     max_chunk_len: usize,
+}
+
+#[test]
+fn test_seek_window_failure_preserves_unread() {
+    for (consume_count, offset, expected_unread) in [(1, 1, &[2, 3, 4, 5][..]), (2, -1, &[3, 4, 5][..])] {
+        let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+            RejectingCurrentSeekReader::new(vec![1, 2, 3, 4, 5]),
+            5,
+        );
+        let mut consumed = vec![0; consume_count];
+        reader.read_exactly(&mut consumed).expect("bytes should be consumed");
+        let error = reader
+            .seek_to(SeekFrom::Current(offset))
+            .expect_err("current query must fail");
+        assert_eq!(ErrorKind::Other, error.kind());
+        let (_, unread): (_, qubit_io::Buffer<u8>) = reader.into_parts();
+        assert_eq!(expected_unread, unread.readable());
+    }
+
+    for (consume_count, offset, expected_next) in [(1, 1, 2), (2, -1, 3)] {
+        let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
+            RejectingCurrentSeekReader::new(vec![1, 2, 3, 4, 5]),
+            5,
+        );
+        let mut consumed = vec![0; consume_count];
+        reader.read_exactly(&mut consumed).expect("bytes should be consumed");
+        reader
+            .seek_to(SeekFrom::Current(offset))
+            .expect_err("current query must fail");
+        let mut next = [0];
+        reader
+            .read_exactly(&mut next)
+            .expect("unread byte should remain readable");
+        assert_eq!([expected_next], next);
+    }
 }
 
 impl ByteThenErrorReader {
