@@ -14,7 +14,7 @@ qubit-codec = { path = "../../rs-codec", version = "0.17", features = ["io"] }
 
 qubit-codec-binary = { path = "../../rs-codec-binary", version = "0.9" }
 
-qubit-io = "0.19"
+qubit-io = "0.19.1"
 
 qubit-io-binary = { path = ".." }
 
