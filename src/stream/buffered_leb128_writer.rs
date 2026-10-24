@@ -145,6 +145,11 @@ where
     /// means an inner write panicked and may have produced an external prefix;
     /// do not replay it automatically. Flush first for normal completion.
     ///
+    /// Pending contains only bytes retained by this buffer. It does not include
+    /// payload bytes that a failed high-level write never accepted. An empty
+    /// pending buffer, or a successful later flush, does not mean that such a
+    /// failed field was completed.
+    ///
     /// # Returns
     ///
     /// Returns the wrapped writer and pending or indeterminate bytes in logical
@@ -172,6 +177,14 @@ where
     /// # Errors
     ///
     /// Returns an output error encountered while making buffer space.
+    ///
+    /// # Partial writes
+    ///
+    /// This operation is not transactional. An I/O error may leave the length
+    /// prefix and part of the payload retained by this writer or already
+    /// accepted by the wrapped output. Retrying
+    /// this whole method can write a second prefix; recover using the enclosing
+    /// protocol's framing or transaction boundary instead.
     #[inline]
     pub fn write_utf8_string_usize(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
@@ -196,6 +209,14 @@ where
     ///
     /// Returns an invalid-input error when the length cannot fit in `u64`, or
     /// an output error encountered while making buffer space.
+    ///
+    /// # Partial writes
+    ///
+    /// This operation is not transactional. An I/O error may leave the length
+    /// prefix and part of the payload retained by this writer or already
+    /// accepted by the wrapped output. Retrying
+    /// this whole method can write a second prefix; recover using the enclosing
+    /// protocol's framing or transaction boundary instead.
     #[inline]
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;

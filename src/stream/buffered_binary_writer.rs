@@ -163,6 +163,11 @@ where
     /// means an inner write panicked and may have produced an external prefix;
     /// do not replay it automatically. Flush first for normal completion.
     ///
+    /// Pending contains only bytes retained by this buffer. It does not include
+    /// payload bytes that a failed high-level write never accepted. An empty
+    /// pending buffer, or a successful later flush, does not mean that such a
+    /// failed field was completed.
+    ///
     /// # Returns
     ///
     /// Returns the wrapped writer and pending or indeterminate bytes in logical
@@ -224,6 +229,14 @@ macro_rules! impl_for_order {
             ///
             /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8
             /// byte length does not fit `u16`, or an output error.
+            ///
+            /// # Partial writes
+            ///
+            /// This operation is not transactional. An I/O error may leave the length
+            /// prefix and part of the payload retained by this writer or already
+            /// accepted by the wrapped output. Retrying
+            /// this whole method can write a second prefix; recover using the enclosing
+            /// protocol's framing or transaction boundary instead.
             pub fn write_string_with_u16_len(&mut self, value: &str) -> Result<()> {
                 self.write_u16(checked_u16_len(value.len())?)?;
                 write_all(self, value.as_bytes())
@@ -235,6 +248,14 @@ macro_rules! impl_for_order {
             ///
             /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8
             /// byte length does not fit `u32`, or an output error.
+            ///
+            /// # Partial writes
+            ///
+            /// This operation is not transactional. An I/O error may leave the length
+            /// prefix and part of the payload retained by this writer or already
+            /// accepted by the wrapped output. Retrying
+            /// this whole method can write a second prefix; recover using the enclosing
+            /// protocol's framing or transaction boundary instead.
             pub fn write_string_with_u32_len(&mut self, value: &str) -> Result<()> {
                 self.write_u32(checked_u32_len(value.len())?)?;
                 write_all(self, value.as_bytes())

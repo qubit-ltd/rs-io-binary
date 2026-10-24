@@ -190,6 +190,13 @@ macro_rules! impl_for_order {
             ///
             /// Returns an invalid-input error when the length exceeds
             /// `u16::MAX`, or an output error while writing.
+            ///
+            /// # Partial writes
+            ///
+            /// This operation is not transactional. An I/O error may leave the length
+            /// prefix and part of the payload already accepted by the output. Retrying
+            /// this whole method can write a second prefix; recover using the enclosing
+            /// protocol's framing or transaction boundary instead.
             #[inline]
             pub fn write_string_with_u16_len(&mut self, value: &str) -> Result<()> {
                 self.write_u16(checked_u16_len(value.len())?)?;
@@ -211,6 +218,13 @@ macro_rules! impl_for_order {
             ///
             /// Returns an invalid-input error when the length exceeds
             /// `u32::MAX`, or an output error while writing.
+            ///
+            /// # Partial writes
+            ///
+            /// This operation is not transactional. An I/O error may leave the length
+            /// prefix and part of the payload already accepted by the output. Retrying
+            /// this whole method can write a second prefix; recover using the enclosing
+            /// protocol's framing or transaction boundary instead.
             #[inline]
             pub fn write_string_with_u32_len(&mut self, value: &str) -> Result<()> {
                 self.write_u32(checked_u32_len(value.len())?)?;

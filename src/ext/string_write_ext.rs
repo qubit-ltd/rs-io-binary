@@ -23,7 +23,9 @@ use crate::util::write_utf8_string_with_u32_len;
 /// Extension methods for writing length-prefixed UTF-8 strings.
 ///
 /// A failed write can leave the prefix or payload bytes already written to the
-/// output.
+/// output. Length-prefixed methods are not transactional: retrying the whole
+/// method can append a second length prefix. Recover using the enclosing
+/// protocol's framing or transaction boundary instead.
 ///
 /// # Examples
 ///

@@ -166,6 +166,13 @@ where
     /// # Errors
     ///
     /// Returns an I/O error from the underlying writer.
+    ///
+    /// # Partial writes
+    ///
+    /// This operation is not transactional. An I/O error may leave the length
+    /// prefix and part of the payload already accepted by the output. Retrying
+    /// this whole method can write a second prefix; recover using the enclosing
+    /// protocol's framing or transaction boundary instead.
     #[inline]
     pub fn write_utf8_string_usize(&mut self, value: &str) -> Result<()> {
         self.write_usize(value.len())?;
@@ -192,6 +199,13 @@ where
     /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8 byte length
     /// cannot be represented as `u64`, or an I/O error from the underlying
     /// writer.
+    ///
+    /// # Partial writes
+    ///
+    /// This operation is not transactional. An I/O error may leave the length
+    /// prefix and part of the payload already accepted by the output. Retrying
+    /// this whole method can write a second prefix; recover using the enclosing
+    /// protocol's framing or transaction boundary instead.
     #[inline]
     pub fn write_utf8_string_u64(&mut self, value: &str) -> Result<()> {
         self.write_u64(checked_u64_len(value.len())?)?;

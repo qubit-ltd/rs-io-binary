@@ -194,6 +194,18 @@ A buffered reader may prefetch bytes from its underlying input. The underlying
 input position therefore does not describe the reader's logical consumption,
 and buffering does not make a whole record transactional.
 
+Synchronous writes are not transactional either. A string write may fail
+after its length prefix and part of its payload have been accepted. Do not
+retry the whole string method without an application-defined recovery
+boundary: doing so can append another length prefix.
+
+For buffered writers, retrying flush only delivers bytes already retained
+by the buffer. Pending from into_parts describes those retained bytes,
+not the complete remainder of a failed string call. Pending can be empty,
+and a later flush can succeed, while the original field is still incomplete.
+Use the enclosing frame, seek/rollback policy, or transactional transport
+to decide how to recover. These methods do not provide automatic rollback.
+
 When an outer protocol has already isolated complete frames, parse each frame
 through its own bounded input. A malformed frame can then be rejected without
 continuing through its remaining fields:
