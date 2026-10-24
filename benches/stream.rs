@@ -36,6 +36,7 @@ use qubit_io::AsyncBufferedInput;
 use qubit_io::AsyncBufferedOutput;
 use qubit_io::AsyncInput;
 use qubit_io::AsyncOutput;
+use qubit_io::BufferedOutputRecovery;
 use qubit_io::Input;
 use qubit_io::Output;
 use qubit_io_binary::AsyncBinaryReadExt;
@@ -422,7 +423,10 @@ fn write_micro_values_buffered(values: &[u64]) -> Vec<u8> {
     }
     Output::flush(&mut writer).expect("buffered writer should flush");
     let (output, pending) = writer.into_parts();
-    assert!(pending.is_empty(), "flushed writer retained bytes");
+    assert!(
+        matches!(pending, BufferedOutputRecovery::Pending(buffer) if buffer.readable().is_empty()),
+        "flushed writer retained bytes or entered an indeterminate state"
+    );
     output.into_inner()
 }
 
@@ -1661,7 +1665,10 @@ fn write_mixed_buffered_memory(fields: &[MixedBinaryField]) -> Vec<u8> {
     }
     Output::flush(&mut output).unwrap();
     let (bytes, pending) = output.into_parts();
-    assert!(pending.is_empty(), "flushed writer retained bytes");
+    assert!(
+        matches!(pending, BufferedOutputRecovery::Pending(buffer) if buffer.readable().is_empty()),
+        "flushed writer retained bytes or entered an indeterminate state"
+    );
     bytes
 }
 
