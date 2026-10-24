@@ -62,6 +62,9 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 /// let mut input = Cursor::new([0x12, 0x34]);
 /// assert_eq!(input.read_u16_be().unwrap(), 0x1234);
 /// ```
+/// A failed synchronous read may have consumed part of the current value.
+/// Do not blindly retry the same operation; resume only from a framing
+/// boundary or a trusted seek checkpoint.
 pub trait BinaryReadExt: ByteInput {
     /// Reads an unsigned 8-bit integer.
     ///

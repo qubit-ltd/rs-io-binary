@@ -7,6 +7,7 @@
 // =============================================================================
 use std::io::Cursor;
 use std::io::ErrorKind;
+use std::io::Read;
 
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
@@ -14,6 +15,45 @@ use qubit_io::Input;
 use qubit_io::Seekable;
 use qubit_io_binary::Leb128Reader;
 use qubit_io_binary::Leb128Writer;
+
+struct InterruptedValueInput {
+    step: u8,
+}
+
+impl Read for InterruptedValueInput {
+    fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
+        if output.is_empty() {
+            return Ok(0);
+        }
+        let step = self.step;
+        self.step += 1;
+        match step {
+            0 => {
+                output[0] = 0xac;
+                Ok(1)
+            }
+            1 => Err(std::io::Error::from(ErrorKind::WouldBlock)),
+            2 => {
+                output[0] = 0x02;
+                Ok(1)
+            }
+            _ => Ok(0),
+        }
+    }
+}
+
+#[test]
+fn test_leb128_reader_does_not_resume_failed_value() {
+    let mut reader = Leb128Reader::<_, NonStrict>::new(InterruptedValueInput { step: 0 });
+    let error = reader.read_u16_non_strict().expect_err("second byte is not ready");
+    assert_eq!(ErrorKind::WouldBlock, error.kind());
+    assert_eq!(
+        2,
+        reader
+            .read_u16_non_strict()
+            .expect("a new read starts at the next byte")
+    );
+}
 
 #[test]
 fn test_leb128_reader_reads_all_methods() {

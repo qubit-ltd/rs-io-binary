@@ -132,7 +132,7 @@ full command and environment are recorded in
 The reusable payload-buffer comparison is recorded in
 [`benches/results/2026-08-07-string-buffer-reuse.md`](benches/results/2026-08-07-string-buffer-reuse.md).
 The in-memory mixed-pipeline comparison is recorded in
-[`benches/results/2026-08-07-memory-mixed-binary-pipeline.md`](benches/results/2026-08-07-memory-mixed-binary-pipeline.md).
+[`benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md`](benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md).
 Treat these values as a comparison of buffering strategies, not as portable
 performance guarantees.
 
@@ -172,6 +172,9 @@ every public item, see the [API reference](https://docs.rs/qubit-io-binary).
 ```bash
 # Run tests with the default feature set
 cargo test
+
+# Run the README quick-start fixture with its checked-in lockfile
+cargo run --locked --manifest-path tests/fixtures/readme_quick_start/Cargo.toml
 
 # Run tests with all declared features
 cargo test --all-features

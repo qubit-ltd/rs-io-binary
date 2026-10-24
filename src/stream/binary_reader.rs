@@ -34,6 +34,10 @@ use crate::util::usize_from_u32_len;
 /// `BinaryReader<R, BigEndian>` for big-endian data and
 /// `BinaryReader<R, LittleEndian>` for little-endian data.
 ///
+/// If a synchronous read fails partway through a value, some bytes may already
+/// be consumed. Do not blindly retry; use an outer framing boundary or a
+/// trusted seek checkpoint to recover.
+///
 /// # Type Parameters
 ///
 /// - `R`: Underlying byte input.

@@ -34,6 +34,17 @@ use crate::util::write_all;
 /// # Type Parameters
 ///
 /// - `W`: Underlying byte output.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_io_binary::Leb128Writer;
+///
+/// let mut writer = Leb128Writer::new(Vec::new());
+/// writer.write_u16(300).expect("unsigned value should encode");
+/// writer.write_i8(-1).expect("signed value should encode");
+/// assert_eq!(vec![0xac, 0x02, 0x7f], writer.into_inner());
+/// ```
 pub struct Leb128Writer<W> {
     /// Wrapped byte output.
     inner: W,

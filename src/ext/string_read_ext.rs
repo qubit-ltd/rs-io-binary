@@ -25,6 +25,11 @@ use crate::util::usize_from_u64_len;
 ///
 /// String-producing methods may return allocation failures as I/O errors in
 /// addition to input and validation errors described below.
+///
+/// A length-prefixed read is not transactional. If the decoded length exceeds
+/// max_len, the prefix is consumed but the payload is left unread. If UTF-8
+/// validation fails, both the prefix and the complete payload are consumed.
+/// Do not continue parsing the same record from the current position.
 pub trait StringReadExt: ByteInput {
     /// Reads and validates a UTF-8 payload into reusable byte storage.
     ///

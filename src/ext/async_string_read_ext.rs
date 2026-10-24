@@ -28,6 +28,10 @@ use crate::util::usize_from_u64_len;
 ///
 /// These reads are not cancellation safe. Dropping a pending future leaves
 /// bytes already consumed from the prefix or payload consumed.
+///
+/// A length above max_len consumes its prefix but leaves the payload unread;
+/// invalid UTF-8 is reported after the complete payload has been consumed.
+/// Neither failure rolls back the input.
 pub trait AsyncStringReadExt: AsyncInput<Item = u8> {
     /// Asynchronously reads and validates a UTF-8 payload into reusable byte
     /// storage.

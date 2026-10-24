@@ -371,3 +371,23 @@ fn test_string_read_ext_returns_payload_read_error() {
             .kind()
     );
 }
+
+#[test]
+fn test_string_read_ext_preserves_failure_stage_positions() {
+    let mut oversized = Cursor::new(vec![3, b'a', b'b', b'c', 1, b'z']);
+    let error = oversized
+        .read_utf8_string_uleb_u64(2)
+        .expect_err("length exceeds limit");
+    assert_eq!(ErrorKind::InvalidData, error.kind());
+    assert_eq!(1, oversized.position());
+    assert_eq!(&oversized.get_ref()[1..], b"abc\x01z");
+
+    let mut invalid = Cursor::new(vec![1, 0xff, 1, b'z']);
+    let error = invalid
+        .read_utf8_string_uleb_u64(2)
+        .expect_err("payload is invalid UTF-8");
+    assert_eq!(ErrorKind::InvalidData, error.kind());
+    assert_eq!(2, invalid.position());
+    assert_eq!("z", invalid.read_utf8_string_uleb_u64(2).expect("next frame is intact"));
+    assert_eq!(4, invalid.position());
+}

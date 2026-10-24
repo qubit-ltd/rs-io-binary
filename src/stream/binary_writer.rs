@@ -38,6 +38,17 @@ use crate::util::write_all;
 ///
 /// - `W`: Underlying byte output.
 /// - `O`: Compile-time byte-order specification.
+///
+/// # Examples
+///
+/// ```
+/// use qubit_codec::LittleEndian;
+/// use qubit_io_binary::BinaryWriter;
+///
+/// let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
+/// writer.write_u16(0x1234).expect("value should encode");
+/// assert_eq!(vec![0x34, 0x12], writer.into_inner());
+/// ```
 pub struct BinaryWriter<W, O = BigEndian> {
     /// Wrapped byte output.
     inner: W,

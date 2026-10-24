@@ -33,6 +33,10 @@ use crate::util::usize_from_u64_len;
 /// `Leb128Reader<R, NonStrict>` for permissive decoding and
 /// `Leb128Reader<R, Strict>` for canonical-only decoding.
 ///
+/// A synchronous read error may occur after part of a value has been consumed.
+/// A later call starts at the current input position; it does not resume the
+/// failed value. Recover only at a framing boundary or trusted seek checkpoint.
+///
 /// # Target-width integers
 ///
 /// `usize` and `isize` methods use the current Rust target's pointer width.

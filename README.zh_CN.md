@@ -121,7 +121,7 @@ payload 长度，以限制内存分配。持久化格式应优先使用固定宽
 可复用 payload 缓冲区的对比记录在
 [`benches/results/2026-08-07-string-buffer-reuse.md`](benches/results/2026-08-07-string-buffer-reuse.md)。
 内存混合流水线的对比记录在
-[`benches/results/2026-08-07-memory-mixed-binary-pipeline.md`](benches/results/2026-08-07-memory-mixed-binary-pipeline.md)。
+[`benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md`](benches/results/2026-10-24-memory-mixed-binary-pipeline-correction.md)。
 它用于比较缓冲策略，不构成可移植的性能承诺。
 
 benchmark 套件分为多个层次：`micro_binary_pipeline` 使用会产生短写的内存流，
@@ -158,6 +158,9 @@ benchmark 套件分为多个层次：`micro_binary_pipeline` 使用会产生短�
 ```bash
 # 使用默认 feature 集运行测试
 cargo test
+
+# 使用已提交的锁文件运行 README quick-start fixture
+cargo run --locked --manifest-path tests/fixtures/readme_quick_start/Cargo.toml
 
 # 使用项目声明的全部 feature 运行测试
 cargo test --all-features

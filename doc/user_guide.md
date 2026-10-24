@@ -4,7 +4,7 @@
 [API reference](https://docs.rs/qubit-io-binary)
 
 This guide is for Rust applications that read or write structured values on a
-byte stream. It covers `qubit-io-binary` 0.6: a runtime-neutral bridge between
+byte stream. It covers `qubit-io-binary` 0.7.1: a runtime-neutral bridge between
 the buffer codecs in `qubit-codec-binary` and the stream abstractions in
 `qubit-io`. It does not open files, choose a transport, or select an async
 runtime.
@@ -37,10 +37,10 @@ successful result is the same values after a round trip.
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.6"
-qubit-codec = { version = "0.15", features = ["io"] }
-qubit-codec-binary = "0.7"
-qubit-io = "0.17"
+qubit-io-binary = "0.7"
+qubit-codec = { version = "0.17", features = ["io"] }
+qubit-codec-binary = "0.9"
+qubit-io = "0.19"
 ```
 
 The examples use `Vec<u8>` and `Cursor`; standard-library byte sources and
@@ -173,6 +173,44 @@ prefix in the output. Retry only when the surrounding transport or framing
 makes that safe.
 
 ## Errors and Diagnostics
+
+Synchronous reads are not transactional. A failed scalar or varint read may
+have consumed part of its field; calling it again starts at the current input
+position. String reads have two distinct validation stages:
+
+| Failure stage | Bytes consumed | Recovery |
+| --- | --- | --- |
+| Decoded length exceeds `max_len` | Length prefix; payload remains unread | Stop parsing this record. The current position is not the next record boundary. |
+| Complete payload is invalid UTF-8 | Length prefix and complete payload | Discard the record only when an outer protocol already provides its complete frame boundary. |
+| Synchronous I/O error during a scalar | Possibly part of the field | Do not blindly retry. Recover from trusted framing or a seek checkpoint. |
+| Async operation is cancelled | Possibly part of the prefix or payload | Treat consumed bytes as retained; cancellation does not roll the operation back. |
+
+A buffered reader may prefetch bytes from its underlying input. The underlying
+input position therefore does not describe the reader's logical consumption,
+and buffering does not make a whole record transactional.
+
+When an outer protocol has already isolated complete frames, parse each frame
+through its own bounded input. A malformed frame can then be rejected without
+continuing through its remaining fields:
+
+```rust
+use std::io::Cursor;
+use qubit_io_binary::StringReadExt;
+
+fn parse_frame(frame: &[u8]) -> std::io::Result<String> {
+    Cursor::new(frame).read_utf8_string_uleb_u64(2)
+}
+
+// The application has already isolated these frames using its outer protocol.
+assert!(parse_frame(&[3, b'a', b'b', b'c']).is_err());
+assert_eq!("z", parse_frame(&[1, b'z'])?);
+# Ok::<(), std::io::Error>(())
+```
+
+This approach relies on a frame boundary the application already knows. The
+library does not provide transport framing, and skipping an arbitrary number
+of bytes after an excessive length cannot safely guess where the next frame
+begins.
 
 - A stream ending in the middle of a scalar, prefix, or payload reports
   `UnexpectedEof`.

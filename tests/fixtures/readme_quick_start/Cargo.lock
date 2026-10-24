@@ -13,9 +13,7 @@ dependencies = [
 
 [[package]]
 name = "qubit-codec"
-version = "0.15.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "3f2e4507b43dfa570a3cbdf29acb6eb8aeac7cd1f00f58a1dcf90fd09151b1c2"
+version = "0.17.0"
 dependencies = [
  "qubit-io",
  "qubit-utils",
@@ -24,9 +22,7 @@ dependencies = [
 
 [[package]]
 name = "qubit-codec-binary"
-version = "0.7.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "aee2d22efed7141648b7a3f97c901f363b0117bf96eabe5becec9865c2a326b1"
+version = "0.9.0"
 dependencies = [
  "qubit-codec",
  "qubit-utils",
@@ -35,16 +31,16 @@ dependencies = [
 
 [[package]]
 name = "qubit-io"
-version = "0.17.0"
+version = "0.19.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e3eea3e8f7e4b8f96cff01287dec8214ec565b0531b5b495204d14df7a05b85e"
+checksum = "43d93b816b278d218809c780998a9763a3863fe92ec3cb19e74a1470ffcf9d7b"
 dependencies = [
  "qubit-utils",
 ]
 
 [[package]]
 name = "qubit-io-binary"
-version = "0.6.1"
+version = "0.7.1"
 dependencies = [
  "qubit-codec",
  "qubit-codec-binary",
@@ -54,9 +50,9 @@ dependencies = [
 
 [[package]]
 name = "qubit-utils"
-version = "0.3.0"
+version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "7f9bf5cd2e783a8a6edd6536826084ef0a82d1924b14f82e79fe0088b7b33748"
+checksum = "ff9da2a76c1f983bc036d4135036db57f9d066c6fd6e8cdfbfacee72de4e2309"
 
 [[package]]
 name = "quote"
@@ -76,9 +72,9 @@ dependencies = [
 
 [[package]]
 name = "syn"
-version = "3.0.5"
+version = "3.0.9"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "12df2e0110f65b775f769bb17ef989067a1d931b2eb822bd4346631eeada89f9"
+checksum = "d78c8dee4c7bf0e14673097256fed6142ce9d3b85a408189d07482442145823b"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -87,18 +83,18 @@ dependencies = [
 
 [[package]]
 name = "thiserror"
-version = "2.0.20"
+version = "2.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "ec86235f5fcc2a73650310756d2ac5b138a5780bbbdfae3eeccec992c435ba4f"
+checksum = "09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e"
 dependencies = [
  "thiserror-impl",
 ]
 
 [[package]]
 name = "thiserror-impl"
-version = "2.0.20"
+version = "2.0.21"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "bc04cd3e1236dd4a98afca4569f2deb3f120e5422a4023be2cb683f8486292af"
+checksum = "fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524"
 dependencies = [
  "proc-macro2",
  "quote",
@@ -107,6 +103,6 @@ dependencies = [
 
 [[package]]
 name = "unicode-ident"
-version = "1.0.24"
+version = "1.0.27"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "e6e4313cd5fcd3dad5cafa179702e2b244f760991f45397d14d4ebf38247da75"
+checksum = "a2c754d6c33795a1c324727428e5a7dedb5b06195f9890bdbcba760d3e246563"

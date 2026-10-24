@@ -4,7 +4,7 @@
 [API 文档](https://docs.rs/qubit-io-binary)
 
 本指南面向需要在字节流上读取或写入结构化二进制值的 Rust 应用，适用于
-`qubit-io-binary` 0.6。该 crate 将 `qubit-codec-binary` 的缓冲区 codec 接入
+`qubit-io-binary` 0.7.1。该 crate 将 `qubit-codec-binary` 的缓冲区 codec 接入
 `qubit-io` 的流抽象；它不负责打开文件、不选择传输层，也不绑定异步运行时。
 
 ## 概念模型
@@ -33,10 +33,10 @@ typed reader/writer。它们的 buffered 变体会保留未读或未写字节，
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.6"
-qubit-codec = { version = "0.15", features = ["io"] }
-qubit-codec-binary = "0.7"
-qubit-io = "0.17"
+qubit-io-binary = "0.7"
+qubit-codec = { version = "0.17", features = ["io"] }
+qubit-codec-binary = "0.9"
+qubit-io = "0.19"
 ```
 
 示例使用 `Vec<u8>` 和 `Cursor`；标准库字节源与字节宿可通过 `qubit-io` adapter
@@ -156,6 +156,39 @@ where
 pending write 可能已经向输出写入前缀。只有在传输或 framing 保证安全时才能整体重试。
 
 ## 错误与诊断
+
+同步读取不提供事务回滚。标量或变长整数读取失败时，当前字段可能已有一部分字节被
+消费；再次调用会从当前输入位置开始。字符串读取的校验阶段则有明确区别：
+
+| 失败阶段 | 已消费的数据 | 恢复方式 |
+| --- | --- | --- |
+| 解出的长度超过 `max_len` | 长度前缀已消费，payload 尚未读取 | 停止解析当前记录；当前位置不是下一条记录的边界。 |
+| 完整 payload 不是合法 UTF-8 | 长度前缀和完整 payload 均已消费 | 只有外层协议已给出完整帧边界时，才能丢弃该记录继续。 |
+| 同步读取标量时发生 I/O 错误 | 可能已消费字段的一部分 | 不要盲目重试；应从可信帧边界或 seek 检查点恢复。 |
+| 异步操作被取消 | 可能已消费部分前缀或 payload | 已消费字节会保留；取消不会回滚操作。 |
+
+buffered reader 可能已从底层输入预读数据，因此底层输入位置不能代表 reader 的逻辑消费位置。
+缓冲也不会让整条记录变成事务操作。
+
+如果外层协议已经把完整帧隔离出来，可以为每帧单独创建输入并解析。某一帧格式错误时，
+应用据此拒绝整帧，而不是继续读取该帧的内部字段：
+
+```rust
+use std::io::Cursor;
+use qubit_io_binary::StringReadExt;
+
+fn parse_frame(frame: &[u8]) -> std::io::Result<String> {
+    Cursor::new(frame).read_utf8_string_uleb_u64(2)
+}
+
+// The application has already isolated these frames using its outer protocol.
+assert!(parse_frame(&[3, b'a', b'b', b'c']).is_err());
+assert_eq!("z", parse_frame(&[1, b'z'])?);
+# Ok::<(), std::io::Error>(())
+```
+
+这里依赖的是应用已经掌握的帧边界。本库不负责 transport framing；长度超限后随意跳过
+若干字节，也无法可靠推断下一帧从哪里开始。
 
 - 在标量、长度前缀或 payload 中途结束的流会返回 `UnexpectedEof`。
 - 畸形 codec 数据、strict LEB128 拒绝的非 canonical 编码、无效 UTF-8 和超过

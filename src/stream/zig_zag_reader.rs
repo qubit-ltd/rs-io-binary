@@ -26,6 +26,10 @@ use crate::util::read_leb128_from_reader;
 
 /// Reader wrapper for ZigZag + unsigned LEB128 integers.
 ///
+/// A synchronous read error may occur after part of a value has been consumed.
+/// A later call starts at the current input position; it does not resume the
+/// failed value. Recover only at a framing boundary or trusted seek checkpoint.
+///
 /// # Target-width integers
 ///
 /// `isize` methods use the current Rust target's pointer width. Prefer

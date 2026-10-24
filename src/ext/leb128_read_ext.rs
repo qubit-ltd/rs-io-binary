@@ -37,6 +37,9 @@ macro_rules! read_leb128_value {
 /// persistent files and cross-platform protocols. Non-strict methods use the
 /// `_non_strict` suffix; canonical-only methods use the corresponding `_strict`
 /// suffix.
+/// A failed synchronous read may have consumed part of the current value.
+/// Do not blindly retry the same operation; resume only from a framing
+/// boundary or a trusted seek checkpoint.
 pub trait Leb128ReadExt: ByteInput {
     /// Reads a non-strict unsigned LEB128 `u8`.
     ///
