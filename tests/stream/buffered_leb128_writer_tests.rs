@@ -15,6 +15,8 @@ use qubit_io::Output;
 use qubit_io_binary::BufferedLeb128Writer;
 use qubit_io_binary::Leb128WriteExt;
 
+use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
 struct FailingWriter;
 
 impl Write for FailingWriter {
@@ -237,4 +239,28 @@ fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
     let (inner, recovery) = writer.into_parts();
     assert_eq!([0xAC], inner.bytes.as_slice());
     assert!(matches!(recovery, qubit_io::BufferedOutputRecovery::Indeterminate(_)));
+}
+
+#[test]
+fn test_buffered_leb128_string_payload_failure_is_not_completed_by_flush() {
+    for use_u64 in [false, true] {
+        let mut writer = BufferedLeb128Writer::with_capacity(PrefixErrorOutput::new(3), 19);
+        let payload = "x".repeat(40);
+        let result = if use_u64 {
+            writer.write_utf8_string_u64(&payload)
+        } else {
+            writer.write_utf8_string_usize(&payload)
+        };
+        assert_eq!(ErrorKind::Other, result.expect_err("payload should fail").kind());
+        assert_eq!(&[40, b'x', b'x'], writer.inner().bytes());
+        writer
+            .flush()
+            .expect("an empty buffer can flush without completing the field");
+        let (output, recovery) = writer.into_parts();
+        assert_eq!(&[40, b'x', b'x'], output.bytes());
+        match recovery {
+            BufferedOutputRecovery::Pending(buffer) => assert!(buffer.readable().is_empty()),
+            BufferedOutputRecovery::Indeterminate(_) => panic!("ordinary errors must not imply a panic"),
+        }
+    }
 }

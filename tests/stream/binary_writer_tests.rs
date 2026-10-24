@@ -17,6 +17,8 @@ use qubit_io::Output;
 use qubit_io::Seekable;
 use qubit_io_binary::BinaryWriter;
 
+use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
 fn expected_big_endian_bytes() -> Vec<u8> {
     let mut expected = Vec::new();
     expected.extend_from_slice(&[0xaa, 0xbb]);
@@ -126,6 +128,24 @@ fn test_binary_writer_writes_little_endian_and_exposes_accessors() {
     expected.extend_from_slice(&2_u32.to_le_bytes());
     expected.extend_from_slice(b"ok");
     assert_eq!(expected, writer.into_inner().into_inner());
+}
+
+#[test]
+fn test_binary_string_payload_failure_preserves_committed_prefix() {
+    for use_u32 in [false, true] {
+        let mut expected = if use_u32 { vec![40, 0, 0, 0] } else { vec![40, 0] };
+        let output = PrefixErrorOutput::new(expected.len() + 2);
+        let mut writer = BinaryWriter::<_, LittleEndian>::new(output);
+        let payload = "x".repeat(40);
+        let result = if use_u32 {
+            writer.write_string_with_u32_len(&payload)
+        } else {
+            writer.write_string_with_u16_len(&payload)
+        };
+        assert_eq!(ErrorKind::Other, result.expect_err("payload should fail").kind());
+        expected.extend_from_slice(b"xx");
+        assert_eq!(expected.as_slice(), writer.inner().bytes());
+    }
 }
 
 #[test]

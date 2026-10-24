@@ -13,6 +13,8 @@ use qubit_io::Output;
 use qubit_io::Seekable;
 use qubit_io_binary::Leb128Writer;
 
+use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
 struct FailingWriter;
 
 impl Write for FailingWriter {
@@ -98,6 +100,21 @@ fn test_leb128_writer_returns_writer_error() {
     let error = writer.write_u16(300).expect_err("writer error should be returned");
 
     assert_eq!(ErrorKind::Other, error.kind());
+}
+
+#[test]
+fn test_leb128_string_payload_failure_preserves_committed_prefix() {
+    for use_u64 in [false, true] {
+        let mut writer = Leb128Writer::new(PrefixErrorOutput::new(3));
+        let payload = "x".repeat(40);
+        let result = if use_u64 {
+            writer.write_utf8_string_u64(&payload)
+        } else {
+            writer.write_utf8_string_usize(&payload)
+        };
+        assert_eq!(ErrorKind::Other, result.expect_err("payload should fail").kind());
+        assert_eq!(&[40, b'x', b'x'], writer.inner().bytes());
+    }
 }
 
 #[test]

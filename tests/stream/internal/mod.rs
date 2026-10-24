@@ -7,5 +7,6 @@
 // =============================================================================
 
 mod stream_codec_decode_error_tests;
+pub(super) mod string_write_test_support_tests;
 mod transcode_decode_input_ext_tests;
 mod transcode_encode_output_ext_tests;

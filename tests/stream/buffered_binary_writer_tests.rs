@@ -21,6 +21,8 @@ use qubit_io::Output;
 use qubit_io_binary::BinaryWriteExt;
 use qubit_io_binary::BufferedBinaryWriter;
 
+use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
 struct FailingWriter;
 
 impl Write for FailingWriter {
@@ -693,4 +695,31 @@ fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
     let (inner, recovery) = writer.into_parts();
     assert_eq!([0x34], inner.bytes.as_slice());
     assert!(matches!(recovery, qubit_io::BufferedOutputRecovery::Indeterminate(_)));
+}
+
+#[test]
+fn test_buffered_binary_string_payload_failure_is_not_completed_by_flush() {
+    for use_u32 in [false, true] {
+        let mut expected = if use_u32 { vec![40, 0, 0, 0] } else { vec![40, 0] };
+        let output = PrefixErrorOutput::new(expected.len() + 2);
+        let mut writer = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(output, 19);
+        let payload = "x".repeat(40);
+        let result = if use_u32 {
+            writer.write_string_with_u32_len(&payload)
+        } else {
+            writer.write_string_with_u16_len(&payload)
+        };
+        assert_eq!(ErrorKind::Other, result.expect_err("payload should fail").kind());
+        expected.extend_from_slice(b"xx");
+        assert_eq!(expected.as_slice(), writer.inner().bytes());
+        writer
+            .flush()
+            .expect("an empty buffer can flush without completing the field");
+        let (output, recovery) = writer.into_parts();
+        assert_eq!(expected.as_slice(), output.bytes());
+        match recovery {
+            BufferedOutputRecovery::Pending(buffer) => assert!(buffer.readable().is_empty()),
+            BufferedOutputRecovery::Indeterminate(_) => panic!("ordinary errors must not imply a panic"),
+        }
+    }
 }
