@@ -204,8 +204,7 @@ impl AsyncInput for ScriptedAsyncInput<'_> {
             match this.next_event() {
                 0 => {
                     let count = count.min(this.chunk_size).min(this.bytes.len() - this.position);
-                    output[index..index + count]
-                        .copy_from_slice(&this.bytes[this.position..this.position + count]);
+                    output[index..index + count].copy_from_slice(&this.bytes[this.position..this.position + count]);
                     this.position += count;
                     return Poll::Ready(Ok(count));
                 }

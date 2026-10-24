@@ -15,8 +15,8 @@ use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::ZigZagCodec;
 use qubit_io::ByteOutput;
 use qubit_io::Output;
-use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
+use qubit_io::SeekableByteOutput;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::encode_infallible_unchecked;

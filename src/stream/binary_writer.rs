@@ -20,8 +20,8 @@ use qubit_codec::NativeEndian;
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::ByteOutput;
 use qubit_io::Output;
-use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
+use qubit_io::SeekableByteOutput;
 
 use crate::util::checked_u16_len;
 use crate::util::checked_u32_len;

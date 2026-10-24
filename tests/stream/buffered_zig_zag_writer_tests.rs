@@ -26,7 +26,6 @@ impl Write for FailingWriter {
     }
 }
 
-
 #[derive(Default)]
 struct PanicOutput {
     bytes: Vec<u8>,
@@ -153,9 +152,7 @@ fn test_buffered_zig_zag_writer_flushes_before_encoded_value_when_full() {
 fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
     let mut writer = BufferedZigZagWriter::new(PanicOutput::default());
     writer.write_i64(-300).expect("the encoded value should be buffered");
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        qubit_io::Output::flush(&mut writer)
-    }));
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| qubit_io::Output::flush(&mut writer)));
     assert!(result.is_err());
 
     let (inner, recovery) = writer.into_parts();

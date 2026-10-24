@@ -244,7 +244,6 @@ fn expected_values() -> Vec<u8> {
     bytes
 }
 
-
 #[derive(Default)]
 struct PanicOutput {
     bytes: Vec<u8>,
@@ -687,9 +686,7 @@ fn test_buffered_binary_writer_rejects_impossible_capacity() {
 fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
     let mut writer = BufferedBinaryWriter::<_, LittleEndian>::new(PanicOutput::default());
     writer.write_u16(0x1234).expect("the encoded value should be buffered");
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        qubit_io::Output::flush(&mut writer)
-    }));
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| qubit_io::Output::flush(&mut writer)));
     assert!(result.is_err());
 
     let (inner, recovery) = writer.into_parts();

@@ -15,8 +15,8 @@ use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::NonStrict;
 use qubit_io::ByteOutput;
 use qubit_io::Output;
-use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
+use qubit_io::SeekableByteOutput;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 use crate::util::checked_u64_len;

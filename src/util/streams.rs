@@ -20,8 +20,8 @@ use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::Leb128DecodeError;
 use qubit_codec_binary::NonStrict;
 use qubit_io::ByteInput;
-use qubit_io::Input;
 use qubit_io::ByteOutput;
+use qubit_io::Input;
 use qubit_io::Output;
 use qubit_utils::try_reserve_vec;
 

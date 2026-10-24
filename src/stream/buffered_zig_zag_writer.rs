@@ -18,8 +18,8 @@ use qubit_codec_binary::ZigZagCodec;
 use qubit_io::BufferedOutputRecovery;
 use qubit_io::ByteOutput;
 use qubit_io::Output;
-use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
+use qubit_io::SeekableByteOutput;
 
 use super::internal::TranscodeEncodeOutputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
@@ -136,7 +136,8 @@ where
     pub const fn inner(&self) -> &W {
         self.output.inner()
     }
-    /// Recovers the wrapped writer and the status of bytes retained by this writer.
+    /// Recovers the wrapped writer and the status of bytes retained by this
+    /// writer.
     ///
     /// This method performs no I/O and does not call [`Self::flush`]. `Pending`
     /// bytes were not reported as written and may be retried. `Indeterminate`

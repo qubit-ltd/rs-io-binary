@@ -21,8 +21,8 @@ use qubit_codec_binary::Strict;
 use qubit_io::Buffer;
 use qubit_io::ByteInput;
 use qubit_io::Input;
-use qubit_io::SeekableByteInput;
 use qubit_io::Seekable;
+use qubit_io::SeekableByteInput;
 
 use super::internal::TranscodeDecodeInputExt;
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;

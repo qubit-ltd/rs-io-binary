@@ -20,8 +20,8 @@ use qubit_codec::NativeEndian;
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::ByteInput;
 use qubit_io::Input;
-use qubit_io::SeekableByteInput;
 use qubit_io::Seekable;
+use qubit_io::SeekableByteInput;
 
 use crate::util::decode_infallible_unchecked;
 use crate::util::read_utf8_payload;

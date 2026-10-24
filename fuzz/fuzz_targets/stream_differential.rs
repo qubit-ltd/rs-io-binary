@@ -71,13 +71,9 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
     let wrapper_result = wrapper.write_u64(value);
     let wrapper_bytes = wrapper.into_inner().into_bytes();
 
-    let mut buffered = BufferedBinaryWriter::<_, LittleEndian>::with_capacity(
-        ScriptedWriter::new(chunk_size, None),
-        16,
-    );
-    let buffered_result = buffered
-        .write_u64(value)
-        .and_then(|()| Output::flush(&mut buffered));
+    let mut buffered =
+        BufferedBinaryWriter::<_, LittleEndian>::with_capacity(ScriptedWriter::new(chunk_size, None), 16);
+    let buffered_result = buffered.write_u64(value).and_then(|()| Output::flush(&mut buffered));
     let (buffered_inner, pending) = buffered.into_parts();
     let buffered_bytes = buffered_inner.into_bytes();
 
@@ -86,14 +82,8 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
         BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
     ));
     assert_eq!(Ok(()), result_signature(&extension_result));
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(extension_bytes, wrapper_bytes);
     assert_eq!(extension_bytes, buffered_bytes);
 
@@ -103,8 +93,7 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
     let extension_result = extension.write_u64_le(value);
     let extension_bytes = extension.into_bytes();
 
-    let mut wrapper =
-        BinaryWriter::<_, LittleEndian>::new(ScriptedWriter::new(chunk_size, Some(failure_limit)));
+    let mut wrapper = BinaryWriter::<_, LittleEndian>::new(ScriptedWriter::new(chunk_size, Some(failure_limit)));
     let wrapper_result = wrapper.write_u64(value);
     let wrapper_bytes = wrapper.into_inner().into_bytes();
 
@@ -118,14 +107,8 @@ fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
     let (buffered_inner, pending) = buffered.into_parts();
     let buffered_bytes = buffered_inner.into_bytes();
 
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(&expected[..failure_limit], extension_bytes);
     assert_eq!(&expected[..failure_limit], wrapper_bytes);
     assert_eq!(&expected[..failure_limit], buffered_bytes);
@@ -150,23 +133,15 @@ fn fuzz_fixed_width(payload: &[u8], chunk_size: usize) {
     let wrapper_result = wrapper.read_u32();
     let wrapper_position = wrapper.into_inner().position();
 
-    let mut buffered = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
-        ChunkedReader::new(payload, chunk_size),
-        16,
-    );
+    let mut buffered =
+        BufferedBinaryReader::<_, LittleEndian>::with_capacity(ChunkedReader::new(payload, chunk_size), 16);
     let buffered_result = buffered.read_u32();
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
     assert_eq!(extension_position, wrapper_position);
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(extension_position, buffered_position);
 }
 
@@ -177,29 +152,18 @@ fn fuzz_strict_leb128(payload: &[u8], chunk_size: usize) {
     bytes[..count].copy_from_slice(&payload[..count]);
     let value = u64::from_le_bytes(bytes);
     let mut encoded = Vec::new();
-    encoded
-        .write_uleb_u64(value)
-        .expect("LEB128 value should encode");
+    encoded.write_uleb_u64(value).expect("LEB128 value should encode");
 
     let mut extension = ChunkedReader::new(&encoded, chunk_size);
     let extension_result = extension.read_uleb_u64_strict();
     let mut wrapper = Leb128Reader::<_, Strict>::new(ChunkedReader::new(&encoded, chunk_size));
     let wrapper_result = wrapper.read_u64();
-    let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(
-        ChunkedReader::new(&encoded, chunk_size),
-        16,
-    );
+    let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(ChunkedReader::new(&encoded, chunk_size), 16);
     let buffered_result = buffered.read_u64();
 
     assert_eq!(Ok(value), result_signature(&extension_result));
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
 }
 
 /// Checks fixed-length UTF-8 string framing through all synchronous readers.
@@ -214,15 +178,12 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
     let extension_result = extension
         .read_string_with_u16_len(ByteOrder::LittleEndian, MAX_STRING_LEN)
         .map(|text| text.into_bytes());
-    let mut wrapper =
-        BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
+    let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
     let wrapper_result = wrapper
         .read_string_with_u16_len(MAX_STRING_LEN)
         .map(|text| text.into_bytes());
-    let mut buffered = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
-        ChunkedReader::new(&encoded, chunk_size),
-        16,
-    );
+    let mut buffered =
+        BufferedBinaryReader::<_, LittleEndian>::with_capacity(ChunkedReader::new(&encoded, chunk_size), 16);
     let buffered_result = buffered
         .read_string_with_u16_len(MAX_STRING_LEN)
         .map(|text| text.into_bytes());
@@ -257,26 +218,14 @@ fn fuzz_malformed_strict_leb128(payload: &[u8], chunk_size: usize) {
     let wrapper_result = wrapper.read_u64();
     let wrapper_position = wrapper.into_inner().position();
 
-    let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(
-        ChunkedReader::new(&encoded, chunk_size),
-        16,
-    );
+    let mut buffered = BufferedLeb128Reader::<_, Strict>::with_capacity(ChunkedReader::new(&encoded, chunk_size), 16);
     let buffered_result = buffered.read_u64();
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(
-        Err(ErrorKind::InvalidData),
-        result_signature(&extension_result)
-    );
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(Err(ErrorKind::InvalidData), result_signature(&extension_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(extension_position, wrapper_position);
     assert_eq!(extension_position, buffered_position);
 }
@@ -305,20 +254,13 @@ fn fuzz_malformed_strings(payload: &[u8], chunk_size: usize) {
             .map(String::into_bytes);
         let extension_position = extension.position();
 
-        let mut wrapper =
-            BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
-        let wrapper_result = wrapper
-            .read_string_with_u16_len(max_len)
-            .map(String::into_bytes);
+        let mut wrapper = BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
+        let wrapper_result = wrapper.read_string_with_u16_len(max_len).map(String::into_bytes);
         let wrapper_position = wrapper.into_inner().position();
 
-        let mut buffered = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
-            ChunkedReader::new(&encoded, chunk_size),
-            16,
-        );
-        let buffered_result = buffered
-            .read_string_with_u16_len(max_len)
-            .map(String::into_bytes);
+        let mut buffered =
+            BufferedBinaryReader::<_, LittleEndian>::with_capacity(ChunkedReader::new(&encoded, chunk_size), 16);
+        let buffered_result = buffered.read_string_with_u16_len(max_len).map(String::into_bytes);
         let (inner, unread) = buffered.into_parts();
         let buffered_position = inner.position() - unread.available();
 
@@ -346,23 +288,14 @@ fn fuzz_leb128(payload: &[u8], chunk_size: usize) {
     let wrapper_result = wrapper.read_u64_non_strict();
     let wrapper_position = wrapper.into_inner().position();
 
-    let mut buffered = BufferedLeb128Reader::<_, NonStrict>::with_capacity(
-        ChunkedReader::new(payload, chunk_size),
-        16,
-    );
+    let mut buffered = BufferedLeb128Reader::<_, NonStrict>::with_capacity(ChunkedReader::new(payload, chunk_size), 16);
     let buffered_result = buffered.read_u64_non_strict();
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
     assert_eq!(extension_position, wrapper_position);
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(extension_position, buffered_position);
 }
 
@@ -376,23 +309,14 @@ fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     let wrapper_result = wrapper.read_i64_non_strict();
     let wrapper_position = wrapper.into_inner().position();
 
-    let mut buffered = BufferedZigZagReader::<_, NonStrict>::with_capacity(
-        ChunkedReader::new(payload, chunk_size),
-        16,
-    );
+    let mut buffered = BufferedZigZagReader::<_, NonStrict>::with_capacity(ChunkedReader::new(payload, chunk_size), 16);
     let buffered_result = buffered.read_i64_non_strict();
     let (inner, unread) = buffered.into_parts();
     let buffered_position = inner.position() - unread.available();
 
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&wrapper_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&wrapper_result));
     assert_eq!(extension_position, wrapper_position);
-    assert_eq!(
-        result_signature(&extension_result),
-        result_signature(&buffered_result)
-    );
+    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(extension_position, buffered_position);
 }
 
@@ -471,9 +395,7 @@ impl Write for ScriptedWriter {
     /// Accepts at most `chunk_size` bytes, then optionally fails at the budget.
     fn write(&mut self, input: &[u8]) -> io::Result<usize> {
         let requested = input.len().min(self.chunk_size);
-        let count = self
-            .remaining
-            .map_or(requested, |remaining| requested.min(remaining));
+        let count = self.remaining.map_or(requested, |remaining| requested.min(remaining));
         if count == 0 && !input.is_empty() {
             return Err(io::Error::new(ErrorKind::Other, "scripted writer failure"));
         }
