@@ -106,3 +106,82 @@ fn test_async_zig_zag_read_reports_invalid_and_truncated_payloads() {
     let truncated = complete(input.read_zig_zag_i128_non_strict_async()).expect_err("truncated payload should fail");
     assert_eq!(ErrorKind::UnexpectedEof, truncated.kind());
 }
+
+#[test]
+fn test_async_zig_zag_read_golden_vector() {
+    macro_rules! check_read {
+        ($strict:ident, $loose:ident, $value:expr, $bytes:expr) => {{
+            let bytes: &[u8] = &$bytes;
+            let mut strict = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!(
+                $value,
+                complete(strict.$strict()).expect("canonical vector must decode")
+            );
+            assert_eq!(bytes.len(), strict.position());
+            let mut loose = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!($value, complete(loose.$loose()).expect("canonical vector must decode"));
+            assert_eq!(bytes.len(), loose.position());
+        }};
+    }
+    check_read!(read_zig_zag_i8_strict_async, read_zig_zag_i8_non_strict_async, -1, [1]);
+    check_read!(
+        read_zig_zag_i16_strict_async,
+        read_zig_zag_i16_non_strict_async,
+        -1,
+        [1]
+    );
+    check_read!(
+        read_zig_zag_i32_strict_async,
+        read_zig_zag_i32_non_strict_async,
+        -1,
+        [1]
+    );
+    check_read!(
+        read_zig_zag_i64_strict_async,
+        read_zig_zag_i64_non_strict_async,
+        -1,
+        [1]
+    );
+    check_read!(
+        read_zig_zag_i128_strict_async,
+        read_zig_zag_i128_non_strict_async,
+        -1,
+        [1]
+    );
+    check_read!(
+        read_zig_zag_isize_strict_async,
+        read_zig_zag_isize_non_strict_async,
+        -1,
+        [1]
+    );
+    check_read!(
+        read_zig_zag_i16_strict_async,
+        read_zig_zag_i16_non_strict_async,
+        -300,
+        [0xd7, 4]
+    );
+    check_read!(
+        read_zig_zag_i32_strict_async,
+        read_zig_zag_i32_non_strict_async,
+        -300,
+        [0xd7, 4]
+    );
+    check_read!(
+        read_zig_zag_i64_strict_async,
+        read_zig_zag_i64_non_strict_async,
+        -300,
+        [0xd7, 4]
+    );
+    check_read!(
+        read_zig_zag_i128_strict_async,
+        read_zig_zag_i128_non_strict_async,
+        -300,
+        [0xd7, 4]
+    );
+    check_read!(
+        read_zig_zag_isize_strict_async,
+        read_zig_zag_isize_non_strict_async,
+        -300,
+        [0xd7, 4]
+    );
+}

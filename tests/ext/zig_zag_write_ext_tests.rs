@@ -48,3 +48,25 @@ fn test_zig_zag_write_ext_returns_writer_error() {
 
     assert_eq!(ErrorKind::Other, error.kind());
 }
+
+#[test]
+fn test_zig_zag_write_golden_vector() {
+    macro_rules! check_write {
+        ($method:ident, $value:expr, $bytes:expr) => {{
+            let mut output = Vec::new();
+            output.$method($value).expect("golden value must encode");
+            assert_eq!($bytes, output.as_slice(), stringify!($method));
+        }};
+    }
+    check_write!(write_zig_zag_i8, -1, [1]);
+    check_write!(write_zig_zag_i16, -1, [1]);
+    check_write!(write_zig_zag_i32, -1, [1]);
+    check_write!(write_zig_zag_i64, -1, [1]);
+    check_write!(write_zig_zag_i128, -1, [1]);
+    check_write!(write_zig_zag_isize, -1, [1]);
+    check_write!(write_zig_zag_i16, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_i32, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_i64, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_i128, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_isize, -300, [0xd7, 4]);
+}

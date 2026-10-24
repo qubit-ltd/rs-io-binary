@@ -62,3 +62,25 @@ fn test_async_zig_zag_write_propagates_output_errors() {
 
     assert_eq!(ErrorKind::BrokenPipe, error.kind());
 }
+
+#[test]
+fn test_async_zig_zag_write_golden_vector() {
+    macro_rules! check_write {
+        ($method:ident, $value:expr, $bytes:expr) => {{
+            let mut output = ChunkedAsyncOutput::new();
+            complete(output.$method($value)).expect("golden value must encode");
+            assert_eq!($bytes, output.bytes().as_slice(), stringify!($method));
+        }};
+    }
+    check_write!(write_zig_zag_i8_async, -1, [1]);
+    check_write!(write_zig_zag_i16_async, -1, [1]);
+    check_write!(write_zig_zag_i32_async, -1, [1]);
+    check_write!(write_zig_zag_i64_async, -1, [1]);
+    check_write!(write_zig_zag_i128_async, -1, [1]);
+    check_write!(write_zig_zag_isize_async, -1, [1]);
+    check_write!(write_zig_zag_i16_async, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_i32_async, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_i64_async, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_i128_async, -300, [0xd7, 4]);
+    check_write!(write_zig_zag_isize_async, -300, [0xd7, 4]);
+}

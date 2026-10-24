@@ -106,3 +106,99 @@ fn test_async_leb128_read_reports_invalid_and_truncated_payloads() {
     let truncated = complete(input.read_uleb_u128_non_strict_async()).expect_err("truncated payload should fail");
     assert_eq!(ErrorKind::UnexpectedEof, truncated.kind());
 }
+
+#[test]
+fn test_async_leb128_read_golden_vector() {
+    macro_rules! check_read {
+        ($strict:ident, $loose:ident, $value:expr, $bytes:expr) => {{
+            let bytes: &[u8] = &$bytes;
+            let mut strict = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!(
+                $value,
+                complete(strict.$strict()).expect("canonical vector must decode")
+            );
+            assert_eq!(bytes.len(), strict.position());
+            let mut loose = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!($value, complete(loose.$loose()).expect("canonical vector must decode"));
+            assert_eq!(bytes.len(), loose.position());
+        }};
+    }
+    check_read!(read_uleb_u8_strict_async, read_uleb_u8_non_strict_async, 0, [0]);
+    check_read!(read_uleb_u8_strict_async, read_uleb_u8_non_strict_async, 128, [0x80, 1]);
+    check_read!(read_uleb_u16_strict_async, read_uleb_u16_non_strict_async, 0, [0]);
+    check_read!(read_uleb_u32_strict_async, read_uleb_u32_non_strict_async, 0, [0]);
+    check_read!(read_uleb_u64_strict_async, read_uleb_u64_non_strict_async, 0, [0]);
+    check_read!(read_uleb_u128_strict_async, read_uleb_u128_non_strict_async, 0, [0]);
+    check_read!(read_uleb_usize_strict_async, read_uleb_usize_non_strict_async, 0, [0]);
+    check_read!(
+        read_uleb_u16_strict_async,
+        read_uleb_u16_non_strict_async,
+        300,
+        [0xac, 2]
+    );
+    check_read!(
+        read_uleb_u32_strict_async,
+        read_uleb_u32_non_strict_async,
+        300,
+        [0xac, 2]
+    );
+    check_read!(
+        read_uleb_u64_strict_async,
+        read_uleb_u64_non_strict_async,
+        300,
+        [0xac, 2]
+    );
+    check_read!(
+        read_uleb_u128_strict_async,
+        read_uleb_u128_non_strict_async,
+        300,
+        [0xac, 2]
+    );
+    check_read!(
+        read_uleb_usize_strict_async,
+        read_uleb_usize_non_strict_async,
+        300,
+        [0xac, 2]
+    );
+    check_read!(read_sleb_i8_strict_async, read_sleb_i8_non_strict_async, -1, [0x7f]);
+    check_read!(read_sleb_i16_strict_async, read_sleb_i16_non_strict_async, -1, [0x7f]);
+    check_read!(read_sleb_i32_strict_async, read_sleb_i32_non_strict_async, -1, [0x7f]);
+    check_read!(read_sleb_i64_strict_async, read_sleb_i64_non_strict_async, -1, [0x7f]);
+    check_read!(read_sleb_i128_strict_async, read_sleb_i128_non_strict_async, -1, [0x7f]);
+    check_read!(
+        read_sleb_isize_strict_async,
+        read_sleb_isize_non_strict_async,
+        -1,
+        [0x7f]
+    );
+    check_read!(
+        read_sleb_i16_strict_async,
+        read_sleb_i16_non_strict_async,
+        -300,
+        [0xd4, 0x7d]
+    );
+    check_read!(
+        read_sleb_i32_strict_async,
+        read_sleb_i32_non_strict_async,
+        -300,
+        [0xd4, 0x7d]
+    );
+    check_read!(
+        read_sleb_i64_strict_async,
+        read_sleb_i64_non_strict_async,
+        -300,
+        [0xd4, 0x7d]
+    );
+    check_read!(
+        read_sleb_i128_strict_async,
+        read_sleb_i128_non_strict_async,
+        -300,
+        [0xd4, 0x7d]
+    );
+    check_read!(
+        read_sleb_isize_strict_async,
+        read_sleb_isize_non_strict_async,
+        -300,
+        [0xd4, 0x7d]
+    );
+}

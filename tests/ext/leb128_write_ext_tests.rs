@@ -93,3 +93,37 @@ fn test_leb128_write_ext_returns_writer_error() {
 
     assert_eq!(ErrorKind::Other, error.kind());
 }
+
+#[test]
+fn test_leb128_write_golden_vector() {
+    macro_rules! check_write {
+        ($method:ident, $value:expr, $bytes:expr) => {{
+            let mut output = Vec::new();
+            output.$method($value).expect("golden value must encode");
+            assert_eq!($bytes, output.as_slice(), stringify!($method));
+        }};
+    }
+    check_write!(write_uleb_u8, 0, [0]);
+    check_write!(write_uleb_u8, 128, [0x80, 1]);
+    check_write!(write_uleb_u16, 0, [0]);
+    check_write!(write_uleb_u32, 0, [0]);
+    check_write!(write_uleb_u64, 0, [0]);
+    check_write!(write_uleb_u128, 0, [0]);
+    check_write!(write_uleb_usize, 0, [0]);
+    check_write!(write_uleb_u16, 300, [0xac, 2]);
+    check_write!(write_uleb_u32, 300, [0xac, 2]);
+    check_write!(write_uleb_u64, 300, [0xac, 2]);
+    check_write!(write_uleb_u128, 300, [0xac, 2]);
+    check_write!(write_uleb_usize, 300, [0xac, 2]);
+    check_write!(write_sleb_i8, -1, [0x7f]);
+    check_write!(write_sleb_i16, -1, [0x7f]);
+    check_write!(write_sleb_i32, -1, [0x7f]);
+    check_write!(write_sleb_i64, -1, [0x7f]);
+    check_write!(write_sleb_i128, -1, [0x7f]);
+    check_write!(write_sleb_isize, -1, [0x7f]);
+    check_write!(write_sleb_i16, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_i32, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_i64, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_i128, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_isize, -300, [0xd4, 0x7d]);
+}

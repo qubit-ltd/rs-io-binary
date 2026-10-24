@@ -107,3 +107,34 @@ fn test_zig_zag_read_ext_reports_invalid_data_and_eof() {
             .kind()
     );
 }
+
+#[test]
+fn test_zig_zag_read_golden_vector() {
+    macro_rules! check_read {
+        ($strict:ident, $loose:ident, $value:expr, $bytes:expr) => {{
+            let bytes: &[u8] = &$bytes;
+            let mut strict = Cursor::new(bytes);
+            assert_eq!($value, strict.$strict().expect("canonical vector must decode"));
+            assert_eq!(bytes.len() as u64, strict.position());
+            let mut loose = Cursor::new(bytes);
+            assert_eq!($value, loose.$loose().expect("canonical vector must decode"));
+            assert_eq!(bytes.len() as u64, loose.position());
+        }};
+    }
+    check_read!(read_zig_zag_i8_strict, read_zig_zag_i8_non_strict, -1, [1]);
+    check_read!(read_zig_zag_i16_strict, read_zig_zag_i16_non_strict, -1, [1]);
+    check_read!(read_zig_zag_i32_strict, read_zig_zag_i32_non_strict, -1, [1]);
+    check_read!(read_zig_zag_i64_strict, read_zig_zag_i64_non_strict, -1, [1]);
+    check_read!(read_zig_zag_i128_strict, read_zig_zag_i128_non_strict, -1, [1]);
+    check_read!(read_zig_zag_isize_strict, read_zig_zag_isize_non_strict, -1, [1]);
+    check_read!(read_zig_zag_i16_strict, read_zig_zag_i16_non_strict, -300, [0xd7, 4]);
+    check_read!(read_zig_zag_i32_strict, read_zig_zag_i32_non_strict, -300, [0xd7, 4]);
+    check_read!(read_zig_zag_i64_strict, read_zig_zag_i64_non_strict, -300, [0xd7, 4]);
+    check_read!(read_zig_zag_i128_strict, read_zig_zag_i128_non_strict, -300, [0xd7, 4]);
+    check_read!(
+        read_zig_zag_isize_strict,
+        read_zig_zag_isize_non_strict,
+        -300,
+        [0xd7, 4]
+    );
+}

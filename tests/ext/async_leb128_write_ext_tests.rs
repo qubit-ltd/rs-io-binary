@@ -82,3 +82,37 @@ fn test_async_leb128_write_propagates_output_errors() {
 
     assert_eq!(ErrorKind::BrokenPipe, error.kind());
 }
+
+#[test]
+fn test_async_leb128_write_golden_vector() {
+    macro_rules! check_write {
+        ($method:ident, $value:expr, $bytes:expr) => {{
+            let mut output = ChunkedAsyncOutput::new();
+            complete(output.$method($value)).expect("golden value must encode");
+            assert_eq!($bytes, output.bytes().as_slice(), stringify!($method));
+        }};
+    }
+    check_write!(write_uleb_u8_async, 0, [0]);
+    check_write!(write_uleb_u8_async, 128, [0x80, 1]);
+    check_write!(write_uleb_u16_async, 0, [0]);
+    check_write!(write_uleb_u32_async, 0, [0]);
+    check_write!(write_uleb_u64_async, 0, [0]);
+    check_write!(write_uleb_u128_async, 0, [0]);
+    check_write!(write_uleb_usize_async, 0, [0]);
+    check_write!(write_uleb_u16_async, 300, [0xac, 2]);
+    check_write!(write_uleb_u32_async, 300, [0xac, 2]);
+    check_write!(write_uleb_u64_async, 300, [0xac, 2]);
+    check_write!(write_uleb_u128_async, 300, [0xac, 2]);
+    check_write!(write_uleb_usize_async, 300, [0xac, 2]);
+    check_write!(write_sleb_i8_async, -1, [0x7f]);
+    check_write!(write_sleb_i16_async, -1, [0x7f]);
+    check_write!(write_sleb_i32_async, -1, [0x7f]);
+    check_write!(write_sleb_i64_async, -1, [0x7f]);
+    check_write!(write_sleb_i128_async, -1, [0x7f]);
+    check_write!(write_sleb_isize_async, -1, [0x7f]);
+    check_write!(write_sleb_i16_async, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_i32_async, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_i64_async, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_i128_async, -300, [0xd4, 0x7d]);
+    check_write!(write_sleb_isize_async, -300, [0xd4, 0x7d]);
+}
