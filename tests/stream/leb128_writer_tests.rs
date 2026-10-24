@@ -32,23 +32,63 @@ fn test_leb128_writer_writes_all_methods_and_exposes_accessors() {
     assert_eq!(0, writer.inner().len());
     writer.inner_mut().extend_from_slice(&[]);
     writer.write_u8(u8::MAX).expect("u8 should be written");
-    writer.write_u16(300).expect("u16 should be written");
-    writer.write_u32(0x1f600).expect("u32 should be written");
-    writer.write_u64(0x0102_0304_0506_0708).expect("u64 should be written");
-    writer
-        .write_u128(0x0102_0304_0506_0708_1112_1314_1516_1718)
-        .expect("u128 should be written");
+    writer.write_u16(u16::MAX).expect("u16 should be written");
+    writer.write_u32(u32::MAX).expect("u32 should be written");
+    writer.write_u64(u64::MAX).expect("u64 should be written");
+    writer.write_u128(u128::MAX).expect("u128 should be written");
     writer.write_usize(usize::MAX).expect("usize should be written");
     writer.write_i8(i8::MIN).expect("i8 should be written");
-    writer.write_i16(-300).expect("i16 should be written");
-    writer.write_i32(-0x1f600).expect("i32 should be written");
-    writer.write_i64(-0x0102_0304_0506_0708).expect("i64 should be written");
-    writer
-        .write_i128(-0x0102_0304_0506_0708_1112_1314_1516_1718)
-        .expect("i128 should be written");
+    writer.write_i16(i16::MIN).expect("i16 should be written");
+    writer.write_i32(i32::MIN).expect("i32 should be written");
+    writer.write_i64(i64::MIN).expect("i64 should be written");
+    writer.write_i128(i128::MIN).expect("i128 should be written");
     writer.write_isize(isize::MIN).expect("isize should be written");
 
-    assert!(!writer.into_inner().is_empty());
+    let mut expected = Vec::new();
+    expected.extend_from_slice(&[0xff, 0x01]); // u8::MAX
+    expected.extend_from_slice(&[0xff, 0xff, 0x03]); // u16::MAX
+    expected.extend_from_slice(&[0xff, 0xff, 0xff, 0xff, 0x0f]); // u32::MAX
+    expected.extend_from_slice(&[0xff; 9]);
+    expected.push(0x01); // u64::MAX
+    expected.extend_from_slice(&[0xff; 18]);
+    expected.push(0x03); // u128::MAX
+    #[cfg(target_pointer_width = "16")]
+    expected.extend_from_slice(&[0xff, 0xff, 0x03]);
+    #[cfg(target_pointer_width = "32")]
+    expected.extend_from_slice(&[0xff, 0xff, 0xff, 0xff, 0x0f]);
+    #[cfg(target_pointer_width = "64")]
+    {
+        expected.extend_from_slice(&[0xff; 9]);
+        expected.push(0x01);
+    }
+    expected.extend_from_slice(&[0x80, 0x7f]); // i8::MIN
+    expected.extend_from_slice(&[0x80, 0x80, 0x7e]); // i16::MIN
+    expected.extend_from_slice(&[0x80, 0x80, 0x80, 0x80, 0x78]); // i32::MIN
+    expected.extend_from_slice(&[0x80; 9]);
+    expected.push(0x7f); // i64::MIN
+    expected.extend_from_slice(&[0x80; 18]);
+    expected.push(0x7e); // i128::MIN
+    #[cfg(target_pointer_width = "16")]
+    expected.extend_from_slice(&[0x80, 0x80, 0x7e]);
+    #[cfg(target_pointer_width = "32")]
+    expected.extend_from_slice(&[0x80, 0x80, 0x80, 0x80, 0x78]);
+    #[cfg(target_pointer_width = "64")]
+    {
+        expected.extend_from_slice(&[0x80; 9]);
+        expected.push(0x7f);
+    }
+
+    assert_eq!(expected, writer.into_inner());
+}
+
+#[test]
+fn test_leb128_writer_signed_canonical_boundaries() {
+    let mut writer = Leb128Writer::new(Vec::new());
+    for value in [-65_i16, -64, 63, 64] {
+        writer.write_i16(value).expect("signed boundary should encode");
+    }
+
+    assert_eq!(vec![0xbf, 0x7f, 0x40, 0x3f, 0xc0, 0x00], writer.into_inner());
 }
 
 #[test]

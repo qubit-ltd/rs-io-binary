@@ -6,12 +6,20 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 use std::ffi::c_void;
 use std::io::Error;
 use std::io::ErrorKind;
 use std::io::Write;
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 use std::ptr::null_mut;
 
 use qubit_codec::ByteOrder;
@@ -28,28 +36,52 @@ const MAP_ANONYMOUS_FLAG: i32 = 0x1000;
 ))]
 const MAP_ANONYMOUS_FLAG: i32 = 0x20;
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 const MAP_PRIVATE_FLAG: i32 = 0x02;
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 const PROT_READ_FLAG: i32 = 0x01;
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 const MAP_FAILED: *mut c_void = -1_isize as *mut c_void;
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 unsafe extern "C" {
     fn mmap(addr: *mut c_void, len: usize, prot: i32, flags: i32, fd: i32, offset: i64) -> *mut c_void;
     fn munmap(addr: *mut c_void, len: usize) -> i32;
 }
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 struct MappedBytes {
     ptr: *mut c_void,
     len: usize,
 }
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 impl MappedBytes {
     fn new_zeroed(len: usize) -> Self {
         // SAFETY: The mapping is anonymous, private, read-only, and requests no
@@ -77,7 +109,11 @@ impl MappedBytes {
     }
 }
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 impl Drop for MappedBytes {
     fn drop(&mut self) {
         // SAFETY: `ptr` and `len` come from a successful `mmap` call in
@@ -253,7 +289,11 @@ fn test_string_write_ext_reports_length_and_writer_errors() {
     );
 }
 
-#[cfg(all(not(miri), unix, target_pointer_width = "64"))]
+#[cfg(all(
+    not(miri),
+    target_pointer_width = "64",
+    any(target_os = "linux", target_os = "android", target_os = "macos")
+))]
 #[test]
 fn test_string_write_ext_reports_u32_length_overflow() {
     let value = MappedBytes::new_zeroed(u32::MAX as usize + 1);
