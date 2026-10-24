@@ -39,6 +39,7 @@ use qubit_io_binary::ZigZagReader;
 
 /// Keeps allocations and each target invocation bounded outside CI.
 const MAX_FUZZ_INPUT_LEN: usize = 4096;
+const MAX_STRING_LEN: usize = MAX_FUZZ_INPUT_LEN * 3;
 
 fuzz_target!(|data: &[u8]| {
     let data = &data[..data.len().min(MAX_FUZZ_INPUT_LEN)];
@@ -194,19 +195,19 @@ fn fuzz_string(payload: &[u8], chunk_size: usize) {
 
     let mut extension = ChunkedReader::new(&encoded, chunk_size);
     let extension_result = extension
-        .read_string_with_u16_len(ByteOrder::LittleEndian, MAX_FUZZ_INPUT_LEN)
+        .read_string_with_u16_len(ByteOrder::LittleEndian, MAX_STRING_LEN)
         .map(|text| text.into_bytes());
     let mut wrapper =
         BinaryReader::<_, LittleEndian>::new(ChunkedReader::new(&encoded, chunk_size));
     let wrapper_result = wrapper
-        .read_string_with_u16_len(MAX_FUZZ_INPUT_LEN)
+        .read_string_with_u16_len(MAX_STRING_LEN)
         .map(|text| text.into_bytes());
     let mut buffered = BufferedBinaryReader::<_, LittleEndian>::with_capacity(
         ChunkedReader::new(&encoded, chunk_size),
         16,
     );
     let buffered_result = buffered
-        .read_string_with_u16_len(MAX_FUZZ_INPUT_LEN)
+        .read_string_with_u16_len(MAX_STRING_LEN)
         .map(|text| text.into_bytes());
 
     assert_eq!(
