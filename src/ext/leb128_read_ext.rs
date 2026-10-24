@@ -13,7 +13,7 @@ use std::io::Result;
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
-use qubit_io::Input;
+use qubit_io::ByteInput;
 
 use crate::util::read_leb128_payload;
 
@@ -37,7 +37,7 @@ macro_rules! read_leb128_value {
 /// persistent files and cross-platform protocols. Non-strict methods use the
 /// `_non_strict` suffix; canonical-only methods use the corresponding `_strict`
 /// suffix.
-pub trait Leb128ReadExt: Input<Item = u8> {
+pub trait Leb128ReadExt: ByteInput {
     /// Reads a non-strict unsigned LEB128 `u8`.
     ///
     /// # Returns
@@ -399,4 +399,4 @@ pub trait Leb128ReadExt: Input<Item = u8> {
     }
 }
 
-impl<R> Leb128ReadExt for R where R: Input<Item = u8> + ?Sized {}
+impl<R> Leb128ReadExt for R where R: ByteInput + ?Sized {}

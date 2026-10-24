@@ -21,7 +21,9 @@ use qubit_codec::NativeEndian;
 use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::BinaryCodec;
 use qubit_io::BufferedOutputRecovery;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
+use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
 
 use super::internal::TranscodeEncodeOutputExt;
@@ -63,7 +65,7 @@ use crate::util::write_all;
 /// ```
 pub struct BufferedBinaryWriter<W, O = BigEndian>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
@@ -71,12 +73,12 @@ where
     marker: PhantomData<fn() -> O>,
 }
 
-impl_output_methods!(BufferedBinaryWriter<W, O> where W: Output<Item = u8>);
-impl_seekable_methods!(BufferedBinaryWriter<W, O> where W: Output<Item = u8> + Seekable<Unit = u8>);
+impl_output_methods!(BufferedBinaryWriter<W, O> where W: ByteOutput);
+impl_seekable_methods!(BufferedBinaryWriter<W, O> where W: SeekableByteOutput);
 
 impl<W, O> BufferedBinaryWriter<W, O>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
     O: ByteOrderSpec,
 {
     /// Creates a buffered binary writer with the default buffer capacity.
@@ -201,7 +203,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<W> BufferedBinaryWriter<W, $order>
         where
-            W: Output<Item = u8>,
+            W: ByteOutput,
         {
             impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
             impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
@@ -247,7 +249,7 @@ impl_for_order!(NativeEndian);
 
 impl<W, O> Output for BufferedBinaryWriter<W, O>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     type Item = u8;
 
@@ -303,7 +305,7 @@ where
 
 impl<W, O> Seekable for BufferedBinaryWriter<W, O>
 where
-    W: Output<Item = u8> + Seekable<Unit = u8>,
+    W: SeekableByteOutput,
 {
     type Unit = u8;
 

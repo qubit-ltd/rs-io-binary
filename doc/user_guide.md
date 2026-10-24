@@ -12,7 +12,7 @@ runtime.
 ## Conceptual Model
 
 `qubit-codec-binary` owns binary representations; `qubit-io` supplies generic
-synchronous `Input`/`Output` and asynchronous `AsyncInput`/`AsyncOutput`; this
+synchronous `ByteInput`/`ByteOutput` and asynchronous `AsyncInput`/`AsyncOutput`; this
 crate applies the codecs to those streams.
 
 | Wire representation | Synchronous API | Asynchronous API |

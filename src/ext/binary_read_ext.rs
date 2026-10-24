@@ -14,6 +14,7 @@ use qubit_codec::BigEndian;
 use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::ByteInput;
 use qubit_io::Input;
 
 use crate::util::decode_infallible_unchecked;
@@ -61,7 +62,7 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 /// let mut input = Cursor::new([0x12, 0x34]);
 /// assert_eq!(input.read_u16_be().unwrap(), 0x1234);
 /// ```
-pub trait BinaryReadExt: Input<Item = u8> {
+pub trait BinaryReadExt: ByteInput {
     /// Reads an unsigned 8-bit integer.
     ///
     /// # Returns
@@ -623,7 +624,7 @@ pub trait BinaryReadExt: Input<Item = u8> {
     }
 }
 
-impl<R> BinaryReadExt for R where R: Input<Item = u8> + ?Sized {}
+impl<R> BinaryReadExt for R where R: ByteInput + ?Sized {}
 
 /// Reads and decodes one fixed-width value.
 ///
@@ -650,7 +651,7 @@ impl<R> BinaryReadExt for R where R: Input<Item = u8> + ?Sized {}
 #[inline]
 fn read_binary<const N: usize, T, R, F>(reader: &mut R, decode: F) -> Result<T>
 where
-    R: Input<Item = u8> + ?Sized,
+    R: ByteInput + ?Sized,
     F: FnOnce(&[u8]) -> T,
 {
     let mut bytes = [0u8; N];

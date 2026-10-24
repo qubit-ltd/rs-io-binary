@@ -19,7 +19,9 @@ use qubit_codec::DecodeFailure;
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::Leb128DecodeError;
 use qubit_codec_binary::NonStrict;
+use qubit_io::ByteInput;
 use qubit_io::Input;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
 use qubit_utils::try_reserve_vec;
 
@@ -61,7 +63,7 @@ pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = {
 #[inline(always)]
 pub(crate) fn write_all<O>(output: &mut O, input: &[u8]) -> Result<()>
 where
-    O: Output<Item = u8> + ?Sized,
+    O: ByteOutput + ?Sized,
 {
     Output::write_fully(output, input)
 }
@@ -208,7 +210,7 @@ where
 /// when the codec rejects the payload.
 pub(crate) fn read_leb128_payload<const N: usize, C, R>(reader: &mut R) -> Result<C::Value>
 where
-    R: Input<Item = u8> + ?Sized,
+    R: ByteInput + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
 {
     let mut bytes = [0u8; N];
@@ -256,7 +258,7 @@ pub(crate) fn read_leb128_from_reader<const N: usize, C, R>(
     buffer: &mut [u8; MIN_CODEC_BUFFER_CAPACITY],
 ) -> Result<C::Value>
 where
-    R: Input<Item = u8> + ?Sized,
+    R: ByteInput + ?Sized,
     C: Codec<Unit = u8, DecodeError = Leb128DecodeError> + Default,
 {
     let payload = buffer.get_mut(..N).ok_or_else(|| {
@@ -320,7 +322,7 @@ pub(crate) fn map_leb128_decode_error(error: Leb128DecodeError) -> Error {
 /// `reader`, or [`ErrorKind::InvalidData`] when the payload is not valid UTF-8.
 pub(crate) fn read_utf8_payload<R>(reader: &mut R, len: usize, max_len: usize) -> Result<String>
 where
-    R: Input<Item = u8> + ?Sized,
+    R: ByteInput + ?Sized,
 {
     let mut bytes = Vec::new();
     read_utf8_payload_bytes(reader, &mut bytes, len, max_len)?;
@@ -353,7 +355,7 @@ where
 /// resized, or an I/O error from `reader`.
 pub(crate) fn read_utf8_payload_into<R>(reader: &mut R, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()>
 where
-    R: Input<Item = u8> + ?Sized,
+    R: ByteInput + ?Sized,
 {
     read_utf8_payload_bytes(reader, bytes, len, max_len)?;
     std::str::from_utf8(bytes)
@@ -367,7 +369,7 @@ where
 /// exact input transfer but leaves UTF-8 validation to its caller.
 fn read_utf8_payload_bytes<R>(reader: &mut R, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()>
 where
-    R: Input<Item = u8> + ?Sized,
+    R: ByteInput + ?Sized,
 {
     if len > max_len {
         return Err(length_exceeded_error(len, max_len));
@@ -399,7 +401,7 @@ where
 #[inline(always)]
 pub(crate) fn write_utf8_payload<W>(writer: &mut W, value: &str) -> Result<()>
 where
-    W: Output<Item = u8> + ?Sized,
+    W: ByteOutput + ?Sized,
 {
     write_all(writer, value.as_bytes())
 }
@@ -428,7 +430,7 @@ where
 #[inline]
 pub(crate) fn write_utf8_string_with_u16_len<W, F>(writer: &mut W, value: &str, write_len: F) -> Result<()>
 where
-    W: Output<Item = u8> + ?Sized,
+    W: ByteOutput + ?Sized,
     F: FnOnce(&mut W, u16) -> Result<()>,
 {
     let bytes = value.as_bytes();
@@ -460,7 +462,7 @@ where
 #[inline]
 pub(crate) fn write_utf8_string_with_u32_len<W, F>(writer: &mut W, value: &str, write_len: F) -> Result<()>
 where
-    W: Output<Item = u8> + ?Sized,
+    W: ByteOutput + ?Sized,
     F: FnOnce(&mut W, u32) -> Result<()>,
 {
     let bytes = value.as_bytes();

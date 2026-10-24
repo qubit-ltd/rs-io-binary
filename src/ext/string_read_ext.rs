@@ -10,7 +10,7 @@
 use std::io::Result;
 
 use qubit_codec::ByteOrder;
-use qubit_io::Input;
+use qubit_io::ByteInput;
 
 use crate::BinaryReadExt;
 use crate::Leb128ReadExt;
@@ -25,7 +25,7 @@ use crate::util::usize_from_u64_len;
 ///
 /// String-producing methods may return allocation failures as I/O errors in
 /// addition to input and validation errors described below.
-pub trait StringReadExt: Input<Item = u8> {
+pub trait StringReadExt: ByteInput {
     /// Reads and validates a UTF-8 payload into reusable byte storage.
     ///
     /// # Parameters
@@ -272,7 +272,7 @@ pub trait StringReadExt: Input<Item = u8> {
 
 impl<T> StringReadExt for T
 where
-    T: Input<Item = u8> + ?Sized,
+    T: ByteInput + ?Sized,
 {
     #[inline]
     fn read_utf8_payload_into(&mut self, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()> {

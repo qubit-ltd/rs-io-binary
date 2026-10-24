@@ -16,7 +16,9 @@ use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::ZigZagCodec;
 use qubit_io::BufferedOutputRecovery;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
+use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
 
 use super::internal::TranscodeEncodeOutputExt;
@@ -49,7 +51,7 @@ use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 /// # Examples
 ///
 /// ```
-/// use qubit_io::Output;
+/// use qubit_io::ByteOutput;
 /// use qubit_io_binary::BufferedZigZagWriter;
 ///
 /// let mut writer = BufferedZigZagWriter::new(Vec::new());
@@ -60,18 +62,18 @@ use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 /// ```
 pub struct BufferedZigZagWriter<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
 }
 
-impl_output_methods!(BufferedZigZagWriter<W> where W: Output<Item = u8>);
-impl_seekable_methods!(BufferedZigZagWriter<W> where W: Output<Item = u8> + Seekable<Unit = u8>);
+impl_output_methods!(BufferedZigZagWriter<W> where W: ByteOutput);
+impl_seekable_methods!(BufferedZigZagWriter<W> where W: SeekableByteOutput);
 
 impl<W> BufferedZigZagWriter<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     /// Creates a buffered ZigZag writer with the default buffer capacity.
     ///
@@ -179,7 +181,7 @@ macro_rules! impl_write_value {
 
 impl<W> BufferedZigZagWriter<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     impl_write_value!(write_i8, i8, "Writes a ZigZag `i8`.");
     impl_write_value!(write_i16, i16, "Writes a ZigZag `i16`.");
@@ -191,7 +193,7 @@ where
 
 impl<W> Output for BufferedZigZagWriter<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     type Item = u8;
 
@@ -247,7 +249,7 @@ where
 
 impl<W> Seekable for BufferedZigZagWriter<W>
 where
-    W: Output<Item = u8> + Seekable<Unit = u8>,
+    W: SeekableByteOutput,
 {
     type Unit = u8;
 

@@ -14,7 +14,7 @@ use qubit_codec::BigEndian;
 use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
 use qubit_codec_binary::BinaryCodec;
-use qubit_io::Output;
+use qubit_io::ByteOutput;
 
 use crate::util::encode_infallible_unchecked;
 use crate::util::write_all;
@@ -69,7 +69,7 @@ const fn use_big_endian(byte_order: ByteOrder) -> bool {
 /// assert_eq!(output, [0x12, 0x34]);
 /// # Ok::<(), std::io::Error>(())
 /// ```
-pub trait BinaryWriteExt: Output<Item = u8> {
+pub trait BinaryWriteExt: ByteOutput {
     /// Writes an unsigned 8-bit integer.
     ///
     /// # Parameters
@@ -729,7 +729,7 @@ pub trait BinaryWriteExt: Output<Item = u8> {
     }
 }
 
-impl<W> BinaryWriteExt for W where W: Output<Item = u8> + ?Sized {}
+impl<W> BinaryWriteExt for W where W: ByteOutput + ?Sized {}
 
 /// Encodes and writes one fixed-width value.
 ///
@@ -757,7 +757,7 @@ impl<W> BinaryWriteExt for W where W: Output<Item = u8> + ?Sized {}
 #[inline]
 fn write_binary<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
 where
-    W: Output<Item = u8> + ?Sized,
+    W: ByteOutput + ?Sized,
     F: FnOnce(&mut [u8], T),
 {
     let mut bytes = [0u8; N];

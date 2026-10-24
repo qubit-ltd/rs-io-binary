@@ -10,7 +10,7 @@
 use std::io::Result;
 
 use qubit_codec::ByteOrder;
-use qubit_io::Output;
+use qubit_io::ByteOutput;
 
 use crate::BinaryWriteExt;
 use crate::Leb128WriteExt;
@@ -35,7 +35,7 @@ use crate::util::write_utf8_string_with_u32_len;
 /// assert_eq!(output, [0, 3, b'A', b'd', b'a']);
 /// # Ok::<(), std::io::Error>(())
 /// ```
-pub trait StringWriteExt: Output<Item = u8> {
+pub trait StringWriteExt: ByteOutput {
     /// Writes a UTF-8 payload without a length prefix.
     ///
     /// # Parameters
@@ -192,7 +192,7 @@ pub trait StringWriteExt: Output<Item = u8> {
 
 impl<T> StringWriteExt for T
 where
-    T: Output<Item = u8> + ?Sized,
+    T: ByteOutput + ?Sized,
 {
     #[inline]
     fn write_utf8_payload(&mut self, value: &str) -> Result<()> {

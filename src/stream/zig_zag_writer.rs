@@ -13,7 +13,9 @@ use std::io::SeekFrom;
 
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::ZigZagCodec;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
+use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
@@ -130,7 +132,7 @@ macro_rules! impl_write_value {
 
 impl<W> ZigZagWriter<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     impl_write_value!(write_i8, i8, "Writes a ZigZag `i8`.");
     impl_write_value!(write_i16, i16, "Writes a ZigZag `i16`.");
@@ -173,7 +175,7 @@ where
 
 impl<W> Output for ZigZagWriter<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     type Item = u8;
 
@@ -229,7 +231,7 @@ where
 
 impl<W> Seekable for ZigZagWriter<W>
 where
-    W: Seekable<Unit = u8>,
+    W: SeekableByteOutput,
 {
     type Unit = u8;
 
@@ -252,5 +254,5 @@ where
     }
 }
 
-impl_output_methods!(ZigZagWriter<W> where W: Output<Item = u8>);
-impl_seekable_methods!(ZigZagWriter<W> where W: Seekable<Unit = u8>);
+impl_output_methods!(ZigZagWriter<W> where W: ByteOutput);
+impl_seekable_methods!(ZigZagWriter<W> where W: SeekableByteOutput);

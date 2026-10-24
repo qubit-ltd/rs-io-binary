@@ -13,7 +13,9 @@ use std::io::SeekFrom;
 
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::NonStrict;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
+use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
@@ -121,7 +123,7 @@ macro_rules! impl_write_value {
 
 impl<W> Leb128Writer<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     impl_write_value!(write_u8, u8, "Writes an unsigned LEB128 `u8`.");
     impl_write_value!(write_u16, u16, "Writes an unsigned LEB128 `u16`.");
@@ -220,7 +222,7 @@ where
 
 impl<W> Output for Leb128Writer<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     type Item = u8;
 
@@ -276,7 +278,7 @@ where
 
 impl<W> Seekable for Leb128Writer<W>
 where
-    W: Seekable<Unit = u8>,
+    W: SeekableByteOutput,
 {
     type Unit = u8;
 
@@ -299,5 +301,5 @@ where
     }
 }
 
-impl_output_methods!(Leb128Writer<W> where W: Output<Item = u8>);
-impl_seekable_methods!(Leb128Writer<W> where W: Seekable<Unit = u8>);
+impl_output_methods!(Leb128Writer<W> where W: ByteOutput);
+impl_seekable_methods!(Leb128Writer<W> where W: SeekableByteOutput);

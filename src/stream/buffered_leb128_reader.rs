@@ -19,7 +19,9 @@ use qubit_codec_binary::Leb128DecodePolicy;
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
 use qubit_io::Buffer;
+use qubit_io::ByteInput;
 use qubit_io::Input;
+use qubit_io::SeekableByteInput;
 use qubit_io::Seekable;
 
 use super::internal::TranscodeDecodeInputExt;
@@ -64,7 +66,7 @@ use crate::util::usize_from_u64_len;
 /// ```
 pub struct BufferedLeb128Reader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
 {
     /// Buffered codec input and wrapped reader.
     input: TranscodeDecodeInput<R>,
@@ -72,12 +74,12 @@ where
     marker: PhantomData<fn() -> P>,
 }
 
-impl_input_methods!(BufferedLeb128Reader<R, P> where R: Input<Item = u8>);
-impl_seekable_methods!(BufferedLeb128Reader<R, P> where R: Input<Item = u8> + Seekable<Unit = u8>);
+impl_input_methods!(BufferedLeb128Reader<R, P> where R: ByteInput);
+impl_seekable_methods!(BufferedLeb128Reader<R, P> where R: SeekableByteInput);
 
 impl<R, P> BufferedLeb128Reader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
     P: Leb128DecodePolicy,
 {
     /// Creates a buffered LEB128 reader with the default buffer capacity.
@@ -207,7 +209,7 @@ macro_rules! impl_for_policy {
     ) => {
         impl<R> BufferedLeb128Reader<R, $policy>
         where
-            R: Input<Item = u8>,
+            R: ByteInput,
         {
             $(
                 impl_read_value!($policy, $method, $ty, $doc);
@@ -320,7 +322,7 @@ impl_for_policy!(
 );
 impl<R, P> Input for BufferedLeb128Reader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
 {
     type Item = u8;
 
@@ -362,7 +364,7 @@ where
 
 impl<R, P> Seekable for BufferedLeb128Reader<R, P>
 where
-    R: Input<Item = u8> + Seekable<Unit = u8>,
+    R: SeekableByteInput,
 {
     type Unit = u8;
 

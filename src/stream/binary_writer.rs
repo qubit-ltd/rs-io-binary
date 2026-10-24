@@ -18,7 +18,9 @@ use qubit_codec::ByteOrderSpec;
 use qubit_codec::LittleEndian;
 use qubit_codec::NativeEndian;
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
+use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
 
 use crate::util::checked_u16_len;
@@ -148,7 +150,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<W> BinaryWriter<W, $order>
         where
-            W: Output<Item = u8>,
+            W: ByteOutput,
         {
             impl_value_write!($order, write_u8, u8, "Writes an unsigned 8-bit integer.");
             impl_value_write!($order, write_i8, i8, "Writes a signed 8-bit integer.");
@@ -214,7 +216,7 @@ impl_for_order!(NativeEndian);
 
 impl<W, O> Output for BinaryWriter<W, O>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     type Item = u8;
 
@@ -271,7 +273,7 @@ where
 
 impl<W, O> Seekable for BinaryWriter<W, O>
 where
-    W: Seekable<Unit = u8>,
+    W: SeekableByteOutput,
 {
     type Unit = u8;
 
@@ -294,5 +296,5 @@ where
     }
 }
 
-impl_output_methods!(BinaryWriter<W, O> where W: Output<Item = u8>);
-impl_seekable_methods!(BinaryWriter<W, O> where W: Seekable<Unit = u8>);
+impl_output_methods!(BinaryWriter<W, O> where W: ByteOutput);
+impl_seekable_methods!(BinaryWriter<W, O> where W: SeekableByteOutput);

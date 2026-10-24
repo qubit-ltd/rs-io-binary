@@ -16,7 +16,9 @@ use qubit_codec::TranscodeEncodeOutput;
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::NonStrict;
 use qubit_io::BufferedOutputRecovery;
+use qubit_io::ByteOutput;
 use qubit_io::Output;
+use qubit_io::SeekableByteOutput;
 use qubit_io::Seekable;
 
 use super::internal::TranscodeEncodeOutputExt;
@@ -51,7 +53,7 @@ use crate::util::write_all;
 /// # Examples
 ///
 /// ```
-/// use qubit_io::Output;
+/// use qubit_io::ByteOutput;
 /// use qubit_io_binary::BufferedLeb128Writer;
 ///
 /// let mut writer = BufferedLeb128Writer::new(Vec::new());
@@ -62,18 +64,18 @@ use crate::util::write_all;
 /// ```
 pub struct BufferedLeb128Writer<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     /// Buffered codec output and wrapped writer.
     output: TranscodeEncodeOutput<W>,
 }
 
-impl_output_methods!(BufferedLeb128Writer<W> where W: Output<Item = u8>);
-impl_seekable_methods!(BufferedLeb128Writer<W> where W: Output<Item = u8> + Seekable<Unit = u8>);
+impl_output_methods!(BufferedLeb128Writer<W> where W: ByteOutput);
+impl_seekable_methods!(BufferedLeb128Writer<W> where W: SeekableByteOutput);
 
 impl<W> BufferedLeb128Writer<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     /// Creates a buffered LEB128 writer with the default buffer capacity.
     ///
@@ -228,7 +230,7 @@ macro_rules! impl_write_value {
 
 impl<W> BufferedLeb128Writer<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     impl_write_value!(write_u8, u8, "Writes an unsigned LEB128 `u8`.");
     impl_write_value!(write_u16, u16, "Writes an unsigned LEB128 `u16`.");
@@ -246,7 +248,7 @@ where
 
 impl<W> Output for BufferedLeb128Writer<W>
 where
-    W: Output<Item = u8>,
+    W: ByteOutput,
 {
     type Item = u8;
 
@@ -302,7 +304,7 @@ where
 
 impl<W> Seekable for BufferedLeb128Writer<W>
 where
-    W: Output<Item = u8> + Seekable<Unit = u8>,
+    W: SeekableByteOutput,
 {
     type Unit = u8;
 

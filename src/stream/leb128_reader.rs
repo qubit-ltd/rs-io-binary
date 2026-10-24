@@ -16,7 +16,9 @@ use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::Leb128DecodePolicy;
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
+use qubit_io::ByteInput;
 use qubit_io::Input;
+use qubit_io::SeekableByteInput;
 use qubit_io::Seekable;
 
 use crate::util::MIN_CODEC_BUFFER_CAPACITY;
@@ -63,8 +65,8 @@ pub struct Leb128Reader<R, P> {
     marker: PhantomData<fn() -> P>,
 }
 
-impl_input_methods!(Leb128Reader<R, P> where R: Input<Item = u8>);
-impl_seekable_methods!(Leb128Reader<R, P> where R: Seekable<Unit = u8>);
+impl_input_methods!(Leb128Reader<R, P> where R: ByteInput);
+impl_seekable_methods!(Leb128Reader<R, P> where R: SeekableByteInput);
 
 impl<R, P> Leb128Reader<R, P>
 where
@@ -172,7 +174,7 @@ macro_rules! impl_for_policy {
     ) => {
         impl<R> Leb128Reader<R, $policy>
         where
-            R: Input<Item = u8>,
+            R: ByteInput,
         {
             $(
                 impl_read_value!($policy, $method, $ty, $doc);
@@ -286,7 +288,7 @@ impl_for_policy!(
 );
 impl<R, P> Input for Leb128Reader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
 {
     type Item = u8;
 
@@ -328,7 +330,7 @@ where
 
 impl<R, P> Seekable for Leb128Reader<R, P>
 where
-    R: Seekable<Unit = u8>,
+    R: SeekableByteInput,
 {
     type Unit = u8;
 

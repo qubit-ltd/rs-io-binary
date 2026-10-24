@@ -12,7 +12,7 @@ use std::io::Result;
 
 use qubit_codec_binary::Leb128Codec;
 use qubit_codec_binary::NonStrict;
-use qubit_io::Output;
+use qubit_io::ByteOutput;
 
 use crate::util::encode_infallible_unchecked;
 use crate::util::write_all;
@@ -39,7 +39,7 @@ macro_rules! write_leb128_value {
 /// `usize` and `isize` methods use the current Rust target's pointer width.
 /// Prefer fixed-width integer methods such as [`Self::write_uleb_u64`] or
 /// [`Self::write_sleb_i64`] for persistent files and cross-platform protocols.
-pub trait Leb128WriteExt: Output<Item = u8> {
+pub trait Leb128WriteExt: ByteOutput {
     /// Writes an unsigned LEB128 `u8`.
     ///
     /// # Parameters
@@ -269,7 +269,7 @@ pub trait Leb128WriteExt: Output<Item = u8> {
     }
 }
 
-impl<W> Leb128WriteExt for W where W: Output<Item = u8> + ?Sized {}
+impl<W> Leb128WriteExt for W where W: ByteOutput + ?Sized {}
 
 /// Encodes and writes one canonical LEB128 value.
 ///
@@ -298,7 +298,7 @@ impl<W> Leb128WriteExt for W where W: Output<Item = u8> + ?Sized {}
 #[inline]
 fn write_leb128<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
 where
-    W: Output<Item = u8> + ?Sized,
+    W: ByteOutput + ?Sized,
     F: FnOnce(&mut [u8], T) -> usize,
 {
     let mut bytes = [0u8; N];

@@ -13,7 +13,7 @@ use std::io::Result;
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
 use qubit_codec_binary::ZigZagCodec;
-use qubit_io::Input;
+use qubit_io::ByteInput;
 
 use crate::util::read_leb128_payload;
 
@@ -38,7 +38,7 @@ macro_rules! read_zig_zag_value {
 /// for persistent files and cross-platform protocols.
 /// Non-strict methods use the `_non_strict` suffix; canonical-only methods use
 /// the corresponding `_strict` suffix.
-pub trait ZigZagReadExt: Input<Item = u8> {
+pub trait ZigZagReadExt: ByteInput {
     /// Reads a non-strict ZigZag `i8`.
     ///
     /// # Returns
@@ -220,4 +220,4 @@ pub trait ZigZagReadExt: Input<Item = u8> {
     }
 }
 
-impl<R> ZigZagReadExt for R where R: Input<Item = u8> + ?Sized {}
+impl<R> ZigZagReadExt for R where R: ByteInput + ?Sized {}

@@ -18,7 +18,9 @@ use qubit_codec::ByteOrderSpec;
 use qubit_codec::LittleEndian;
 use qubit_codec::NativeEndian;
 use qubit_codec_binary::BinaryCodec;
+use qubit_io::ByteInput;
 use qubit_io::Input;
+use qubit_io::SeekableByteInput;
 use qubit_io::Seekable;
 
 use crate::util::decode_infallible_unchecked;
@@ -57,8 +59,8 @@ pub struct BinaryReader<R, O = BigEndian> {
     marker: PhantomData<fn() -> O>,
 }
 
-impl_input_methods!(BinaryReader<R, O> where R: Input<Item = u8>);
-impl_seekable_methods!(BinaryReader<R, O> where R: Seekable<Unit = u8>);
+impl_input_methods!(BinaryReader<R, O> where R: ByteInput);
+impl_seekable_methods!(BinaryReader<R, O> where R: SeekableByteInput);
 
 impl<R, O> BinaryReader<R, O>
 where
@@ -157,7 +159,7 @@ macro_rules! impl_for_order {
     ($order:ty) => {
         impl<R> BinaryReader<R, $order>
         where
-            R: Input<Item = u8>,
+            R: ByteInput,
         {
             impl_value_read!($order, read_u8, u8, "Reads an unsigned 8-bit integer.");
             impl_value_read!($order, read_i8, i8, "Reads a signed 8-bit integer.");
@@ -227,7 +229,7 @@ impl_for_order!(NativeEndian);
 
 impl<R, O> Input for BinaryReader<R, O>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
 {
     type Item = u8;
 
@@ -270,7 +272,7 @@ where
 
 impl<R, O> Seekable for BinaryReader<R, O>
 where
-    R: Seekable<Unit = u8>,
+    R: SeekableByteInput,
 {
     type Unit = u8;
 

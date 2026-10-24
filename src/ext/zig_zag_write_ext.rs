@@ -12,7 +12,7 @@ use std::io::Result;
 
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::ZigZagCodec;
-use qubit_io::Output;
+use qubit_io::ByteOutput;
 
 use crate::util::encode_infallible_unchecked;
 use crate::util::write_all;
@@ -49,7 +49,7 @@ macro_rules! write_zig_zag_value {
 /// bytes.write_zig_zag_i32(-300).expect("value should be written");
 /// assert_eq!(bytes, [0xD7, 0x04]);
 /// ```
-pub trait ZigZagWriteExt: Output<Item = u8> {
+pub trait ZigZagWriteExt: ByteOutput {
     /// Writes a ZigZag `i8`.
     ///
     /// # Parameters
@@ -165,7 +165,7 @@ pub trait ZigZagWriteExt: Output<Item = u8> {
     }
 }
 
-impl<W> ZigZagWriteExt for W where W: Output<Item = u8> + ?Sized {}
+impl<W> ZigZagWriteExt for W where W: ByteOutput + ?Sized {}
 
 /// Encodes and writes one canonical ZigZag value.
 ///
@@ -194,7 +194,7 @@ impl<W> ZigZagWriteExt for W where W: Output<Item = u8> + ?Sized {}
 #[inline]
 fn write_zig_zag<const N: usize, T, W, F>(writer: &mut W, value: T, encode: F) -> Result<()>
 where
-    W: Output<Item = u8> + ?Sized,
+    W: ByteOutput + ?Sized,
     F: FnOnce(&mut [u8], T) -> usize,
 {
     let mut bytes = [0u8; N];

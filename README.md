@@ -11,7 +11,7 @@
 protocol without coupling the protocol to a file type or async runtime. It
 adapts the buffer codecs in `qubit-codec-binary` to `qubit-io` streams:
 
-- synchronous extensions use `Input<Item = u8>` and `Output<Item = u8>`;
+- synchronous extensions use `ByteInput` and `ByteOutput`;
 - asynchronous extensions use `AsyncInput<Item = u8>` and
   `AsyncOutput<Item = u8>`;
 - both layers share the same fixed-width, LEB128, ZigZag, and UTF-8 codec
@@ -31,7 +31,7 @@ qubit-io-binary = "0.7"
 
 The quick start below needs only `qubit-io-binary`. Add `qubit-codec` or
 `qubit-codec-binary` when importing their byte-order or decode-policy types,
-and add `qubit-io` when writing generic `Input` or `Output` bounds.
+and add `qubit-io` when writing generic `ByteInput` or `ByteOutput` bounds.
 
 ## Quick Start: a Synchronous Record
 

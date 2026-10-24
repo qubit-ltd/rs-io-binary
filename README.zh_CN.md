@@ -11,7 +11,7 @@
 某种文件类型或异步运行时。它把 `qubit-codec-binary` 的缓冲区 codec 适配到
 `qubit-io` 流抽象：
 
-- 同步扩展基于 `Input<Item = u8>` 与 `Output<Item = u8>`；
+- 同步扩展基于 `ByteInput` 与 `ByteOutput`；
 - 异步扩展基于 `AsyncInput<Item = u8>` 与 `AsyncOutput<Item = u8>`；
 - 两套 API 共享 fixed-width、LEB128、ZigZag 和 UTF-8 codec 语义；
 - 同步 typed reader/writer 可携带字节序或解码策略；
@@ -29,7 +29,7 @@ qubit-io-binary = "0.7"
 
 下面的快速开始示例只需要 `qubit-io-binary`。如果要导入字节序或解码策略
 类型，请另外添加 `qubit-codec` 或 `qubit-codec-binary`；如果要编写泛型
-`Input` 或 `Output` 约束，请另外添加 `qubit-io`。
+`ByteInput` 或 `ByteOutput` 约束，请另外添加 `qubit-io`。
 
 ## 快速开始：同步记录
 

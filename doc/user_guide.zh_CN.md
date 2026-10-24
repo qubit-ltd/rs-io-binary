@@ -10,7 +10,7 @@
 ## 概念模型
 
 `qubit-codec-binary` 负责二进制表示，`qubit-io` 提供通用的同步
-`Input` / `Output` 与异步 `AsyncInput` / `AsyncOutput`，本 crate 则把 codec
+`ByteInput` / `ByteOutput` 与异步 `AsyncInput` / `AsyncOutput`，本 crate 则把 codec
 应用到这些流上。
 
 | 线上的表示 | 同步 API | 异步 API |

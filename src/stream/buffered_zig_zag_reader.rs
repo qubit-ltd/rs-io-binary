@@ -19,7 +19,9 @@ use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
 use qubit_codec_binary::ZigZagCodec;
 use qubit_io::Buffer;
+use qubit_io::ByteInput;
 use qubit_io::Input;
+use qubit_io::SeekableByteInput;
 use qubit_io::Seekable;
 
 use super::internal::TranscodeDecodeInputExt;
@@ -61,7 +63,7 @@ use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 /// ```
 pub struct BufferedZigZagReader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
 {
     /// Buffered codec input and wrapped reader.
     input: TranscodeDecodeInput<R>,
@@ -71,7 +73,7 @@ where
 
 impl<R, P> BufferedZigZagReader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
     P: Leb128DecodePolicy,
 {
     /// Creates a buffered ZigZag reader with the default buffer capacity.
@@ -170,8 +172,8 @@ where
     }
 }
 
-impl_input_methods!(BufferedZigZagReader<R, P> where R: Input<Item = u8>);
-impl_seekable_methods!(BufferedZigZagReader<R, P> where R: Input<Item = u8> + Seekable<Unit = u8>);
+impl_input_methods!(BufferedZigZagReader<R, P> where R: ByteInput);
+impl_seekable_methods!(BufferedZigZagReader<R, P> where R: SeekableByteInput);
 
 macro_rules! impl_read_value {
     ($policy:ty, $method:ident, $ty:ty, $doc:literal) => {
@@ -204,7 +206,7 @@ macro_rules! impl_for_policy {
     ) => {
         impl<R> BufferedZigZagReader<R, $policy>
         where
-            R: Input<Item = u8>,
+            R: ByteInput,
         {
             $(
                 impl_read_value!($policy, $method, $ty, $doc);
@@ -237,7 +239,7 @@ impl_for_policy!(
 );
 impl<R, P> Input for BufferedZigZagReader<R, P>
 where
-    R: Input<Item = u8>,
+    R: ByteInput,
 {
     type Item = u8;
 
@@ -279,7 +281,7 @@ where
 
 impl<R, P> Seekable for BufferedZigZagReader<R, P>
 where
-    R: Input<Item = u8> + Seekable<Unit = u8>,
+    R: SeekableByteInput,
 {
     type Unit = u8;
 
