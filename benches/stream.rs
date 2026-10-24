@@ -1694,6 +1694,11 @@ fn read_mixed_reusing_payload_memory(bytes: &[u8], fields: &[MixedBinaryField]) 
     read_mixed_reusing_payload(Cursor::new(bytes), fields)
 }
 
+fn read_mixed_buffered_reusing_payload_memory(bytes: &[u8], fields: &[MixedBinaryField]) -> u64 {
+    let input = BufferedBinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
+    read_mixed_reusing_payload(input, fields)
+}
+
 fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
     let fields = build_mixed_binary_fields();
     let extension_bytes = write_mixed_ext_memory(&fields);
@@ -1701,7 +1706,11 @@ fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
     assert_eq!(extension_bytes, buffered_bytes);
     let expected = read_mixed_ext_memory(&extension_bytes, &fields);
     assert_eq!(expected, read_mixed_buffered_memory(&buffered_bytes, &fields));
-    assert_eq!(expected, read_mixed_reusing_payload_memory(&buffered_bytes, &fields),);
+    assert_eq!(expected, read_mixed_reusing_payload_memory(&extension_bytes, &fields));
+    assert_eq!(
+        expected,
+        read_mixed_buffered_reusing_payload_memory(&buffered_bytes, &fields)
+    );
 
     let mut group = c.benchmark_group("memory_mixed_binary_pipeline");
     group.throughput(Throughput::Elements(MIXED_FIELD_COUNT as u64));
@@ -1714,6 +1723,14 @@ fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
     group.bench_function("extension_read", |b| {
         b.iter(|| black_box(read_mixed_ext_memory(black_box(&extension_bytes), black_box(&fields))))
     });
+    group.bench_function("extension_read_reuse", |b| {
+        b.iter(|| {
+            black_box(read_mixed_reusing_payload_memory(
+                black_box(&extension_bytes),
+                black_box(&fields),
+            ))
+        })
+    });
     group.bench_function("buffered_read", |b| {
         b.iter(|| {
             black_box(read_mixed_buffered_memory(
@@ -1724,7 +1741,7 @@ fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
     });
     group.bench_function("buffered_read_reuse", |b| {
         b.iter(|| {
-            black_box(read_mixed_reusing_payload_memory(
+            black_box(read_mixed_buffered_reusing_payload_memory(
                 black_box(&buffered_bytes),
                 black_box(&fields),
             ))

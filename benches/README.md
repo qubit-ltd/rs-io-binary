@@ -20,7 +20,10 @@
   合成内存流；它不使用 `Cursor`，并以 16 字节内部缓冲强制覆盖 buffer 边界。
 - `memory_mixed_binary_pipeline` 使用与 `prod_mixed_binary_pipeline` 相同的
   131,072 条混合记录，但使用 `Cursor` 内存流，不把文件打开、关闭和 page cache
-  成本混入 adapter 对比。
+  成本混入 adapter 对比。读取包含四种对照：extension trait 与
+  `BufferedBinaryReader` 各自分别使用新建 `String` 或复用 payload `Vec<u8>`；
+  `extension_read_reuse` 和 `buffered_read_reuse` 使用相同字段 schema 与输入字节，
+  计时前检查四种读取摘要一致。
 - 生产型输入规模采用大批量重复：
   - 单批记录数：`BINARY_BATCH = 1_048_576`
   - 单批 varint 字段数：`VARINT_COUNT = 262_144`
@@ -61,6 +64,9 @@
 - `buffered_*`：使用自带大缓冲区并直接在缓冲区上调用 codec unsafe 方法的 buffered reader/writer。
 - `*_read_reuse`：读取混合记录时复用调用方的 UTF-8 payload `Vec<u8>`；这些结果与默认
   `*_read` 路径分开比较，避免把分配策略变化误认为缓冲区变化。
+  在内存组中，`extension_read_reuse` 使用 `Cursor<&[u8]>`，
+  `buffered_read_reuse` 使用 `BufferedBinaryReader<Cursor<&[u8]>, LittleEndian>`；
+  两种输入构造不会混淆。
 
 结果解读时应比较同一 group 下相同方向的 `ext_*` 与 `wrapper_*`，例如：
 
