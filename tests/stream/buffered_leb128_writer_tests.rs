@@ -8,6 +8,7 @@
 use std::io::Cursor;
 use std::io::Error;
 use std::io::ErrorKind;
+use std::io::SeekFrom;
 use std::io::Write;
 
 use qubit_io::BufferedOutputRecovery;
@@ -16,6 +17,22 @@ use qubit_io_binary::BufferedLeb128Writer;
 use qubit_io_binary::Leb128WriteExt;
 
 use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
+#[test]
+fn test_seek_current_zero_preserves_pending_bytes() {
+    let mut writer = BufferedLeb128Writer::new(Cursor::new(Vec::new()));
+    writer.write_u8(1).unwrap();
+    assert_eq!(1, writer.seek_to(SeekFrom::Current(0)).unwrap());
+    assert_eq!(0, writer.inner().position());
+    assert!(writer.inner().get_ref().is_empty());
+    let (_, recovery) = writer.into_parts();
+    match recovery {
+        BufferedOutputRecovery::Pending(bytes) => assert_eq!(&[1], bytes.readable()),
+        BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("position query must preserve determinate pending bytes")
+        }
+    }
+}
 
 struct FailingWriter;
 
@@ -108,7 +125,7 @@ fn test_buffered_leb128_writer_accessors_write_all_seek_and_string() {
         6,
         writer
             .seek_to(std::io::SeekFrom::Current(0))
-            .expect("seek should flush pending bytes")
+            .expect("logical position query should succeed")
     );
 
     writer.flush().expect("flush should write all bytes");

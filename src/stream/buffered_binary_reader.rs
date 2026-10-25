@@ -289,7 +289,9 @@ where
 {
     type Unit = u8;
 
-    /// Seeks the wrapped reader and discards buffered bytes after success.
+    /// Seeks relative to this reader's logical position. Relative seeks within
+    /// the buffered window preserve unread bytes; successful seeks outside the
+    /// window discard the old buffer. The returned position is logical.
     ///
     /// # Parameters
     ///
@@ -297,12 +299,13 @@ where
     ///
     /// # Returns
     ///
-    /// Returns the new physical stream position.
+    /// Returns the new logical stream position in bytes.
     ///
     /// # Errors
     ///
     /// Returns the seek error reported by the wrapped reader and preserves
-    /// buffered bytes when seeking fails.
+    /// buffered bytes when seeking fails, including when an in-window seek
+    /// cannot query the wrapped position.
     #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.input.seek(position)

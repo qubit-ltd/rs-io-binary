@@ -18,6 +18,19 @@ use qubit_io_binary::ZigZagWriteExt;
 use crate::stream::internal::seek_test_support_tests::RejectingCurrentSeekReader;
 
 #[test]
+fn test_seek_within_buffer_preserves_logical_position() {
+    let mut reader = BufferedZigZagReader::<_, NonStrict>::with_capacity(Cursor::new(vec![1, 2, 3, 4, 5]), 19);
+    reader.read_exactly(&mut [0_u8; 1]).unwrap();
+    assert_eq!(5, reader.inner().position());
+    assert_eq!(1, reader.seek_to(SeekFrom::Current(0)).unwrap());
+    assert_eq!(2, reader.seek_to(SeekFrom::Current(1)).unwrap());
+    assert_eq!(1, reader.seek_to(SeekFrom::Current(-1)).unwrap());
+    assert_eq!(5, reader.inner().position());
+    let (_, unread) = reader.into_parts();
+    assert_eq!(&[2, 3, 4, 5], unread.readable());
+}
+
+#[test]
 fn test_seek_window_failure_preserves_unread() {
     for (consume_count, offset, expected_unread) in [(1, 1, &[2, 3, 4, 5][..]), (2, -1, &[3, 4, 5][..])] {
         let mut reader = BufferedZigZagReader::<_, NonStrict>::with_capacity(

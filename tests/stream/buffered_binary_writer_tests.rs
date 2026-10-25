@@ -14,6 +14,7 @@ use std::io::SeekFrom;
 use std::io::Write;
 use std::rc::Rc;
 
+use qubit_codec::BigEndian;
 use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
 use qubit_io::BufferedOutputRecovery;
@@ -22,6 +23,22 @@ use qubit_io_binary::BinaryWriteExt;
 use qubit_io_binary::BufferedBinaryWriter;
 
 use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
+#[test]
+fn test_seek_current_zero_preserves_pending_bytes() {
+    let mut writer = BufferedBinaryWriter::<_, BigEndian>::new(Cursor::new(Vec::new()));
+    writer.write_u8(1).unwrap();
+    assert_eq!(1, writer.seek_to(SeekFrom::Current(0)).unwrap());
+    assert_eq!(0, writer.inner().position());
+    assert!(writer.inner().get_ref().is_empty());
+    let (_, recovery) = writer.into_parts();
+    match recovery {
+        BufferedOutputRecovery::Pending(bytes) => assert_eq!(&[1], bytes.readable()),
+        BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("position query must preserve determinate pending bytes")
+        }
+    }
+}
 
 struct FailingWriter;
 
@@ -301,7 +318,7 @@ fn test_buffered_binary_writer_accessors_write_all_and_seek() {
         3,
         writer
             .seek_to(SeekFrom::End(0))
-            .expect("seek should flush pending bytes")
+            .expect("seek should drain pending bytes before repositioning")
     );
     writer.write_u8(4).expect("u8 should be buffered after seek");
 

@@ -265,7 +265,10 @@ macro_rules! impl_seekable_methods {
         where
             $($bound)*
         {
-            /// Seeks the wrapped byte stream.
+            /// Seeks the wrapped byte stream; see [`Seekable::seek_to`] for
+            /// the seek contract. Buffered wrappers interpret relative offsets
+            /// and report positions relative to their logical stream position.
+            /// A position query does not flush buffered output.
             ///
             /// # Parameters
             ///
@@ -273,7 +276,8 @@ macro_rules! impl_seekable_methods {
             ///
             /// # Returns
             ///
-            /// Returns the resulting stream position in bytes.
+            /// Returns the resulting stream position in bytes. For buffered
+            /// wrappers this is the logical position, including buffered data.
             ///
             /// # Errors
             ///

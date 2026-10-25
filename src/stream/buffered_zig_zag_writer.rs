@@ -254,7 +254,12 @@ where
 {
     type Unit = u8;
 
-    /// Flushes pending bytes before seeking the wrapped writer.
+    /// Seeks relative to this writer's logical position.
+    /// For `SeekFrom::Current(0)`, returns the logical position including
+    /// pending bytes without draining them. Other requests drain pending bytes
+    /// before repositioning the wrapped output, but do not flush that output.
+    /// Call [`Self::flush`] explicitly when buffered data and the wrapped
+    /// output must be flushed.
     ///
     /// # Parameters
     ///
@@ -262,11 +267,11 @@ where
     ///
     /// # Returns
     ///
-    /// Returns the new physical stream position.
+    /// Returns the new logical stream position in bytes.
     ///
     /// # Errors
     ///
-    /// Returns an error encountered while flushing or seeking.
+    /// Returns an error encountered while draining pending bytes or seeking.
     #[inline(always)]
     fn seek_to(&mut self, position: SeekFrom) -> Result<u64> {
         self.output.seek(position)
