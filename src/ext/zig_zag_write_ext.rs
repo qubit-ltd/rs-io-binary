@@ -40,6 +40,15 @@ macro_rules! write_zig_zag_value {
 /// fixed-width integer methods such as [`Self::write_zig_zag_i64`] for
 /// persistent files and cross-platform protocols.
 ///
+/// # Partial writes
+///
+/// These methods are not transactional. An output error may occur after the
+/// output has accepted a byte prefix of the encoded value, and those bytes are
+/// not rolled back. Calling a method again encodes the entire value from the
+/// output's current position and may duplicate that prefix. Recovery requires
+/// outer framing, a trusted seek or rollback strategy, or a transactional
+/// transport. Output acceptance does not imply durable persistence.
+///
 /// # Examples
 ///
 /// ```
