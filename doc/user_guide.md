@@ -67,16 +67,18 @@ use qubit_io_binary::{
     StringWriteExt,
 };
 
-let mut bytes = Vec::new();
-bytes.write_u32(0x5142_4954, ByteOrder::BigEndian)?;
-bytes.write_uleb_u64(300)?;
-bytes.write_utf8_string_uleb_u64("inventory")?;
+fn main() -> std::io::Result<()> {
+    let mut bytes = Vec::new();
+    bytes.write_u32(0x5142_4954, ByteOrder::BigEndian)?;
+    bytes.write_uleb_u64(300)?;
+    bytes.write_utf8_string_uleb_u64("inventory")?;
 
-let mut input = Cursor::new(bytes);
-assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
-assert_eq!(300, input.read_uleb_u64_non_strict()?);
-assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
-# Ok::<(), std::io::Error>(())
+    let mut input = Cursor::new(bytes);
+    assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
+    assert_eq!(300, input.read_uleb_u64_non_strict()?);
+    assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
+    Ok(())
+}
 ```
 
 Integer LEB128 extension methods name their decoding policy explicitly:
@@ -101,11 +103,13 @@ use std::io::Cursor;
 
 use qubit_io_binary::StringReadExt;
 
-let mut input = Cursor::new(b"hello world".to_vec());
-let mut payload = Vec::with_capacity(32);
-input.read_utf8_payload_into(&mut payload, 11, 64)?;
-assert_eq!(payload, b"hello world");
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    let mut input = Cursor::new(b"hello world".to_vec());
+    let mut payload = Vec::with_capacity(32);
+    input.read_utf8_payload_into(&mut payload, 11, 64)?;
+    assert_eq!(payload, b"hello world");
+    Ok(())
+}
 ```
 
 The reusable API clears the buffer only after the length passes `max_len`; on
@@ -133,13 +137,15 @@ use std::io::Cursor;
 use qubit_codec::LittleEndian;
 use qubit_io_binary::{BinaryReader, BinaryWriter};
 
-let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
-writer.write_u16(0x1234)?;
-let bytes = writer.into_inner();
+fn main() -> std::io::Result<()> {
+    let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
+    writer.write_u16(0x1234)?;
+    let bytes = writer.into_inner();
 
-let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
-assert_eq!(0x1234, reader.read_u16()?);
-# Ok::<(), std::io::Error>(())
+    let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
+    assert_eq!(0x1234, reader.read_u16()?);
+    Ok(())
+}
 ```
 
 LEB128 readers select their canonicality policy in the type parameter. Import
@@ -151,10 +157,12 @@ use std::io::Cursor;
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::Leb128Reader;
 
-let mut reader =
-    Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0xac, 0x02]));
-assert_eq!(300, reader.read_u16_non_strict()?);
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    let mut reader =
+        Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0xac, 0x02]));
+    assert_eq!(300, reader.read_u16_non_strict()?);
+    Ok(())
+}
 ```
 
 `Buffered*Reader::into_parts()` returns the wrapped input and unread prefetched
@@ -183,6 +191,8 @@ where
     output.write_u32_be_async(marker).await
 }
 ```
+
+This is a compile-only async function example. Call it from an executor in your application; the guide fixture does not run it.
 
 These high-level operations are not cancellation safe. Cancelling a pending
 read can leave part of a value consumed; cancelling a pending write can leave a
@@ -230,10 +240,12 @@ fn parse_frame(frame: &[u8]) -> std::io::Result<String> {
     Cursor::new(frame).read_utf8_string_uleb_u64(2)
 }
 
-// The application has already isolated these frames using its outer protocol.
-assert!(parse_frame(&[3, b'a', b'b', b'c']).is_err());
-assert_eq!("z", parse_frame(&[1, b'z'])?);
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    // The application has already isolated these frames using its outer protocol.
+    assert!(parse_frame(&[3, b'a', b'b', b'c']).is_err());
+    assert_eq!("z", parse_frame(&[1, b'z'])?);
+    Ok(())
+}
 ```
 
 This approach relies on a frame boundary the application already knows. The

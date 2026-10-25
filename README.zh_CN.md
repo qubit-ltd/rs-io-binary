@@ -40,21 +40,20 @@ qubit-io-binary = "0.7"
 ```rust
 use std::io::Cursor;
 
-use qubit_io_binary::{
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-};
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
 
-let mut bytes = Vec::new();
-bytes.write_u32_le(0x0102_0304)?;
-bytes.write_uleb_u64(300)?;
-
-let mut input = Cursor::new(bytes);
-assert_eq!(0x0102_0304, input.read_u32_le()?);
-assert_eq!(300, input.read_uleb_u64_non_strict()?);
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    let mut bytes = Vec::new();
+    bytes.write_u32_le(0x0102_0304)?;
+    bytes.write_uleb_u64(300)?;
+    let mut input = Cursor::new(bytes);
+    assert_eq!(0x0102_0304, input.read_u32_le()?);
+    assert_eq!(300, input.read_uleb_u64_non_strict()?);
+    Ok(())
+}
 ```
 <!-- readme-quick-start:end -->
 
@@ -82,6 +81,8 @@ where
     output.write_u32_le_async(version).await
 }
 ```
+
+这是仅用于编译检查的异步函数示例。应用应从自己的 executor 调用它；README fixture 不会运行此函数。
 
 异步扩展方法只要求 `Unpin`，不额外要求运行时或 `Send`。这些操作不具备取消
 安全性：丢弃尚未完成的读取 future 会保留已经消费的字节，丢弃尚未完成的写入

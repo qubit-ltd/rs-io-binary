@@ -63,16 +63,18 @@ use qubit_io_binary::{
     StringWriteExt,
 };
 
-let mut bytes = Vec::new();
-bytes.write_u32(0x5142_4954, ByteOrder::BigEndian)?;
-bytes.write_uleb_u64(300)?;
-bytes.write_utf8_string_uleb_u64("inventory")?;
+fn main() -> std::io::Result<()> {
+    let mut bytes = Vec::new();
+    bytes.write_u32(0x5142_4954, ByteOrder::BigEndian)?;
+    bytes.write_uleb_u64(300)?;
+    bytes.write_utf8_string_uleb_u64("inventory")?;
 
-let mut input = Cursor::new(bytes);
-assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
-assert_eq!(300, input.read_uleb_u64_non_strict()?);
-assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
-# Ok::<(), std::io::Error>(())
+    let mut input = Cursor::new(bytes);
+    assert_eq!(0x5142_4954, input.read_u32(ByteOrder::BigEndian)?);
+    assert_eq!(300, input.read_uleb_u64_non_strict()?);
+    assert_eq!("inventory", input.read_utf8_string_uleb_u64(64)?);
+    Ok(())
+}
 ```
 
 整数 LEB128 扩展方法会在名称中明确标出解码策略：`_non_strict` 接受非规范前缀，
@@ -92,11 +94,13 @@ use std::io::Cursor;
 
 use qubit_io_binary::StringReadExt;
 
-let mut input = Cursor::new(b"hello world".to_vec());
-let mut payload = Vec::with_capacity(32);
-input.read_utf8_payload_into(&mut payload, 11, 64)?;
-assert_eq!(payload, b"hello world");
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    let mut input = Cursor::new(b"hello world".to_vec());
+    let mut payload = Vec::with_capacity(32);
+    input.read_utf8_payload_into(&mut payload, 11, 64)?;
+    assert_eq!(payload, b"hello world");
+    Ok(())
+}
 ```
 
 可复用接口只会在长度通过 `max_len` 校验后清空缓冲区；如果 UTF-8 无效，则保留已接收
@@ -120,13 +124,15 @@ use std::io::Cursor;
 use qubit_codec::LittleEndian;
 use qubit_io_binary::{BinaryReader, BinaryWriter};
 
-let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
-writer.write_u16(0x1234)?;
-let bytes = writer.into_inner();
+fn main() -> std::io::Result<()> {
+    let mut writer = BinaryWriter::<_, LittleEndian>::new(Vec::new());
+    writer.write_u16(0x1234)?;
+    let bytes = writer.into_inner();
 
-let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
-assert_eq!(0x1234, reader.read_u16()?);
-# Ok::<(), std::io::Error>(())
+    let mut reader = BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
+    assert_eq!(0x1234, reader.read_u16()?);
+    Ok(())
+}
 ```
 
 LEB128 reader 会把 canonicality 策略放在类型参数中。构造 typed reader 时，
@@ -138,10 +144,12 @@ use std::io::Cursor;
 use qubit_codec_binary::NonStrict;
 use qubit_io_binary::Leb128Reader;
 
-let mut reader =
-    Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0xac, 0x02]));
-assert_eq!(300, reader.read_u16_non_strict()?);
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    let mut reader =
+        Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![0xac, 0x02]));
+    assert_eq!(300, reader.read_u16_non_strict()?);
+    Ok(())
+}
 ```
 
 `Buffered*Reader::into_parts()` 返回被包装的输入和预取后尚未消费的字节；
@@ -165,6 +173,8 @@ where
     output.write_u32_be_async(marker).await
 }
 ```
+
+这是仅用于编译检查的异步函数示例。应用应从自己的 executor 调用它；指南 fixture 不会运行此函数。
 
 这些高层操作不具备取消安全性。取消 pending read 可能已经消费一个值的部分字节；取消
 pending write 可能已经向输出写入前缀。只有在传输或 framing 保证安全时才能整体重试。
@@ -204,10 +214,12 @@ fn parse_frame(frame: &[u8]) -> std::io::Result<String> {
     Cursor::new(frame).read_utf8_string_uleb_u64(2)
 }
 
-// The application has already isolated these frames using its outer protocol.
-assert!(parse_frame(&[3, b'a', b'b', b'c']).is_err());
-assert_eq!("z", parse_frame(&[1, b'z'])?);
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    // The application has already isolated these frames using its outer protocol.
+    assert!(parse_frame(&[3, b'a', b'b', b'c']).is_err());
+    assert_eq!("z", parse_frame(&[1, b'z'])?);
+    Ok(())
+}
 ```
 
 这里依赖的是应用已经掌握的帧边界。本库不负责 transport framing；长度超限后随意跳过

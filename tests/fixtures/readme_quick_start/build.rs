@@ -50,15 +50,6 @@ fn extract_quick_start(markdown: &str) -> Result<String, String> {
         .to_owned())
 }
 
-/// Removes rustdoc-hidden prefixes while preserving all other source lines.
-fn executable_body(source: &str) -> String {
-    source
-        .lines()
-        .map(|line| line.strip_prefix("# ").unwrap_or(line))
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
 fn main() {
     let fixture = PathBuf::from(env::var_os("CARGO_MANIFEST_DIR").expect("fixture directory"));
     let root = fixture.join("../../..");
@@ -72,17 +63,12 @@ fn main() {
     let chinese = extract_quick_start(&fs::read_to_string(&chinese_path).expect("read Chinese README"))
         .expect("Chinese README quick start");
     assert_eq!(english, chinese, "README quick-start code differs between languages");
-    let source = format!(
-        "fn main() -> std::io::Result<()> {{\n{}\n}}\n",
-        executable_body(&english)
-    );
     let output = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo output directory"));
-    fs::write(output.join("readme_quick_start.rs"), source).expect("write generated quick start");
+    fs::write(output.join("readme_quick_start.rs"), english).expect("write generated quick start");
 }
 
 #[cfg(test)]
 mod tests {
-    use super::executable_body;
     use super::extract_quick_start;
 
     const START: &str = "<!-- readme-quick-start:start -->";
@@ -108,10 +94,11 @@ mod tests {
     }
 
     #[test]
-    fn removes_only_rustdoc_hidden_prefixes() {
+    fn preserves_rustdoc_hidden_prefixes_as_source() {
+        let source = markdown("```rust\n# Ok::<(), Error>(())\n```");
         assert_eq!(
-            executable_body("# Ok::<(), Error>(())\n# let hidden = 1;\n// # retained\n#retained"),
-            "Ok::<(), Error>(())\nlet hidden = 1;\n// # retained\n#retained"
+            extract_quick_start(&source).expect("extract block"),
+            "# Ok::<(), Error>(())"
         );
     }
 

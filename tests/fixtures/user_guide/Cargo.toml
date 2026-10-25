@@ -1,0 +1,22 @@
+# =============================================================================
+#    Copyright (c) 2026 Haixing Hu.
+#
+#    SPDX-License-Identifier: Apache-2.0
+#
+#    Licensed under the Apache License, Version 2.0.
+# =============================================================================
+
+[package]
+name = "user-guide-examples"
+version = "0.0.0"
+edition = "2024"
+rust-version = "1.94"
+publish = false
+
+[dependencies]
+qubit-io-binary = { path = "../../.." }
+qubit-codec = { path = "../../../../rs-codec", version = "0.17", features = ["io"] }
+qubit-codec-binary = { path = "../../../../rs-codec-binary", version = "0.9" }
+qubit-io = "0.19.1"
+
+[workspace]

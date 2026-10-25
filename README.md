@@ -42,21 +42,20 @@ implement the `qubit-io` abstractions through adapters.
 ```rust
 use std::io::Cursor;
 
-use qubit_io_binary::{
-    BinaryReadExt,
-    BinaryWriteExt,
-    Leb128ReadExt,
-    Leb128WriteExt,
-};
+use qubit_io_binary::BinaryReadExt;
+use qubit_io_binary::BinaryWriteExt;
+use qubit_io_binary::Leb128ReadExt;
+use qubit_io_binary::Leb128WriteExt;
 
-let mut bytes = Vec::new();
-bytes.write_u32_le(0x0102_0304)?;
-bytes.write_uleb_u64(300)?;
-
-let mut input = Cursor::new(bytes);
-assert_eq!(0x0102_0304, input.read_u32_le()?);
-assert_eq!(300, input.read_uleb_u64_non_strict()?);
-# Ok::<(), std::io::Error>(())
+fn main() -> std::io::Result<()> {
+    let mut bytes = Vec::new();
+    bytes.write_u32_le(0x0102_0304)?;
+    bytes.write_uleb_u64(300)?;
+    let mut input = Cursor::new(bytes);
+    assert_eq!(0x0102_0304, input.read_u32_le()?);
+    assert_eq!(300, input.read_uleb_u64_non_strict()?);
+    Ok(())
+}
 ```
 <!-- readme-quick-start:end -->
 
@@ -84,6 +83,8 @@ where
     output.write_u32_le_async(version).await
 }
 ```
+
+This is a compile-only async function example. Call it from an executor in your application; the README fixture does not run it.
 
 Asynchronous extension methods only require `Unpin`; they do not impose a
 runtime or `Send` requirement. These operations are not cancellation safe:
