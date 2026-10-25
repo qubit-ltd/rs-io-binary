@@ -17,12 +17,134 @@ use std::rc::Rc;
 use qubit_codec::BigEndian;
 use qubit_codec::ByteOrder;
 use qubit_codec::LittleEndian;
+use qubit_codec::NativeEndian;
 use qubit_io::BufferedOutputRecovery;
 use qubit_io::Output;
 use qubit_io_binary::BinaryWriteExt;
 use qubit_io_binary::BufferedBinaryWriter;
 
 use super::internal::string_write_test_support_tests::PrefixErrorOutput;
+
+macro_rules! float_bit_vectors {
+    (f32) => {
+        [
+            0x0000_0000_u32,
+            0x8000_0000,
+            0x7f80_0000,
+            0xff80_0000,
+            0x7fc1_2345,
+            0xffc5_4321,
+            0x0000_0001,
+            0x8000_0001,
+        ]
+    };
+    (f64) => {
+        [
+            0x0000_0000_0000_0000_u64,
+            0x8000_0000_0000_0000,
+            0x7ff0_0000_0000_0000,
+            0xfff0_0000_0000_0000,
+            0x7ff8_1234_5678_9abc,
+            0xfff8_abcd_ef01_2345,
+            0x0000_0000_0000_0001,
+            0x8000_0000_0000_0001,
+        ]
+    };
+}
+
+macro_rules! check_writer_float_bits {
+    ($factory:expr, $finish:expr, $method:ident, $float:ident, $endian:ident) => {{
+        for bits in float_bit_vectors!($float) {
+            for padding in [0, 18] {
+                let mut writer = ($factory)();
+                let mut expected = vec![0xa5; padding];
+                writer.write_fully(&expected).expect("padding should be writable");
+                writer
+                    .$method($float::from_bits(bits))
+                    .expect("float should be writable");
+                expected.extend_from_slice(&bits.$endian());
+                writer.flush().expect("output should flush");
+                assert_eq!(
+                    expected,
+                    ($finish)(writer),
+                    "{} padding {}",
+                    stringify!($method),
+                    padding
+                );
+            }
+        }
+    }};
+}
+
+#[test]
+fn test_buffered_binary_writer_float_bits() {
+    check_writer_float_bits!(
+        || BufferedBinaryWriter::<_, BigEndian>::with_capacity(Vec::new(), 19),
+        |writer: BufferedBinaryWriter<Vec<u8>, BigEndian>| {
+            let (bytes, recovery) = writer.into_parts();
+            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            bytes
+        },
+        write_f32,
+        f32,
+        to_be_bytes
+    );
+    check_writer_float_bits!(
+        || BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19),
+        |writer: BufferedBinaryWriter<Vec<u8>, LittleEndian>| {
+            let (bytes, recovery) = writer.into_parts();
+            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            bytes
+        },
+        write_f32,
+        f32,
+        to_le_bytes
+    );
+    check_writer_float_bits!(
+        || BufferedBinaryWriter::<_, NativeEndian>::with_capacity(Vec::new(), 19),
+        |writer: BufferedBinaryWriter<Vec<u8>, NativeEndian>| {
+            let (bytes, recovery) = writer.into_parts();
+            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            bytes
+        },
+        write_f32,
+        f32,
+        to_ne_bytes
+    );
+    check_writer_float_bits!(
+        || BufferedBinaryWriter::<_, BigEndian>::with_capacity(Vec::new(), 19),
+        |writer: BufferedBinaryWriter<Vec<u8>, BigEndian>| {
+            let (bytes, recovery) = writer.into_parts();
+            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            bytes
+        },
+        write_f64,
+        f64,
+        to_be_bytes
+    );
+    check_writer_float_bits!(
+        || BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19),
+        |writer: BufferedBinaryWriter<Vec<u8>, LittleEndian>| {
+            let (bytes, recovery) = writer.into_parts();
+            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            bytes
+        },
+        write_f64,
+        f64,
+        to_le_bytes
+    );
+    check_writer_float_bits!(
+        || BufferedBinaryWriter::<_, NativeEndian>::with_capacity(Vec::new(), 19),
+        |writer: BufferedBinaryWriter<Vec<u8>, NativeEndian>| {
+            let (bytes, recovery) = writer.into_parts();
+            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            bytes
+        },
+        write_f64,
+        f64,
+        to_ne_bytes
+    );
+}
 
 #[test]
 fn test_seek_current_zero_preserves_pending_bytes() {

@@ -16,6 +16,95 @@ use qubit_io::Input;
 use qubit_io::Seekable;
 use qubit_io_binary::BinaryReader;
 
+macro_rules! float_bit_vectors {
+    (f32) => {
+        [
+            0x0000_0000_u32,
+            0x8000_0000,
+            0x7f80_0000,
+            0xff80_0000,
+            0x7fc1_2345,
+            0xffc5_4321,
+            0x0000_0001,
+            0x8000_0001,
+        ]
+    };
+    (f64) => {
+        [
+            0x0000_0000_0000_0000_u64,
+            0x8000_0000_0000_0000,
+            0x7ff0_0000_0000_0000,
+            0xfff0_0000_0000_0000,
+            0x7ff8_1234_5678_9abc,
+            0xfff8_abcd_ef01_2345,
+            0x0000_0000_0000_0001,
+            0x8000_0000_0000_0001,
+        ]
+    };
+}
+
+macro_rules! check_reader_float_bits {
+    ($factory:expr, $method:ident, $float:ident, $endian:ident) => {{
+        for bits in float_bit_vectors!($float) {
+            for padding in [0, 18] {
+                let mut encoded = vec![0xa5; padding];
+                encoded.extend_from_slice(&bits.$endian());
+                let mut reader = ($factory)(encoded);
+                let mut prefix = vec![0; padding];
+                reader.read_exactly(&mut prefix).expect("padding should be readable");
+                assert_eq!(vec![0xa5; padding], prefix);
+                assert_eq!(
+                    bits,
+                    reader.$method().expect("float should be readable").to_bits(),
+                    "{} padding {}",
+                    stringify!($method),
+                    padding
+                );
+            }
+        }
+    }};
+}
+
+#[test]
+fn test_binary_reader_float_bits() {
+    check_reader_float_bits!(
+        |bytes| BinaryReader::<_, BigEndian>::new(Cursor::new(bytes)),
+        read_f32,
+        f32,
+        to_be_bytes
+    );
+    check_reader_float_bits!(
+        |bytes| BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes)),
+        read_f32,
+        f32,
+        to_le_bytes
+    );
+    check_reader_float_bits!(
+        |bytes| BinaryReader::<_, NativeEndian>::new(Cursor::new(bytes)),
+        read_f32,
+        f32,
+        to_ne_bytes
+    );
+    check_reader_float_bits!(
+        |bytes| BinaryReader::<_, BigEndian>::new(Cursor::new(bytes)),
+        read_f64,
+        f64,
+        to_be_bytes
+    );
+    check_reader_float_bits!(
+        |bytes| BinaryReader::<_, LittleEndian>::new(Cursor::new(bytes)),
+        read_f64,
+        f64,
+        to_le_bytes
+    );
+    check_reader_float_bits!(
+        |bytes| BinaryReader::<_, NativeEndian>::new(Cursor::new(bytes)),
+        read_f64,
+        f64,
+        to_ne_bytes
+    );
+}
+
 fn push_be_values(output: &mut Vec<u8>) {
     output.extend_from_slice(&[0xaa, 0xbb]);
     output.push(0x12);
