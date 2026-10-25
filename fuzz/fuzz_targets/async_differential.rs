@@ -50,6 +50,7 @@ fuzz_target!(|data: &[u8]| {
     fuzz_scripted_fixed_width(payload, chunk_size);
     fuzz_leb128(payload, chunk_size);
     fuzz_zig_zag(payload, chunk_size);
+    fuzz_varint_widths(payload, chunk_size);
     fuzz_string(payload, chunk_size);
     fuzz_malformed_reads(payload, chunk_size);
 });
@@ -337,6 +338,146 @@ fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     let async_result = run_to_completion(async_input.read_zig_zag_i64_strict_async());
     assert_eq!(result_signature(&sync_result), result_signature(&async_result));
     assert_eq!(sync_position, async_input.position);
+}
+
+/// Compares variable-width integer APIs across their supported fixed widths.
+fn fuzz_varint_widths(payload: &[u8], chunk_size: usize) {
+    macro_rules! check_codec {
+        ($value:expr, $write_sync:ident, $write_async:ident,
+         $read_sync_strict:ident, $read_sync_non_strict:ident,
+         $read_async_strict:ident, $read_async_non_strict:ident) => {{
+            let mut sync_input = Cursor::new(payload);
+            let sync_strict = sync_input.$read_sync_strict();
+            let sync_strict_position = sync_input.position() as usize;
+            let mut async_input = FuzzAsyncInput::new(payload.to_vec(), chunk_size);
+            let async_strict = run_to_completion(async_input.$read_async_strict());
+            assert_eq!(result_signature(&sync_strict), result_signature(&async_strict));
+            assert_eq!(sync_strict_position, async_input.position);
+
+            let mut sync_input = Cursor::new(payload);
+            let sync_non_strict = sync_input.$read_sync_non_strict();
+            let sync_non_strict_position = sync_input.position() as usize;
+            let mut async_input = FuzzAsyncInput::new(payload.to_vec(), chunk_size);
+            let async_non_strict = run_to_completion(async_input.$read_async_non_strict());
+            assert_eq!(result_signature(&sync_non_strict), result_signature(&async_non_strict));
+            assert_eq!(sync_non_strict_position, async_input.position);
+
+            let value = $value;
+            let mut expected = Vec::new();
+            expected.$write_sync(value).expect("value should encode");
+            let mut output = FuzzAsyncOutput::new(chunk_size);
+            let write_result = run_to_completion(async {
+                output.$write_async(value).await?;
+                output.flush_async().await
+            });
+            assert_eq!(Ok(()), result_signature(&write_result));
+            assert_eq!(expected, output.bytes);
+
+            let mut strict_input = FuzzAsyncInput::new(expected.clone(), chunk_size);
+            let strict_result = run_to_completion(strict_input.$read_async_strict());
+            assert_eq!(Ok(value), result_signature(&strict_result));
+            assert_eq!(expected.len(), strict_input.position);
+            let mut non_strict_input = FuzzAsyncInput::new(expected.clone(), chunk_size);
+            let non_strict_result = run_to_completion(non_strict_input.$read_async_non_strict());
+            assert_eq!(Ok(value), result_signature(&non_strict_result));
+            assert_eq!(expected.len(), non_strict_input.position);
+        }};
+    }
+
+    let mut bytes = [0_u8; 16];
+    let count = payload.len().min(bytes.len());
+    bytes[..count].copy_from_slice(&payload[..count]);
+
+    check_codec!(
+        u8::from_le_bytes([bytes[0]]),
+        write_uleb_u8,
+        write_uleb_u8_async,
+        read_uleb_u8_strict,
+        read_uleb_u8_non_strict,
+        read_uleb_u8_strict_async,
+        read_uleb_u8_non_strict_async
+    );
+    check_codec!(
+        u16::from_le_bytes([bytes[0], bytes[1]]),
+        write_uleb_u16,
+        write_uleb_u16_async,
+        read_uleb_u16_strict,
+        read_uleb_u16_non_strict,
+        read_uleb_u16_strict_async,
+        read_uleb_u16_non_strict_async
+    );
+    check_codec!(
+        u128::from_le_bytes(bytes),
+        write_uleb_u128,
+        write_uleb_u128_async,
+        read_uleb_u128_strict,
+        read_uleb_u128_non_strict,
+        read_uleb_u128_strict_async,
+        read_uleb_u128_non_strict_async
+    );
+    check_codec!(
+        i8::from_le_bytes([bytes[0]]),
+        write_sleb_i8,
+        write_sleb_i8_async,
+        read_sleb_i8_strict,
+        read_sleb_i8_non_strict,
+        read_sleb_i8_strict_async,
+        read_sleb_i8_non_strict_async
+    );
+    check_codec!(
+        i16::from_le_bytes([bytes[0], bytes[1]]),
+        write_sleb_i16,
+        write_sleb_i16_async,
+        read_sleb_i16_strict,
+        read_sleb_i16_non_strict,
+        read_sleb_i16_strict_async,
+        read_sleb_i16_non_strict_async
+    );
+    check_codec!(
+        i64::from_le_bytes(bytes[..8].try_into().expect("slice has eight bytes")),
+        write_sleb_i64,
+        write_sleb_i64_async,
+        read_sleb_i64_strict,
+        read_sleb_i64_non_strict,
+        read_sleb_i64_strict_async,
+        read_sleb_i64_non_strict_async
+    );
+    check_codec!(
+        i128::from_le_bytes(bytes),
+        write_sleb_i128,
+        write_sleb_i128_async,
+        read_sleb_i128_strict,
+        read_sleb_i128_non_strict,
+        read_sleb_i128_strict_async,
+        read_sleb_i128_non_strict_async
+    );
+    check_codec!(
+        i8::from_le_bytes([bytes[0]]),
+        write_zig_zag_i8,
+        write_zig_zag_i8_async,
+        read_zig_zag_i8_strict,
+        read_zig_zag_i8_non_strict,
+        read_zig_zag_i8_strict_async,
+        read_zig_zag_i8_non_strict_async
+    );
+    check_codec!(
+        i16::from_le_bytes([bytes[0], bytes[1]]),
+        write_zig_zag_i16,
+        write_zig_zag_i16_async,
+        read_zig_zag_i16_strict,
+        read_zig_zag_i16_non_strict,
+        read_zig_zag_i16_strict_async,
+        read_zig_zag_i16_non_strict_async
+    );
+    check_codec!(
+        i128::from_le_bytes(bytes),
+        write_zig_zag_i128,
+        write_zig_zag_i128_async,
+        read_zig_zag_i128_strict,
+        read_zig_zag_i128_non_strict,
+        read_zig_zag_i128_strict_async,
+        read_zig_zag_i128_non_strict_async
+    );
 }
 
 /// Compares length-prefixed UTF-8 framing through both API layers.

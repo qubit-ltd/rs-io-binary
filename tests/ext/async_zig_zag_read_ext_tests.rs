@@ -185,3 +185,15 @@ fn test_async_zig_zag_read_golden_vector() {
         [0xd7, 4]
     );
 }
+
+#[test]
+fn test_async_zig_zag_varint_boundary_i128_min() {
+    let mut bytes = vec![0xff; 18];
+    bytes.push(0x03);
+    let mut strict = ChunkedAsyncInput::new(bytes.clone());
+    assert_eq!(i128::MIN, complete(strict.read_zig_zag_i128_strict_async()).unwrap());
+    assert_eq!(19, strict.position());
+    let mut loose = ChunkedAsyncInput::new(bytes);
+    assert_eq!(i128::MIN, complete(loose.read_zig_zag_i128_non_strict_async()).unwrap());
+    assert_eq!(19, loose.position());
+}

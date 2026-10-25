@@ -194,3 +194,56 @@ fn test_leb128_read_golden_vector() {
     check_read!(read_sleb_i128_strict, read_sleb_i128_non_strict, -300, [0xd4, 0x7d]);
     check_read!(read_sleb_isize_strict, read_sleb_isize_non_strict, -300, [0xd4, 0x7d]);
 }
+
+#[test]
+fn test_leb128_varint_boundary_vectors() {
+    macro_rules! check_value {
+        ($strict:ident, $loose:ident, $value:expr, $bytes:expr) => {{
+            let bytes: &[u8] = &$bytes;
+            let mut strict = Cursor::new(bytes);
+            assert_eq!($value, strict.$strict().expect("fixed boundary vector should decode"));
+            assert_eq!(bytes.len() as u64, strict.position());
+            let mut loose = Cursor::new(bytes);
+            assert_eq!($value, loose.$loose().expect("fixed boundary vector should decode"));
+            assert_eq!(bytes.len() as u64, loose.position());
+        }};
+    }
+    macro_rules! check_invalid {
+        ($method:ident, $bytes:expr) => {{
+            let mut input = Cursor::new(&$bytes[..]);
+            assert_eq!(ErrorKind::InvalidData, input.$method().unwrap_err().kind());
+            assert_eq!($bytes.len() as u64, input.position());
+        }};
+    }
+    check_invalid!(read_uleb_u8_strict, [0x80, 0x02]);
+    check_invalid!(read_uleb_u8_non_strict, [0x80, 0x02]);
+    check_value!(read_sleb_i8_strict, read_sleb_i8_non_strict, 127, [0xff, 0x00]);
+    check_value!(read_sleb_i8_strict, read_sleb_i8_non_strict, -128, [0x80, 0x7f]);
+    check_invalid!(read_sleb_i8_strict, [0x80, 0x01]);
+    check_invalid!(read_sleb_i8_non_strict, [0x80, 0x01]);
+    let noncanonical = [0xff, 0x7f];
+    let mut strict = Cursor::new(noncanonical);
+    assert_eq!(ErrorKind::InvalidData, strict.read_sleb_i8_strict().unwrap_err().kind());
+    assert_eq!(2, strict.position());
+    let mut loose = Cursor::new(noncanonical);
+    assert_eq!(-1, loose.read_sleb_i8_non_strict().unwrap());
+    assert_eq!(2, loose.position());
+    let mut u128_max = vec![0xff; 18];
+    u128_max.push(0x03);
+    check_value!(read_uleb_u128_strict, read_uleb_u128_non_strict, u128::MAX, u128_max);
+    let mut i128_max = vec![0xff; 18];
+    i128_max.push(0x01);
+    check_value!(read_sleb_i128_strict, read_sleb_i128_non_strict, i128::MAX, i128_max);
+    let mut i128_min = vec![0x80; 18];
+    i128_min.push(0x7e);
+    check_value!(read_sleb_i128_strict, read_sleb_i128_non_strict, i128::MIN, i128_min);
+    let unterminated = [0x80; 19];
+    check_invalid!(read_uleb_u128_strict, unterminated);
+    check_invalid!(read_uleb_u128_non_strict, unterminated);
+    let mut truncated = Cursor::new([0x80]);
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        truncated.read_uleb_u128_strict().unwrap_err().kind()
+    );
+    assert_eq!(1, truncated.position());
+}

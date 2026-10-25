@@ -202,3 +202,79 @@ fn test_async_leb128_read_golden_vector() {
         [0xd4, 0x7d]
     );
 }
+
+#[test]
+fn test_async_leb128_varint_boundary_vectors() {
+    macro_rules! check_value {
+        ($strict:ident, $loose:ident, $value:expr, $bytes:expr) => {{
+            let bytes: &[u8] = &$bytes;
+            let mut strict = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!($value, complete(strict.$strict()).unwrap());
+            assert_eq!(bytes.len(), strict.position());
+            let mut loose = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!($value, complete(loose.$loose()).unwrap());
+            assert_eq!(bytes.len(), loose.position());
+        }};
+    }
+    macro_rules! check_invalid {
+        ($method:ident, $bytes:expr) => {{
+            let bytes: &[u8] = &$bytes;
+            let mut input = ChunkedAsyncInput::new(bytes.to_vec());
+            assert_eq!(ErrorKind::InvalidData, complete(input.$method()).unwrap_err().kind());
+            assert_eq!(bytes.len(), input.position());
+        }};
+    }
+    check_invalid!(read_uleb_u8_strict_async, [0x80, 0x02]);
+    check_invalid!(read_uleb_u8_non_strict_async, [0x80, 0x02]);
+    check_value!(read_sleb_i8_strict_async, read_sleb_i8_non_strict_async, 127, [0xff, 0]);
+    check_value!(
+        read_sleb_i8_strict_async,
+        read_sleb_i8_non_strict_async,
+        -128,
+        [0x80, 0x7f]
+    );
+    check_invalid!(read_sleb_i8_strict_async, [0x80, 1]);
+    check_invalid!(read_sleb_i8_non_strict_async, [0x80, 1]);
+    let noncanonical = [0xff, 0x7f];
+    let mut strict = ChunkedAsyncInput::new(noncanonical.to_vec());
+    assert_eq!(
+        ErrorKind::InvalidData,
+        complete(strict.read_sleb_i8_strict_async()).unwrap_err().kind()
+    );
+    assert_eq!(2, strict.position());
+    let mut loose = ChunkedAsyncInput::new(noncanonical.to_vec());
+    assert_eq!(-1, complete(loose.read_sleb_i8_non_strict_async()).unwrap());
+    assert_eq!(2, loose.position());
+    let mut u128_max = vec![0xff; 18];
+    u128_max.push(3);
+    check_value!(
+        read_uleb_u128_strict_async,
+        read_uleb_u128_non_strict_async,
+        u128::MAX,
+        u128_max
+    );
+    let mut i128_max = vec![0xff; 18];
+    i128_max.push(1);
+    check_value!(
+        read_sleb_i128_strict_async,
+        read_sleb_i128_non_strict_async,
+        i128::MAX,
+        i128_max
+    );
+    let mut i128_min = vec![0x80; 18];
+    i128_min.push(0x7e);
+    check_value!(
+        read_sleb_i128_strict_async,
+        read_sleb_i128_non_strict_async,
+        i128::MIN,
+        i128_min
+    );
+    check_invalid!(read_uleb_u128_strict_async, [0x80; 19]);
+    check_invalid!(read_uleb_u128_non_strict_async, [0x80; 19]);
+    let mut truncated = ChunkedAsyncInput::new(vec![0x80]);
+    assert_eq!(
+        ErrorKind::UnexpectedEof,
+        complete(truncated.read_uleb_u128_strict_async()).unwrap_err().kind()
+    );
+    assert_eq!(1, truncated.position());
+}

@@ -28,14 +28,19 @@ use qubit_io_binary::BinaryWriter;
 use qubit_io_binary::BufferedBinaryReader;
 use qubit_io_binary::BufferedBinaryWriter;
 use qubit_io_binary::BufferedLeb128Reader;
+use qubit_io_binary::BufferedLeb128Writer;
 use qubit_io_binary::BufferedZigZagReader;
+use qubit_io_binary::BufferedZigZagWriter;
 use qubit_io_binary::Leb128ReadExt;
 use qubit_io_binary::Leb128Reader;
 use qubit_io_binary::Leb128WriteExt;
+use qubit_io_binary::Leb128Writer;
 use qubit_io_binary::StringReadExt;
 use qubit_io_binary::StringWriteExt;
 use qubit_io_binary::ZigZagReadExt;
 use qubit_io_binary::ZigZagReader;
+use qubit_io_binary::ZigZagWriteExt;
+use qubit_io_binary::ZigZagWriter;
 
 /// Keeps allocations and each target invocation bounded outside CI.
 const MAX_FUZZ_INPUT_LEN: usize = 4096;
@@ -49,6 +54,7 @@ fuzz_target!(|data: &[u8]| {
     fuzz_fixed_width(payload, chunk_size);
     fuzz_binary_writers(payload, chunk_size);
     fuzz_leb128(payload, chunk_size);
+    fuzz_varint_widths(payload, chunk_size);
     fuzz_strict_leb128(payload, chunk_size);
     fuzz_zig_zag(payload, chunk_size);
     fuzz_string(payload, chunk_size);
@@ -318,6 +324,336 @@ fn fuzz_zig_zag(payload: &[u8], chunk_size: usize) {
     assert_eq!(extension_position, wrapper_position);
     assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
     assert_eq!(extension_position, buffered_position);
+}
+
+/// Compares varint widths and writer encodings across public stream APIs.
+fn fuzz_varint_widths(payload: &[u8], chunk_size: usize) {
+    macro_rules! check_read {
+        ($ty:ty, $extension_method:ident, $typed_method:ident, $buffered_type:ty, $buffered_method:ident, $policy:ty) => {{
+            let mut extension = ChunkedReader::new(payload, chunk_size);
+            let extension_result = extension.$extension_method();
+            let extension_position = extension.position();
+
+            let mut typed = Leb128Reader::<_, $policy>::new(ChunkedReader::new(payload, chunk_size));
+            let typed_result = typed.$typed_method();
+            let typed_position = typed.into_inner().position();
+
+            let mut buffered = <$buffered_type>::with_capacity(ChunkedReader::new(payload, chunk_size), 16);
+            let buffered_result = buffered.$buffered_method();
+            let (inner, unread) = buffered.into_parts();
+            let buffered_position = inner.position() - unread.available();
+
+            assert_eq!(result_signature(&extension_result), result_signature(&typed_result));
+            assert_eq!(extension_position, typed_position);
+            assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+            assert_eq!(extension_position, buffered_position);
+        }};
+    }
+
+    macro_rules! check_zigzag_read {
+        ($extension_method:ident, $typed_method:ident, $buffered_method:ident, $ty:ty, $policy:ty) => {{
+            let mut extension = ChunkedReader::new(payload, chunk_size);
+            let extension_result = extension.$extension_method();
+            let extension_position = extension.position();
+
+            let mut typed = ZigZagReader::<_, $policy>::new(ChunkedReader::new(payload, chunk_size));
+            let typed_result = typed.$typed_method();
+            let typed_position = typed.into_inner().position();
+
+            let mut buffered =
+                BufferedZigZagReader::<_, $policy>::with_capacity(ChunkedReader::new(payload, chunk_size), 16);
+            let buffered_result = buffered.$buffered_method();
+            let (inner, unread) = buffered.into_parts();
+            let buffered_position = inner.position() - unread.available();
+
+            assert_eq!(result_signature(&extension_result), result_signature(&typed_result));
+            assert_eq!(extension_position, typed_position);
+            assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+            assert_eq!(extension_position, buffered_position);
+        }};
+    }
+
+    macro_rules! check_writer {
+        ($ty:ty, $extension_method:ident, $typed_method:ident, $buffered_method:ident, $extension_strict:ident, $extension_non_strict:ident, $reader_strict:ident, $reader_non_strict:ident) => {{
+            let mut raw = [0_u8; std::mem::size_of::<$ty>()];
+            let count = payload.len().min(raw.len());
+            raw[..count].copy_from_slice(&payload[..count]);
+            let value = <$ty>::from_le_bytes(raw);
+
+            let mut extension = Vec::new();
+            extension.$extension_method(value).expect("value should encode");
+
+            let mut typed = Vec::new();
+            let mut writer = Leb128Writer::<_>::new(&mut typed);
+            writer.$typed_method(value).expect("value should encode");
+
+            let mut buffered = BufferedLeb128Writer::<_>::with_capacity(Vec::new(), 16);
+            buffered.$buffered_method(value).expect("value should encode");
+            Output::flush(&mut buffered).expect("buffered value should flush");
+            let (buffered, pending) = buffered.into_parts();
+            assert!(matches!(pending, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+
+            assert_eq!(extension, typed);
+            assert_eq!(extension, buffered);
+
+            macro_rules! check_roundtrip {
+                ($policy:ty, $decode_extension_method:ident, $reader_method:ident) => {{
+                    let mut extension_reader = ChunkedReader::new(&extension, chunk_size);
+                    let extension_result = extension_reader.$decode_extension_method();
+                    let extension_position = extension_reader.position();
+
+                    let mut reader = Leb128Reader::<_, $policy>::new(ChunkedReader::new(&extension, chunk_size));
+                    let reader_result = reader.$reader_method();
+                    let reader_position = reader.into_inner().position();
+
+                    let mut buffered_reader = BufferedLeb128Reader::<_, $policy>::with_capacity(
+                        ChunkedReader::new(&extension, chunk_size),
+                        16,
+                    );
+                    let buffered_result = buffered_reader.$reader_method();
+                    let (inner, unread) = buffered_reader.into_parts();
+                    let buffered_position = inner.position() - unread.available();
+
+                    assert_eq!(Ok(value), result_signature(&extension_result));
+                    assert_eq!(result_signature(&extension_result), result_signature(&reader_result));
+                    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+                    assert_eq!(extension.len(), extension_position);
+                    assert_eq!(extension_position, reader_position);
+                    assert_eq!(extension_position, buffered_position);
+                }};
+            }
+
+            check_roundtrip!(Strict, $extension_strict, $reader_strict);
+            check_roundtrip!(NonStrict, $extension_non_strict, $reader_non_strict);
+        }};
+    }
+
+    macro_rules! check_zigzag_writer {
+        ($ty:ty, $extension_method:ident, $typed_method:ident, $buffered_method:ident, $extension_strict:ident, $extension_non_strict:ident, $reader_strict:ident, $reader_non_strict:ident) => {{
+            let mut raw = [0_u8; std::mem::size_of::<$ty>()];
+            let count = payload.len().min(raw.len());
+            raw[..count].copy_from_slice(&payload[..count]);
+            let value = <$ty>::from_le_bytes(raw);
+
+            let mut extension = Vec::new();
+            extension.$extension_method(value).expect("value should encode");
+
+            let mut typed = Vec::new();
+            let mut writer = ZigZagWriter::<_>::new(&mut typed);
+            writer.$typed_method(value).expect("value should encode");
+
+            let mut buffered = BufferedZigZagWriter::<_>::with_capacity(Vec::new(), 16);
+            buffered.$buffered_method(value).expect("value should encode");
+            Output::flush(&mut buffered).expect("buffered value should flush");
+            let (buffered, pending) = buffered.into_parts();
+            assert!(matches!(pending, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+
+            assert_eq!(extension, typed);
+            assert_eq!(extension, buffered);
+
+            macro_rules! check_roundtrip {
+                ($policy:ty, $decode_extension_method:ident, $reader_method:ident) => {{
+                    let mut extension_reader = ChunkedReader::new(&extension, chunk_size);
+                    let extension_result = extension_reader.$decode_extension_method();
+                    let extension_position = extension_reader.position();
+
+                    let mut reader = ZigZagReader::<_, $policy>::new(ChunkedReader::new(&extension, chunk_size));
+                    let reader_result = reader.$reader_method();
+                    let reader_position = reader.into_inner().position();
+
+                    let mut buffered_reader = BufferedZigZagReader::<_, $policy>::with_capacity(
+                        ChunkedReader::new(&extension, chunk_size),
+                        16,
+                    );
+                    let buffered_result = buffered_reader.$reader_method();
+                    let (inner, unread) = buffered_reader.into_parts();
+                    let buffered_position = inner.position() - unread.available();
+
+                    assert_eq!(Ok(value), result_signature(&extension_result));
+                    assert_eq!(result_signature(&extension_result), result_signature(&reader_result));
+                    assert_eq!(result_signature(&extension_result), result_signature(&buffered_result));
+                    assert_eq!(extension.len(), extension_position);
+                    assert_eq!(extension_position, reader_position);
+                    assert_eq!(extension_position, buffered_position);
+                }};
+            }
+
+            check_roundtrip!(Strict, $extension_strict, $reader_strict);
+            check_roundtrip!(NonStrict, $extension_non_strict, $reader_non_strict);
+        }};
+    }
+
+    check_read!(u8, read_uleb_u8_strict, read_u8, BufferedLeb128Reader<_, Strict>, read_u8, Strict);
+    check_read!(u8, read_uleb_u8_non_strict, read_u8_non_strict, BufferedLeb128Reader<_, NonStrict>, read_u8_non_strict, NonStrict);
+    check_read!(u16, read_uleb_u16_strict, read_u16, BufferedLeb128Reader<_, Strict>, read_u16, Strict);
+    check_read!(u16, read_uleb_u16_non_strict, read_u16_non_strict, BufferedLeb128Reader<_, NonStrict>, read_u16_non_strict, NonStrict);
+    check_read!(u64, read_uleb_u64_strict, read_u64, BufferedLeb128Reader<_, Strict>, read_u64, Strict);
+    check_read!(u64, read_uleb_u64_non_strict, read_u64_non_strict, BufferedLeb128Reader<_, NonStrict>, read_u64_non_strict, NonStrict);
+    check_read!(u128, read_uleb_u128_strict, read_u128, BufferedLeb128Reader<_, Strict>, read_u128, Strict);
+    check_read!(u128, read_uleb_u128_non_strict, read_u128_non_strict, BufferedLeb128Reader<_, NonStrict>, read_u128_non_strict, NonStrict);
+
+    check_read!(i8, read_sleb_i8_strict, read_i8, BufferedLeb128Reader<_, Strict>, read_i8, Strict);
+    check_read!(i8, read_sleb_i8_non_strict, read_i8_non_strict, BufferedLeb128Reader<_, NonStrict>, read_i8_non_strict, NonStrict);
+    check_read!(i16, read_sleb_i16_strict, read_i16, BufferedLeb128Reader<_, Strict>, read_i16, Strict);
+    check_read!(i16, read_sleb_i16_non_strict, read_i16_non_strict, BufferedLeb128Reader<_, NonStrict>, read_i16_non_strict, NonStrict);
+    check_read!(i64, read_sleb_i64_strict, read_i64, BufferedLeb128Reader<_, Strict>, read_i64, Strict);
+    check_read!(i64, read_sleb_i64_non_strict, read_i64_non_strict, BufferedLeb128Reader<_, NonStrict>, read_i64_non_strict, NonStrict);
+    check_read!(i128, read_sleb_i128_strict, read_i128, BufferedLeb128Reader<_, Strict>, read_i128, Strict);
+    check_read!(i128, read_sleb_i128_non_strict, read_i128_non_strict, BufferedLeb128Reader<_, NonStrict>, read_i128_non_strict, NonStrict);
+
+    check_zigzag_read!(read_zig_zag_i8_strict, read_i8, read_i8, i8, Strict);
+    check_zigzag_read!(
+        read_zig_zag_i8_non_strict,
+        read_i8_non_strict,
+        read_i8_non_strict,
+        i8,
+        NonStrict
+    );
+    check_zigzag_read!(read_zig_zag_i16_strict, read_i16, read_i16, i16, Strict);
+    check_zigzag_read!(
+        read_zig_zag_i16_non_strict,
+        read_i16_non_strict,
+        read_i16_non_strict,
+        i16,
+        NonStrict
+    );
+    check_zigzag_read!(read_zig_zag_i64_strict, read_i64, read_i64, i64, Strict);
+    check_zigzag_read!(
+        read_zig_zag_i64_non_strict,
+        read_i64_non_strict,
+        read_i64_non_strict,
+        i64,
+        NonStrict
+    );
+    check_zigzag_read!(read_zig_zag_i128_strict, read_i128, read_i128, i128, Strict);
+    check_zigzag_read!(
+        read_zig_zag_i128_non_strict,
+        read_i128_non_strict,
+        read_i128_non_strict,
+        i128,
+        NonStrict
+    );
+
+    check_writer!(
+        u8,
+        write_uleb_u8,
+        write_u8,
+        write_u8,
+        read_uleb_u8_strict,
+        read_uleb_u8_non_strict,
+        read_u8,
+        read_u8_non_strict
+    );
+    check_writer!(
+        u16,
+        write_uleb_u16,
+        write_u16,
+        write_u16,
+        read_uleb_u16_strict,
+        read_uleb_u16_non_strict,
+        read_u16,
+        read_u16_non_strict
+    );
+    check_writer!(
+        u64,
+        write_uleb_u64,
+        write_u64,
+        write_u64,
+        read_uleb_u64_strict,
+        read_uleb_u64_non_strict,
+        read_u64,
+        read_u64_non_strict
+    );
+    check_writer!(
+        u128,
+        write_uleb_u128,
+        write_u128,
+        write_u128,
+        read_uleb_u128_strict,
+        read_uleb_u128_non_strict,
+        read_u128,
+        read_u128_non_strict
+    );
+    check_writer!(
+        i8,
+        write_sleb_i8,
+        write_i8,
+        write_i8,
+        read_sleb_i8_strict,
+        read_sleb_i8_non_strict,
+        read_i8,
+        read_i8_non_strict
+    );
+    check_writer!(
+        i16,
+        write_sleb_i16,
+        write_i16,
+        write_i16,
+        read_sleb_i16_strict,
+        read_sleb_i16_non_strict,
+        read_i16,
+        read_i16_non_strict
+    );
+    check_writer!(
+        i64,
+        write_sleb_i64,
+        write_i64,
+        write_i64,
+        read_sleb_i64_strict,
+        read_sleb_i64_non_strict,
+        read_i64,
+        read_i64_non_strict
+    );
+    check_writer!(
+        i128,
+        write_sleb_i128,
+        write_i128,
+        write_i128,
+        read_sleb_i128_strict,
+        read_sleb_i128_non_strict,
+        read_i128,
+        read_i128_non_strict
+    );
+    check_zigzag_writer!(
+        i8,
+        write_zig_zag_i8,
+        write_i8,
+        write_i8,
+        read_zig_zag_i8_strict,
+        read_zig_zag_i8_non_strict,
+        read_i8,
+        read_i8_non_strict
+    );
+    check_zigzag_writer!(
+        i16,
+        write_zig_zag_i16,
+        write_i16,
+        write_i16,
+        read_zig_zag_i16_strict,
+        read_zig_zag_i16_non_strict,
+        read_i16,
+        read_i16_non_strict
+    );
+    check_zigzag_writer!(
+        i64,
+        write_zig_zag_i64,
+        write_i64,
+        write_i64,
+        read_zig_zag_i64_strict,
+        read_zig_zag_i64_non_strict,
+        read_i64,
+        read_i64_non_strict
+    );
+    check_zigzag_writer!(
+        i128,
+        write_zig_zag_i128,
+        write_i128,
+        write_i128,
+        read_zig_zag_i128_strict,
+        read_zig_zag_i128_non_strict,
+        read_i128,
+        read_i128_non_strict
+    );
 }
 
 /// Checks values and error kinds without relying on error-message wording.
