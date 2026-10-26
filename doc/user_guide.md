@@ -45,7 +45,7 @@ successful result is the same values after a round trip.
 [dependencies]
 qubit-io-binary = "0.7"
 qubit-codec = { version = "0.17", features = ["io"] }
-qubit-codec-binary = "0.9"
+qubit-codec-binary = "^0.9"
 qubit-io = "0.19"
 ```
 

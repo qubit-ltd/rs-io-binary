@@ -41,7 +41,7 @@ typed reader/writer。它们的 buffered 变体会保留未读或未写字节，
 [dependencies]
 qubit-io-binary = "0.7"
 qubit-codec = { version = "0.17", features = ["io"] }
-qubit-codec-binary = "0.9"
+qubit-codec-binary = "^0.9"
 qubit-io = "0.19"
 ```
 
