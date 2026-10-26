@@ -203,6 +203,15 @@ macro_rules! impl_for_policy {
             /// Returns an I/O error for length or payload reads,
             /// InvalidData when the encoded length exceeds max_len, or
             /// InvalidData when the payload is not valid UTF-8.
+            ///
+            /// # Stream position
+            ///
+            /// If the decoded length exceeds `max_len`, the length prefix has been
+            /// consumed, but the payload remains unread. If UTF-8 validation fails,
+            /// the prefix and complete payload have been consumed. These operations
+            /// do not roll back; recover only at an outer framing boundary or a
+            /// trusted seek checkpoint. See [`StringReadExt`](crate::StringReadExt)
+            /// for the shared length-prefixed read contract.
             #[inline]
             pub fn $read_utf8_string_usize(
                 &mut self,
@@ -232,6 +241,15 @@ macro_rules! impl_for_policy {
             /// Returns an input, conversion, or allocation error, or an
             /// invalid-data error for a malformed or excessive length or
             /// invalid UTF-8.
+            ///
+            /// # Stream position
+            ///
+            /// If the decoded length exceeds `max_len`, the length prefix has been
+            /// consumed, but the payload remains unread. If UTF-8 validation fails,
+            /// the prefix and complete payload have been consumed. These operations
+            /// do not roll back; recover only at an outer framing boundary or a
+            /// trusted seek checkpoint. See [`StringReadExt`](crate::StringReadExt)
+            /// for the shared length-prefixed read contract.
             #[inline]
             pub fn $read_utf8_string_u64(
                 &mut self,

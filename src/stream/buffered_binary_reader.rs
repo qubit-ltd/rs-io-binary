@@ -214,6 +214,17 @@ macro_rules! impl_for_order {
             /// Returns an input error, or [`std::io::ErrorKind::InvalidData`]
             /// when the byte length exceeds `max_len` or the payload is not
             /// valid UTF-8.
+            ///
+            /// # Stream position
+            ///
+            /// If the decoded length exceeds `max_len`, the length prefix has been
+            /// consumed logically, but the payload has not. If UTF-8 validation
+            /// fails, the prefix and complete payload have been consumed logically.
+            /// The underlying input may already have prefetched payload bytes;
+            /// its position is not the logical consumption position. These operations
+            /// do not roll back; recover only at an outer framing boundary or a
+            /// trusted seek checkpoint. See [`StringReadExt`](crate::StringReadExt)
+            /// for the shared length-prefixed read contract.
             pub fn read_string_with_u16_len(&mut self, max_len: usize) -> Result<String> {
                 let len = usize::from(self.read_u16()?);
                 read_utf8_payload(self, len, max_len)
@@ -226,6 +237,17 @@ macro_rules! impl_for_order {
             /// Returns an input error, or [`std::io::ErrorKind::InvalidData`]
             /// when the byte length does not fit `usize`, exceeds `max_len`,
             /// or the payload is not valid UTF-8.
+            ///
+            /// # Stream position
+            ///
+            /// If the decoded length exceeds `max_len`, the length prefix has been
+            /// consumed logically, but the payload has not. If UTF-8 validation
+            /// fails, the prefix and complete payload have been consumed logically.
+            /// The underlying input may already have prefetched payload bytes;
+            /// its position is not the logical consumption position. These operations
+            /// do not roll back; recover only at an outer framing boundary or a
+            /// trusted seek checkpoint. See [`StringReadExt`](crate::StringReadExt)
+            /// for the shared length-prefixed read contract.
             pub fn read_string_with_u32_len(&mut self, max_len: usize) -> Result<String> {
                 #[cfg(any(target_pointer_width = "32", target_pointer_width = "64"))]
                 let len = self.read_u32()? as usize;

@@ -193,6 +193,15 @@ macro_rules! impl_for_order {
             /// Returns an input or allocation error, or
             /// [`std::io::ErrorKind::InvalidData`] when the encoded length
             /// exceeds `max_len` or the payload is not valid UTF-8.
+            ///
+            /// # Stream position
+            ///
+            /// If the decoded length exceeds `max_len`, the length prefix has been
+            /// consumed, but the payload remains unread. If UTF-8 validation fails,
+            /// the prefix and complete payload have been consumed. These operations
+            /// do not roll back; recover only at an outer framing boundary or a
+            /// trusted seek checkpoint. See [`StringReadExt`](crate::StringReadExt)
+            /// for the shared length-prefixed read contract.
             #[inline]
             pub fn read_string_with_u16_len(&mut self, max_len: usize) -> Result<String> {
                 let len = usize::from(self.read_u16()?);
@@ -214,6 +223,15 @@ macro_rules! impl_for_order {
             /// Returns an input, conversion, or allocation error, or
             /// [`std::io::ErrorKind::InvalidData`] when the encoded length
             /// exceeds `max_len` or the payload is not valid UTF-8.
+            ///
+            /// # Stream position
+            ///
+            /// If the decoded length exceeds `max_len`, the length prefix has been
+            /// consumed, but the payload remains unread. If UTF-8 validation fails,
+            /// the prefix and complete payload have been consumed. These operations
+            /// do not roll back; recover only at an outer framing boundary or a
+            /// trusted seek checkpoint. See [`StringReadExt`](crate::StringReadExt)
+            /// for the shared length-prefixed read contract.
             #[inline]
             pub fn read_string_with_u32_len(&mut self, max_len: usize) -> Result<String> {
                 let len = self.read_u32()?;
