@@ -4,7 +4,7 @@
 [API 文档](https://docs.rs/qubit-io-binary)
 
 本指南面向需要在字节流上读取或写入结构化二进制值的 Rust 应用，适用于
-`qubit-io-binary` 0.7.1。该 crate 将 `qubit-codec-binary` 的缓冲区 codec 接入
+`qubit-io-binary` 0.8。该 crate 将 `qubit-codec-binary` 的缓冲区 codec 接入
 `qubit-io` 的流抽象；它不负责打开文件、不选择传输层，也不绑定异步运行时。
 
 ## 概念模型
@@ -39,7 +39,7 @@ typed reader/writer。它们的 buffered 变体会保留未读或未写字节，
 
 ```toml
 [dependencies]
-qubit-io-binary = "0.7"
+qubit-io-binary = "0.8"
 qubit-codec = { version = "0.17", features = ["io"] }
 qubit-codec-binary = "^0.9"
 qubit-io = "0.19"
