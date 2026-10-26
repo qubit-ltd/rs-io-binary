@@ -47,7 +47,7 @@ use crate::util::MIN_CODEC_BUFFER_CAPACITY;
 /// # Type Parameters
 ///
 /// - `R`: Underlying byte input.
-/// - `P`: LEB128 canonicality policy applied after ZigZag decoding.
+/// - `P`: Canonicality policy for the underlying unsigned LEB128 encoding.
 ///
 /// # Examples
 ///

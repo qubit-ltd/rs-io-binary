@@ -39,7 +39,7 @@ use crate::util::read_leb128_from_reader;
 /// # Type Parameters
 ///
 /// - `R`: Underlying byte input.
-/// - `P`: LEB128 canonicality policy applied after ZigZag decoding.
+/// - `P`: Canonicality policy for the underlying unsigned LEB128 encoding.
 ///
 /// # Examples
 ///
