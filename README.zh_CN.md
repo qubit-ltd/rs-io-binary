@@ -62,6 +62,7 @@ fn main() -> std::io::Result<()> {
 异步方法统一使用 `_async` 后缀，因此一个类型可以同时暴露同步和异步流
 API，而不会产生名字歧义。
 
+<!-- readme-async:start -->
 ```rust
 use qubit_io::{
     AsyncInput,
@@ -81,6 +82,7 @@ where
     output.write_u32_le_async(version).await
 }
 ```
+<!-- readme-async:end -->
 
 这是仅用于编译检查的异步函数示例。应用应从自己的 executor 调用它；README fixture 不会运行此函数。
 

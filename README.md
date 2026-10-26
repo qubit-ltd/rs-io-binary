@@ -64,6 +64,7 @@ fn main() -> std::io::Result<()> {
 Async method names use the `_async` suffix so a type may expose both sync and
 async stream APIs without ambiguity.
 
+<!-- readme-async:start -->
 ```rust
 use qubit_io::{
     AsyncInput,
@@ -83,6 +84,7 @@ where
     output.write_u32_le_async(version).await
 }
 ```
+<!-- readme-async:end -->
 
 This is a compile-only async function example. Call it from an executor in your application; the README fixture does not run it.
 
