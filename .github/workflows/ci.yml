@@ -61,3 +61,26 @@ jobs:
             packages: ((.packages // []) | join(","))
           }]}' "$config")
           echo "matrix=$matrix" >> "$GITHUB_OUTPUT"
+
+  length-conversion-i686:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    defaults:
+      run:
+        working-directory: rs-io-binary
+    env:
+      CARGO_TARGET_I686_UNKNOWN_LINUX_GNU_LINKER: gcc
+    steps:
+      - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09
+        with:
+          path: rs-io-binary
+      - name: Install 32-bit Rust and system linker support
+        run: |
+          rustup toolchain install 1.94.0 --profile minimal --target i686-unknown-linux-gnu
+          sudo apt-get update
+          sudo apt-get install -y gcc-multilib
+      - name: Prepare local path dependencies
+        run: ./.infra/bin/prepare-local-path-dependencies.sh
+      - name: Execute length conversion tests on i686
+        run: cargo +1.94.0 test --locked --target i686-unknown-linux-gnu --test length_conversion_tests -- --nocapture
