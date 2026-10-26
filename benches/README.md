@@ -30,7 +30,10 @@
 | `async_binary_pipeline` | 确定性 ready 异步内存流 | Criterion 默认 |
 - 已移除 UTF-8 文本读写基准。
 - `micro_binary_pipeline` 使用 32,768 个 `u64` 值、每次最多读写 7 字节的
-  合成内存流；它不使用 `Cursor`，并以 16 字节内部缓冲强制覆盖 buffer 边界。
+  合成内存流；它不使用 `Cursor`。基准向 buffered reader/writer 请求 16 字节
+  容量；构造器会将其提升到 `MIN_CODEC_BUFFER_CAPACITY`，当前有效缓冲容量
+  为 19 字节。该最小值来自 `u128` LEB128 的最大编码/解码宽度；基准仍会
+  覆盖缓冲边界。
 - `memory_mixed_binary_pipeline` 使用与 `prod_mixed_binary_pipeline` 相同的
   131,072 条混合记录，但使用 `Cursor` 内存流，不把文件打开、关闭和 page cache
   成本混入 adapter 对比。读取包含四种对照：extension trait 与
