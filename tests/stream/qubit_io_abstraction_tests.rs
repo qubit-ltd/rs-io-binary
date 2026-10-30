@@ -126,6 +126,22 @@ fn test_buffered_wrappers_support_fallible_capacity_allocation() {
 }
 
 #[test]
+fn test_buffered_readers_reject_capacity_overflow() {
+    assert!(
+        BufferedBinaryReader::<_, BigEndian>::try_with_capacity(QubitInput::new(vec![]), usize::MAX).is_err(),
+        "binary reader should reject an overflowing buffer capacity",
+    );
+    assert!(
+        BufferedLeb128Reader::<_, NonStrict>::try_with_capacity(QubitInput::new(vec![]), usize::MAX).is_err(),
+        "LEB128 reader should reject an overflowing buffer capacity",
+    );
+    assert!(
+        BufferedZigZagReader::<_, NonStrict>::try_with_capacity(QubitInput::new(vec![]), usize::MAX).is_err(),
+        "ZigZag reader should reject an overflowing buffer capacity",
+    );
+}
+
+#[test]
 fn test_leb128_readers_accept_input_without_std_read() {
     let mut reader = Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
     assert!(!reader.is_buffered());

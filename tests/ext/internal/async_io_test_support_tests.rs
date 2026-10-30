@@ -13,8 +13,11 @@ use std::io::Result;
 use std::pin::Pin;
 use std::sync::Arc;
 use std::sync::Mutex;
+use std::sync::atomic::AtomicUsize;
+use std::sync::atomic::Ordering;
 use std::task::Context;
 use std::task::Poll;
+use std::task::Wake;
 use std::task::Waker;
 
 use qubit_io::AsyncInput;
@@ -155,6 +158,53 @@ where
         }
     }
     panic!("test future did not complete");
+}
+
+struct WakeCounter(AtomicUsize);
+
+impl Wake for WakeCounter {
+    fn wake(self: Arc<Self>) {
+        self.wake_by_ref();
+    }
+
+    fn wake_by_ref(self: &Arc<Self>) {
+        self.0.fetch_add(1, Ordering::SeqCst);
+    }
+}
+
+/// Completes a small test future that wakes synchronously whenever it returns
+/// `Pending`.
+///
+/// This is not an executor for delayed or cross-thread wakeups.
+pub(crate) fn complete_after_wake<F>(future: F) -> (F::Output, usize)
+where
+    F: Future,
+{
+    let counter = Arc::new(WakeCounter(AtomicUsize::new(0)));
+    let waker = Waker::from(Arc::clone(&counter));
+    let mut context = Context::from_waker(&waker);
+    let mut future = std::pin::pin!(future);
+    for _ in 0..256 {
+        let wakes_before_poll = counter.0.load(Ordering::SeqCst);
+        match future.as_mut().poll(&mut context) {
+            Poll::Ready(output) => {
+                return (output, counter.0.load(Ordering::SeqCst));
+            }
+            Poll::Pending => {
+                assert!(
+                    counter.0.load(Ordering::SeqCst) > wakes_before_poll,
+                    "Pending without wake",
+                );
+            }
+        }
+    }
+    panic!("test future did not complete after 256 wake-driven polls");
+}
+
+#[test]
+#[should_panic(expected = "Pending without wake")]
+fn test_wake_driver_rejects_pending_without_wake() {
+    complete_after_wake(std::future::pending::<()>());
 }
 
 pub(crate) fn poll_once<F>(future: F) -> Poll<F::Output>

@@ -20,6 +20,7 @@ use qubit_io_binary::BinaryWriteExt;
 
 use super::internal::async_io_test_support_tests::ChunkedAsyncInput;
 use super::internal::async_io_test_support_tests::complete;
+use super::internal::async_io_test_support_tests::complete_after_wake;
 use super::internal::async_io_test_support_tests::poll_once;
 
 macro_rules! assert_async_read_float_bits {
@@ -190,6 +191,18 @@ fn test_async_binary_read_covers_scalars_and_byte_orders() {
     assert_eq!(-2.5, complete(input.read_f32_le_async()).unwrap());
     assert_eq!(10.25, complete(input.read_f64_be_async()).unwrap());
     assert_eq!(-20.5, complete(input.read_f64_le_async()).unwrap());
+}
+
+#[test]
+fn test_async_binary_read_preserves_wakeups() {
+    let expected = 0xFEDC_BA98_7654_3210_u64;
+    let mut input = ChunkedAsyncInput::new(expected.to_le_bytes().to_vec());
+
+    let (actual, wakes) = complete_after_wake(input.read_u64_le_async());
+
+    assert_eq!(expected, actual.expect("u64 LE should read"));
+    assert_eq!(8, input.position());
+    assert!(wakes > 0);
 }
 
 #[test]
