@@ -37,6 +37,7 @@ use qubit_io::AsyncBufferedOutput;
 use qubit_io::AsyncInput;
 use qubit_io::AsyncOutput;
 use qubit_io::BufferedOutputRecovery;
+use qubit_io::ByteInput;
 use qubit_io::Input;
 use qubit_io::Output;
 use qubit_io_binary::AsyncBinaryReadExt;
@@ -1891,7 +1892,7 @@ fn read_mixed_buffered_reusing_payload<R, const VALIDATE: bool>(
     fields: &[MixedBinaryField],
 ) -> u64
 where
-    R: qubit_io::ByteInput,
+    R: ByteInput,
 {
     let mut payload = Vec::with_capacity(1024);
     let mut digest = 0_u64;
