@@ -552,3 +552,84 @@ fn test_buffered_binary_reader_reads_strings_with_fixed_length_prefixes() {
             .expect("u32-prefixed string should be read")
     );
 }
+
+macro_rules! check_buffered_string_error_position {
+    ($factory:expr, $prefix:expr, $method:ident) => {{
+        for capacity in [19, 23] {
+            for padding in [0, 18] {
+                for (length, payload, max_len, kind, consumed, remainder) in [
+                    (3, &b"abcQB"[..], 2, ErrorKind::InvalidData, 0, &b"abcQB"[..]),
+                    (3, &b"\xffabQB"[..], 3, ErrorKind::InvalidData, 3, &b"QB"[..]),
+                    (4, &b"ab"[..], 4, ErrorKind::UnexpectedEof, 2, &b""[..]),
+                ] {
+                    let mut bytes = vec![0xa5; padding];
+                    let prefix = ($prefix)(length);
+                    bytes.extend_from_slice(&prefix);
+                    bytes.extend_from_slice(payload);
+                    let expected_position = padding + prefix.len() + consumed;
+
+                    let mut reader = ($factory)(Cursor::new(bytes.clone()), capacity);
+                    reader
+                        .read_exactly(&mut vec![0; padding])
+                        .expect("padding should be readable");
+                    let error = reader.$method(max_len).expect_err("invalid string input should fail");
+                    assert_eq!(kind, error.kind());
+                    let (inner, unread) = reader.into_parts();
+                    assert_eq!(
+                        expected_position as u64,
+                        inner.position() - unread.readable().len() as u64,
+                        "logical position after string failure"
+                    );
+                    let mut actual_remainder = unread.readable().to_vec();
+                    actual_remainder.extend_from_slice(&inner.get_ref()[inner.position() as usize..]);
+                    assert_eq!(
+                        remainder,
+                        actual_remainder.as_slice(),
+                        "unread bytes after string failure"
+                    );
+
+                    let mut reader = ($factory)(Cursor::new(bytes), capacity);
+                    reader
+                        .read_exactly(&mut vec![0; padding])
+                        .expect("padding should be readable");
+                    assert_eq!(
+                        kind,
+                        reader
+                            .$method(max_len)
+                            .expect_err("invalid string input should fail")
+                            .kind()
+                    );
+                    let mut raw = vec![0; remainder.len()];
+                    reader
+                        .read_exactly(&mut raw)
+                        .expect("remaining raw bytes should be readable");
+                    assert_eq!(remainder, raw.as_slice(), "remaining bytes through raw API");
+                }
+            }
+        }
+    }};
+}
+
+#[test]
+fn test_buffered_string_error_position_fixed_prefixes() {
+    check_buffered_string_error_position!(
+        BufferedBinaryReader::<_, LittleEndian>::with_capacity,
+        |length: u16| length.to_le_bytes(),
+        read_string_with_u16_len
+    );
+    check_buffered_string_error_position!(
+        BufferedBinaryReader::<_, LittleEndian>::with_capacity,
+        |length: u32| length.to_le_bytes(),
+        read_string_with_u32_len
+    );
+    check_buffered_string_error_position!(
+        BufferedBinaryReader::<_, BigEndian>::with_capacity,
+        |length: u16| length.to_be_bytes(),
+        read_string_with_u16_len
+    );
+    check_buffered_string_error_position!(
+        BufferedBinaryReader::<_, BigEndian>::with_capacity,
+        |length: u32| length.to_be_bytes(),
+        read_string_with_u32_len
+    );
+}

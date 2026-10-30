@@ -329,6 +329,76 @@ fn test_buffered_leb128_reader_reports_invalid_and_truncated_values() {
     );
 }
 
+macro_rules! check_buffered_string_error_position {
+    ($factory:expr, $method:ident) => {{
+        for capacity in [19, 23] {
+            for padding in [0, 18] {
+                for (length, payload, max_len, kind, consumed, remainder) in [
+                    (3, &b"abcQB"[..], 2, ErrorKind::InvalidData, 0, &b"abcQB"[..]),
+                    (3, &b"\xffabQB"[..], 3, ErrorKind::InvalidData, 3, &b"QB"[..]),
+                    (4, &b"ab"[..], 4, ErrorKind::UnexpectedEof, 2, &b""[..]),
+                ] {
+                    let mut bytes = vec![0xa5; padding];
+                    bytes.push(length);
+                    bytes.extend_from_slice(payload);
+                    let expected_position = padding + 1 + consumed;
+
+                    let mut reader = ($factory)(Cursor::new(bytes.clone()), capacity);
+                    reader
+                        .read_exactly(&mut vec![0; padding])
+                        .expect("padding should be readable");
+                    let error = reader.$method(max_len).expect_err("invalid string input should fail");
+                    assert_eq!(kind, error.kind());
+                    let (inner, unread) = reader.into_parts();
+                    assert_eq!(
+                        expected_position as u64,
+                        inner.position() - unread.readable().len() as u64,
+                        "logical position after string failure"
+                    );
+                    let mut actual_remainder = unread.readable().to_vec();
+                    actual_remainder.extend_from_slice(&inner.get_ref()[inner.position() as usize..]);
+                    assert_eq!(
+                        remainder,
+                        actual_remainder.as_slice(),
+                        "unread bytes after string failure"
+                    );
+
+                    let mut reader = ($factory)(Cursor::new(bytes), capacity);
+                    reader
+                        .read_exactly(&mut vec![0; padding])
+                        .expect("padding should be readable");
+                    assert_eq!(
+                        kind,
+                        reader
+                            .$method(max_len)
+                            .expect_err("invalid string input should fail")
+                            .kind()
+                    );
+                    let mut raw = vec![0; remainder.len()];
+                    reader
+                        .read_exactly(&mut raw)
+                        .expect("remaining raw bytes should be readable");
+                    assert_eq!(remainder, raw.as_slice(), "remaining bytes through raw API");
+                }
+            }
+        }
+    }};
+}
+
+#[test]
+fn test_buffered_string_error_position_leb128() {
+    check_buffered_string_error_position!(BufferedLeb128Reader::<_, Strict>::with_capacity, read_utf8_string_u64);
+    check_buffered_string_error_position!(BufferedLeb128Reader::<_, Strict>::with_capacity, read_utf8_string_usize);
+    check_buffered_string_error_position!(
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity,
+        read_utf8_string_u64_non_strict
+    );
+    check_buffered_string_error_position!(
+        BufferedLeb128Reader::<_, NonStrict>::with_capacity,
+        read_utf8_string_usize_non_strict
+    );
+}
+
 #[test]
 fn test_buffered_leb128_reader_reports_refill_error_after_partial_payload() {
     let mut reader = BufferedLeb128Reader::<_, NonStrict>::with_capacity(ByteThenErrorReader::new(0x80), 2);
