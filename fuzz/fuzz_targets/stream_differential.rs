@@ -8,11 +8,14 @@
 
 #![no_main]
 
+use std::cell::RefCell;
 use std::io;
 use std::io::Cursor;
 use std::io::ErrorKind;
 use std::io::Read;
+use std::io::SeekFrom;
 use std::io::Write;
+use std::rc::Rc;
 
 use libfuzzer_sys::fuzz_target;
 use qubit_codec::ByteOrder;
@@ -60,7 +63,174 @@ fuzz_target!(|data: &[u8]| {
     fuzz_string(payload, chunk_size);
     fuzz_malformed_strict_leb128(payload, chunk_size);
     fuzz_malformed_strings(payload, chunk_size);
+    fuzz_stateful_sequences(payload, chunk_size);
 });
+
+#[derive(Clone, Copy)]
+enum StatefulOperation {
+    I8(i8),
+    I16(i16),
+    I64(i64),
+    Raw { bytes: [u8; 8], len: usize },
+    Flush,
+}
+
+/// Exercises bounded mixed operations on one writer and reader per codec
+/// family. The two checked-in seeds start with four `i64::MIN` records to cross
+/// 19/23-byte capacities, then mix raw/scalar data; the flush seed also
+/// includes two empty flushes.
+fn fuzz_stateful_sequences(payload: &[u8], chunk_size: usize) {
+    let control = payload.first().copied().unwrap_or_default();
+    let capacity = [19_usize, 23, 31, 64][usize::from(control & 3)];
+    let flush_at_end = control & 4 != 0;
+    let operations = payload
+        .get(1..)
+        .unwrap_or_default()
+        .chunks_exact(10)
+        .take(64)
+        .map(|record| {
+            let opcode = record[0] % 5;
+            let count = usize::from(record[1] % 9);
+            let mut value = [0_u8; 8];
+            value.copy_from_slice(&record[2..10]);
+            match opcode {
+                0 => StatefulOperation::I8(value[0] as i8),
+                1 => StatefulOperation::I16(i16::from_le_bytes([value[0], value[1]])),
+                2 => StatefulOperation::I64(i64::from_le_bytes(value)),
+                3 => StatefulOperation::Raw {
+                    bytes: value,
+                    len: count,
+                },
+                _ => StatefulOperation::Flush,
+            }
+        })
+        .collect::<Vec<_>>();
+
+    macro_rules! check_family {
+        ($writer_type:ty, $reader_type:ty, $ref_trait:path, $reader_trait:path,
+         $ref_i8:ident, $ref_i16:ident, $ref_i64:ident,
+         $write_i8:ident, $write_i16:ident, $write_i64:ident,
+         $ext_read_i8:ident, $ext_read_i16:ident, $ext_read_i64:ident,
+         $read_i8:ident, $read_i16:ident, $read_i64:ident) => {{
+            let observed = Rc::new(RefCell::new(Vec::new()));
+            let mut buffered_writer =
+                <$writer_type>::with_capacity(ScriptedWriter::with_observer(chunk_size, observed.clone()), capacity);
+            let mut reference = Vec::new();
+            for operation in &operations {
+                match operation {
+                    StatefulOperation::I8(value) => {
+                        <Vec<u8> as $ref_trait>::$ref_i8(&mut reference, *value).expect("reference i8 encoding");
+                        buffered_writer.$write_i8(*value).expect("buffered i8 write");
+                    }
+                    StatefulOperation::I16(value) => {
+                        <Vec<u8> as $ref_trait>::$ref_i16(&mut reference, *value).expect("reference i16 encoding");
+                        buffered_writer.$write_i16(*value).expect("buffered i16 write");
+                    }
+                    StatefulOperation::I64(value) => {
+                        <Vec<u8> as $ref_trait>::$ref_i64(&mut reference, *value).expect("reference i64 encoding");
+                        buffered_writer.$write_i64(*value).expect("buffered i64 write");
+                    }
+                    StatefulOperation::Raw { bytes, len } => {
+                        reference.extend_from_slice(&bytes[..*len]);
+                        buffered_writer.write_fully(&bytes[..*len]).expect("buffered raw write");
+                    }
+                    StatefulOperation::Flush => {
+                        Output::flush(&mut buffered_writer).expect("explicit flush");
+                        assert_eq!(reference, *observed.borrow(), "flush must emit all reference bytes");
+                    }
+                }
+                let written = observed.borrow();
+                assert!(written.len() <= reference.len());
+                assert_eq!(
+                    &reference[..written.len()],
+                    written.as_slice(),
+                    "output must remain a reference prefix"
+                );
+            }
+            if flush_at_end {
+                Output::flush(&mut buffered_writer).expect("final flush");
+            }
+            let (inner, recovery) = buffered_writer.into_parts();
+            let pending = match recovery {
+                BufferedOutputRecovery::Pending(buffer) => buffer,
+                BufferedOutputRecovery::Indeterminate(_) => panic!("non-panicking sequence must stay determinate"),
+            };
+            if flush_at_end {
+                assert!(pending.is_empty(), "final flush must drain pending bytes");
+            }
+            let written = inner.into_bytes();
+            assert_eq!(written, *observed.borrow());
+            let mut combined = written;
+            combined.extend_from_slice(pending.readable());
+            assert_eq!(reference, combined, "written and pending bytes must conserve output");
+
+            let mut extension = Cursor::new(reference.as_slice());
+            let mut buffered_reader = <$reader_type>::with_capacity(Cursor::new(reference.as_slice()), capacity);
+            for operation in &operations {
+                match operation {
+                    StatefulOperation::I8(expected) => {
+                        assert_eq!(
+                            *expected,
+                            <Cursor<&[u8]> as $reader_trait>::$ext_read_i8(&mut extension).expect("reference i8 read")
+                        );
+                        assert_eq!(*expected, buffered_reader.$read_i8().expect("buffered i8 read"));
+                    }
+                    StatefulOperation::I16(expected) => {
+                        assert_eq!(
+                            *expected,
+                            <Cursor<&[u8]> as $reader_trait>::$ext_read_i16(&mut extension)
+                                .expect("reference i16 read")
+                        );
+                        assert_eq!(*expected, buffered_reader.$read_i16().expect("buffered i16 read"));
+                    }
+                    StatefulOperation::I64(expected) => {
+                        assert_eq!(
+                            *expected,
+                            <Cursor<&[u8]> as $reader_trait>::$ext_read_i64(&mut extension)
+                                .expect("reference i64 read")
+                        );
+                        assert_eq!(*expected, buffered_reader.$read_i64().expect("buffered i64 read"));
+                    }
+                    StatefulOperation::Raw { bytes, len } => {
+                        let mut actual = vec![0; *len];
+                        extension.read_exact(&mut actual).expect("reference raw read");
+                        assert_eq!(&bytes[..*len], actual.as_slice());
+                        let mut actual = vec![0; *len];
+                        buffered_reader.read_exactly(&mut actual).expect("buffered raw read");
+                        assert_eq!(&bytes[..*len], actual.as_slice());
+                    }
+                    StatefulOperation::Flush => {}
+                }
+                assert_eq!(
+                    extension.position(),
+                    buffered_reader.seek_to(SeekFrom::Current(0)).expect("position")
+                );
+            }
+            assert_eq!(reference.len() as u64, extension.position());
+            let (inner, unread) = buffered_reader.into_parts();
+            assert_eq!(reference.len() as u64, inner.position() - unread.available() as u64);
+            assert!(unread.readable().is_empty());
+        }};
+    }
+
+    check_family!(
+        BufferedBinaryWriter<_, LittleEndian>, BufferedBinaryReader<_, LittleEndian>, BinaryWriteExt, BinaryReadExt,
+        write_i8, write_i16_le, write_i64_le, write_i8, write_i16, write_i64, read_i8, read_i16_le, read_i64_le,
+        read_i8, read_i16, read_i64
+    );
+    check_family!(
+        BufferedLeb128Writer<_>, BufferedLeb128Reader<_, Strict>, Leb128WriteExt, Leb128ReadExt,
+        write_sleb_i8, write_sleb_i16, write_sleb_i64, write_i8, write_i16, write_i64,
+        read_sleb_i8_strict, read_sleb_i16_strict, read_sleb_i64_strict,
+        read_i8, read_i16, read_i64
+    );
+    check_family!(
+        BufferedZigZagWriter<_>, BufferedZigZagReader<_, Strict>, ZigZagWriteExt, ZigZagReadExt,
+        write_zig_zag_i8, write_zig_zag_i16, write_zig_zag_i64, write_i8, write_i16, write_i64,
+        read_zig_zag_i8_strict, read_zig_zag_i16_strict, read_zig_zag_i64_strict,
+        read_i8, read_i16, read_i64
+    );
+}
 
 /// Compares fixed-width writers across short writes and injected failures.
 fn fuzz_binary_writers(payload: &[u8], chunk_size: usize) {
@@ -709,6 +879,7 @@ struct ScriptedWriter {
     bytes: Vec<u8>,
     chunk_size: usize,
     remaining: Option<usize>,
+    observed: Option<Rc<RefCell<Vec<u8>>>>,
 }
 
 impl ScriptedWriter {
@@ -718,6 +889,17 @@ impl ScriptedWriter {
             bytes: Vec::new(),
             chunk_size,
             remaining: failure_limit,
+            observed: None,
+        }
+    }
+
+    /// Creates a short-write writer whose accepted bytes are also observable.
+    fn with_observer(chunk_size: usize, observed: Rc<RefCell<Vec<u8>>>) -> Self {
+        Self {
+            bytes: Vec::new(),
+            chunk_size,
+            remaining: None,
+            observed: Some(observed),
         }
     }
 
@@ -736,6 +918,9 @@ impl Write for ScriptedWriter {
             return Err(io::Error::new(ErrorKind::Other, "scripted writer failure"));
         }
         self.bytes.extend_from_slice(&input[..count]);
+        if let Some(observed) = &self.observed {
+            observed.borrow_mut().extend_from_slice(&input[..count]);
+        }
         if let Some(remaining) = &mut self.remaining {
             *remaining -= count;
         }
