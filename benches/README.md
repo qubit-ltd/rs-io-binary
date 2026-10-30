@@ -10,7 +10,9 @@
   - `prod_binary_pipeline`：固定字段的二进制读写。
   - `prod_mixed_binary_pipeline`：混合固定宽度整数和 UTF-8 字符串的记录流。
     该组同时测量每条记录分配 `String` 的默认读取路径，以及复用
-    `Vec<u8>` 的 `read_utf8_payload_into` 路径。
+    `Vec<u8>` 的 `read_utf8_payload_into` 路径。buffered 默认与 reuse case 均使用固有
+    typed 标量和 `u16` 前缀读取；reuse case 保留 payload 扩展方法。该组 2026-10-30
+    起的新对照结果见[测量报告](results/2026-10-30-typed-buffered-string-buffer-reuse.md)。
   - `prod_varints`：随机类型字段流的无符号 LEB128 编解码。
   - `prod_signed_varints`：随机类型字段流的 ZigZag 编解码。
   - `async_binary_pipeline`：运行时无关的异步 `u64` 读写，以及与
@@ -39,7 +41,10 @@
   成本混入 adapter 对比。读取包含四种对照：extension trait 与
   `BufferedBinaryReader` 各自分别使用新建 `String` 或复用 payload `Vec<u8>`；
   `extension_read_reuse` 和 `buffered_read_reuse` 使用相同字段 schema 与输入字节，
-  计时前检查四种读取摘要一致。
+  计时前检查四种读取摘要一致。两个 buffered case 均使用固有 typed 标量读取及
+  `u16` 长度前缀读取；reuse case 仅在字符串 payload 上使用
+  `read_utf8_payload_into`。extension 对照保持不变。2026-10-30 的新口径和结果见
+  [typed buffered reuse 测量报告](results/2026-10-30-typed-buffered-string-buffer-reuse.md)。
 - 生产型输入规模采用大批量重复：
   - 单批记录数：`BINARY_BATCH = 1_048_576`
   - 单批 varint 字段数：`VARINT_COUNT = 262_144`
@@ -93,7 +98,12 @@
   `*_read` 路径分开比较，避免把分配策略变化误认为缓冲区变化。
   在内存组中，`extension_read_reuse` 使用 `Cursor<&[u8]>`，
   `buffered_read_reuse` 使用 `BufferedBinaryReader<Cursor<&[u8]>, LittleEndian>`；
-  两种输入构造不会混淆。
+  两种输入构造不会混淆。当前 buffered 默认与 reuse case 的 typed 标量及长度前缀
+  分派一致；reuse case 保留 payload 扩展方法。case 名称相同不表示口径与历史测量连续，
+  请使用[新测量报告](results/2026-10-30-typed-buffered-string-buffer-reuse.md)作为
+  2026-10-30 起的比较基线。历史报告的归因限定见
+  [8 月字符串复用报告](results/2026-08-07-string-buffer-reuse.md)和
+  [10 月 24 日内存组修正报告](results/2026-10-24-memory-mixed-binary-pipeline-correction.md)。
 
 结果解读时应比较同一 group 下相同方向的 `ext_*` 与 `wrapper_*`，例如：
 

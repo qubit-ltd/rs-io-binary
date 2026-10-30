@@ -12,9 +12,15 @@ Criterion reports the 95% confidence interval for time and throughput. The four
 read cases use identical input bytes, schema, length limits, and summary checks;
 the extension cases read through `Cursor<&[u8]>`, while the buffered cases use
 `BufferedBinaryReader<Cursor<&[u8]>, LittleEndian>`. The reuse variants reuse
-the payload `Vec<u8>`. Criterion used its default 3-second warm-up, 100 samples,
-and 5-second measurement target; the first write case estimated 8.85 seconds and
-reported that 100 samples could not fit in its original 5-second target.
+the payload `Vec<u8>`. Additional methodology note: both buffered cases
+constructed the intended wrapper, but their scalar and length-prefix dispatch
+still differed. The default case used inherent typed methods; the reuse case
+used extension traits through a generic helper. These results do not isolate
+payload-buffer reuse. A subsequent comparison aligns typed dispatch in both
+cases; see the [2026-10-30 report](2026-10-30-typed-buffered-string-buffer-reuse.md).
+Criterion used its default 3-second warm-up, 100 samples, and 5-second
+measurement target; the first write case estimated 8.85 seconds and reported
+that 100 samples could not fit in its original 5-second target.
 
 | Case | Time (95% CI) | Throughput (95% CI) |
 | --- | ---: | ---: |
