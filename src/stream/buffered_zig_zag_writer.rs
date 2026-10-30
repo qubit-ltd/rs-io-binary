@@ -113,10 +113,22 @@ where
 
     /// Tries to create a buffered ZigZag writer with at least `capacity` bytes.
     ///
+    /// # Parameters
+    ///
+    /// - `inner`: Underlying byte output to wrap.
+    /// - `capacity`: Requested internal buffer capacity in bytes. The request
+    ///   is raised when necessary to fit the largest supported codec payload.
+    ///
+    /// # Returns
+    ///
+    /// Returns a buffered writer on successful allocation. Its capacity
+    /// satisfies both the request and the minimum required by the supported
+    /// codecs.
+    ///
     /// # Errors
     ///
-    /// Returns an allocation error when the requested buffer cannot be
-    /// allocated.
+    /// Returns a [`TryReserveError`] if the buffer capacity overflows or its
+    /// allocation fails.
     #[inline]
     pub fn try_with_capacity(inner: W, capacity: usize) -> std::result::Result<Self, TryReserveError> {
         Ok(Self {
