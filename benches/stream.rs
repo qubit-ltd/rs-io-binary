@@ -1886,6 +1886,59 @@ fn read_mixed_buffered<const VALIDATE: bool>(path: &Path, fields: &[MixedBinaryF
     digest
 }
 
+fn read_mixed_buffered_reusing_payload<R, const VALIDATE: bool>(
+    mut input: BufferedBinaryReader<R, LittleEndian>,
+    fields: &[MixedBinaryField],
+) -> u64
+where
+    R: qubit_io::ByteInput,
+{
+    let mut payload = Vec::with_capacity(1024);
+    let mut digest = 0_u64;
+    for (index, field) in fields.iter().enumerate() {
+        digest ^= match field {
+            MixedBinaryField::U8(expected) => {
+                let decoded = input.read_u8().unwrap();
+                if VALIDATE {
+                    assert_eq!(*expected, decoded, "field {index}: u8");
+                }
+                u64::from(decoded)
+            }
+            MixedBinaryField::I32(expected) => {
+                let decoded = input.read_i32().unwrap();
+                if VALIDATE {
+                    assert_eq!(*expected, decoded, "field {index}: i32");
+                }
+                decoded as u64
+            }
+            MixedBinaryField::U64(expected) => {
+                let decoded = input.read_u64().unwrap();
+                if VALIDATE {
+                    assert_eq!(*expected, decoded, "field {index}: u64");
+                }
+                decoded
+            }
+            MixedBinaryField::String(expected) => {
+                let len = usize::from(input.read_u16().unwrap());
+                input.read_utf8_payload_into(&mut payload, len, 1024).unwrap();
+                if VALIDATE {
+                    assert_eq!(expected.as_bytes(), payload.as_slice(), "field {index}: string");
+                }
+                payload.len() as u64
+            }
+        };
+    }
+    if VALIDATE {
+        let mut trailing = [0_u8; 1];
+        assert_eq!(
+            0,
+            Input::read(&mut input, &mut trailing).unwrap(),
+            "unexpected trailing bytes"
+        );
+    }
+    digest
+}
+
 fn write_mixed_ext_memory(fields: &[MixedBinaryField]) -> Vec<u8> {
     let mut output = Vec::new();
     write_mixed_ext(&mut output, fields);
@@ -1967,7 +2020,7 @@ fn read_mixed_reusing_payload_memory<const VALIDATE: bool>(bytes: &[u8], fields:
 
 fn read_mixed_buffered_reusing_payload_memory<const VALIDATE: bool>(bytes: &[u8], fields: &[MixedBinaryField]) -> u64 {
     let input = BufferedBinaryReader::<_, LittleEndian>::new(Cursor::new(bytes));
-    read_mixed_reusing_payload::<_, VALIDATE>(input, fields)
+    read_mixed_buffered_reusing_payload::<_, VALIDATE>(input, fields)
 }
 
 fn bench_memory_mixed_binary_pipeline(c: &mut Criterion) {
@@ -2049,7 +2102,7 @@ fn bench_prod_mixed_binary_pipeline(c: &mut Criterion) {
     );
     assert_eq!(
         expected,
-        read_mixed_reusing_payload::<_, true>(
+        read_mixed_buffered_reusing_payload::<_, true>(
             BufferedBinaryReader::<_, LittleEndian>::new(File::open(&buffered_path).unwrap()),
             &fields,
         )
@@ -2095,7 +2148,7 @@ fn bench_prod_mixed_binary_pipeline(c: &mut Criterion) {
     });
     group.bench_function("buffered_read_reuse", |b| {
         b.iter(|| {
-            black_box(read_mixed_reusing_payload::<_, false>(
+            black_box(read_mixed_buffered_reusing_payload::<_, false>(
                 BufferedBinaryReader::<_, LittleEndian>::new(File::open(&buffered_path).unwrap()),
                 black_box(&fields),
             ))
