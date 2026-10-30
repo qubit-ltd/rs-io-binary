@@ -40,6 +40,9 @@ use qubit_io_binary::ZigZagWriteExt;
 /// Keeps each target invocation bounded before allocating test buffers.
 const MAX_FUZZ_INPUT_LEN: usize = 4096;
 const MAX_STRING_LEN: usize = MAX_FUZZ_INPUT_LEN * 4;
+/// Bounds polling for this target's deterministic async input and output
+/// streams. This budget is not a time guarantee for general-purpose futures.
+const MAX_ASYNC_POLLS: usize = 128;
 
 fuzz_target!(|data: &[u8]| {
     let data = &data[..data.len().min(MAX_FUZZ_INPUT_LEN)];
@@ -531,6 +534,8 @@ fn fuzz_malformed_reads(payload: &[u8], chunk_size: usize) {
 }
 
 /// Drives a runtime-neutral future with a deterministic waker.
+///
+/// Panics if the future remains pending for the full poll budget.
 fn run_to_completion<F>(future: F) -> F::Output
 where
     F: Future,
@@ -538,12 +543,13 @@ where
     let mut future = std::pin::pin!(future);
     let waker = Waker::noop();
     let mut context = Context::from_waker(waker);
-    loop {
+    for _ in 0..MAX_ASYNC_POLLS {
         match future.as_mut().poll(&mut context) {
             Poll::Ready(value) => return value,
             Poll::Pending => {}
         }
     }
+    panic!("async differential future exceeded poll budget of {MAX_ASYNC_POLLS}");
 }
 
 /// Converts a result into a value/error-kind signature for exact comparison.
