@@ -82,7 +82,10 @@ fn test_buffered_binary_writer_float_bits() {
         || BufferedBinaryWriter::<_, BigEndian>::with_capacity(Vec::new(), 19),
         |writer: BufferedBinaryWriter<Vec<u8>, BigEndian>| {
             let (bytes, recovery) = writer.into_parts();
-            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            assert!(matches!(
+                recovery,
+                BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
+            ));
             bytes
         },
         write_f32,
@@ -93,7 +96,10 @@ fn test_buffered_binary_writer_float_bits() {
         || BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19),
         |writer: BufferedBinaryWriter<Vec<u8>, LittleEndian>| {
             let (bytes, recovery) = writer.into_parts();
-            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            assert!(matches!(
+                recovery,
+                BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
+            ));
             bytes
         },
         write_f32,
@@ -104,7 +110,10 @@ fn test_buffered_binary_writer_float_bits() {
         || BufferedBinaryWriter::<_, NativeEndian>::with_capacity(Vec::new(), 19),
         |writer: BufferedBinaryWriter<Vec<u8>, NativeEndian>| {
             let (bytes, recovery) = writer.into_parts();
-            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            assert!(matches!(
+                recovery,
+                BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
+            ));
             bytes
         },
         write_f32,
@@ -115,7 +124,10 @@ fn test_buffered_binary_writer_float_bits() {
         || BufferedBinaryWriter::<_, BigEndian>::with_capacity(Vec::new(), 19),
         |writer: BufferedBinaryWriter<Vec<u8>, BigEndian>| {
             let (bytes, recovery) = writer.into_parts();
-            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            assert!(matches!(
+                recovery,
+                BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
+            ));
             bytes
         },
         write_f64,
@@ -126,7 +138,10 @@ fn test_buffered_binary_writer_float_bits() {
         || BufferedBinaryWriter::<_, LittleEndian>::with_capacity(Vec::new(), 19),
         |writer: BufferedBinaryWriter<Vec<u8>, LittleEndian>| {
             let (bytes, recovery) = writer.into_parts();
-            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            assert!(matches!(
+                recovery,
+                BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
+            ));
             bytes
         },
         write_f64,
@@ -137,7 +152,10 @@ fn test_buffered_binary_writer_float_bits() {
         || BufferedBinaryWriter::<_, NativeEndian>::with_capacity(Vec::new(), 19),
         |writer: BufferedBinaryWriter<Vec<u8>, NativeEndian>| {
             let (bytes, recovery) = writer.into_parts();
-            assert!(matches!(recovery, BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()));
+            assert!(matches!(
+                recovery,
+                BufferedOutputRecovery::Pending(buffer) if buffer.is_empty()
+            ));
             bytes
         },
         write_f64,
@@ -458,7 +476,9 @@ fn test_buffered_binary_writer_into_parts_returns_pending_bytes_without_flushing
     let (inner, pending) = writer.into_parts();
     let pending = match pending {
         qubit_io::BufferedOutputRecovery::Pending(buffer) => buffer,
-        qubit_io::BufferedOutputRecovery::Indeterminate(_) => panic!("unexpected indeterminate recovery"),
+        qubit_io::BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("unexpected indeterminate recovery")
+        }
     };
     assert_eq!(b"\x34\x12", pending.readable());
     assert!(inner.into_inner().is_empty());
@@ -855,7 +875,9 @@ fn test_buffered_binary_string_payload_failure_is_not_completed_by_flush() {
         assert_eq!(expected.as_slice(), output.bytes());
         match recovery {
             BufferedOutputRecovery::Pending(buffer) => assert!(buffer.readable().is_empty()),
-            BufferedOutputRecovery::Indeterminate(_) => panic!("ordinary errors must not imply a panic"),
+            BufferedOutputRecovery::Indeterminate(_) => {
+                panic!("ordinary errors must not imply a panic")
+            }
         }
     }
 }

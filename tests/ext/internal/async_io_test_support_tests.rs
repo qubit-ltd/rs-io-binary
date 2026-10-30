@@ -46,6 +46,8 @@ impl ChunkedAsyncInput {
         }
     }
 
+    #[must_use]
+    #[inline]
     pub(crate) const fn position(&self) -> usize {
         self.position
     }

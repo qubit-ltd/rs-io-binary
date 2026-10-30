@@ -211,7 +211,10 @@ fn test_leb128_varint_boundary_vectors() {
     macro_rules! check_invalid {
         ($method:ident, $bytes:expr) => {{
             let mut input = Cursor::new(&$bytes[..]);
-            assert_eq!(ErrorKind::InvalidData, input.$method().unwrap_err().kind());
+            assert_eq!(
+                ErrorKind::InvalidData,
+                input.$method().expect_err("invalid boundary vector should fail").kind()
+            );
             assert_eq!($bytes.len() as u64, input.position());
         }};
     }
@@ -223,10 +226,21 @@ fn test_leb128_varint_boundary_vectors() {
     check_invalid!(read_sleb_i8_non_strict, [0x80, 0x01]);
     let noncanonical = [0xff, 0x7f];
     let mut strict = Cursor::new(noncanonical);
-    assert_eq!(ErrorKind::InvalidData, strict.read_sleb_i8_strict().unwrap_err().kind());
+    assert_eq!(
+        ErrorKind::InvalidData,
+        strict
+            .read_sleb_i8_strict()
+            .expect_err("non-canonical value should fail")
+            .kind()
+    );
     assert_eq!(2, strict.position());
     let mut loose = Cursor::new(noncanonical);
-    assert_eq!(-1, loose.read_sleb_i8_non_strict().unwrap());
+    assert_eq!(
+        -1,
+        loose
+            .read_sleb_i8_non_strict()
+            .expect("non-strict decoding should accept non-canonical values")
+    );
     assert_eq!(2, loose.position());
     let mut u128_max = vec![0xff; 18];
     u128_max.push(0x03);
@@ -243,7 +257,10 @@ fn test_leb128_varint_boundary_vectors() {
     let mut truncated = Cursor::new([0x80]);
     assert_eq!(
         ErrorKind::UnexpectedEof,
-        truncated.read_uleb_u128_strict().unwrap_err().kind()
+        truncated
+            .read_uleb_u128_strict()
+            .expect_err("truncated value should report EOF")
+            .kind()
     );
     assert_eq!(1, truncated.position());
 }

@@ -61,7 +61,7 @@ impl Output for QubitOutput {
 }
 
 #[test]
-fn binary_read_ext_accepts_input_without_std_read() {
+fn test_binary_read_ext_accepts_input_without_std_read() {
     let mut input = QubitInput::new(vec![0x12, 0x34, 0x78, 0x56]);
 
     assert_eq!(0x1234, input.read_u16_be().unwrap());
@@ -69,7 +69,7 @@ fn binary_read_ext_accepts_input_without_std_read() {
 }
 
 #[test]
-fn binary_write_ext_accepts_output_without_std_write() {
+fn test_binary_write_ext_accepts_output_without_std_write() {
     let mut output = QubitOutput::default();
 
     output.write_u16_be(0x1234).unwrap();
@@ -79,7 +79,7 @@ fn binary_write_ext_accepts_output_without_std_write() {
 }
 
 #[test]
-fn variable_length_read_extensions_accept_input_without_std_read() {
+fn test_variable_length_read_extensions_accept_input_without_std_read() {
     let mut input = QubitInput::new(vec![0xac, 0x02, 0x01, 0x02, b'h', b'i']);
 
     assert_eq!(300, input.read_uleb_u16_non_strict().unwrap());
@@ -88,7 +88,7 @@ fn variable_length_read_extensions_accept_input_without_std_read() {
 }
 
 #[test]
-fn variable_length_write_extensions_accept_output_without_std_write() {
+fn test_variable_length_write_extensions_accept_output_without_std_write() {
     let mut output = QubitOutput::default();
 
     output.write_uleb_u16(300).unwrap();

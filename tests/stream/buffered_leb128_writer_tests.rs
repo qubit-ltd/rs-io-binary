@@ -143,7 +143,9 @@ fn test_buffered_leb128_writer_into_parts_returns_pending_bytes_without_flushing
     let (inner, pending) = writer.into_parts();
     let pending = match pending {
         qubit_io::BufferedOutputRecovery::Pending(buffer) => buffer,
-        qubit_io::BufferedOutputRecovery::Indeterminate(_) => panic!("unexpected indeterminate recovery"),
+        qubit_io::BufferedOutputRecovery::Indeterminate(_) => {
+            panic!("unexpected indeterminate recovery")
+        }
     };
     assert_eq!(b"\xAC\x02", pending.readable());
     assert!(inner.into_inner().is_empty());
@@ -274,7 +276,9 @@ fn test_buffered_leb128_string_payload_failure_is_not_completed_by_flush() {
         assert_eq!(&[40, b'x', b'x'], output.bytes());
         match recovery {
             BufferedOutputRecovery::Pending(buffer) => assert!(buffer.readable().is_empty()),
-            BufferedOutputRecovery::Indeterminate(_) => panic!("ordinary errors must not imply a panic"),
+            BufferedOutputRecovery::Indeterminate(_) => {
+                panic!("ordinary errors must not imply a panic")
+            }
         }
     }
 }

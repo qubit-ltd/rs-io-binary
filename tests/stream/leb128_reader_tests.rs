@@ -6,8 +6,11 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 use std::io::Cursor;
+use std::io::Error;
 use std::io::ErrorKind;
 use std::io::Read;
+use std::io::Result;
+use std::io::SeekFrom;
 
 use qubit_codec_binary::NonStrict;
 use qubit_codec_binary::Strict;
@@ -21,7 +24,7 @@ struct InterruptedValueInput {
 }
 
 impl Read for InterruptedValueInput {
-    fn read(&mut self, output: &mut [u8]) -> std::io::Result<usize> {
+    fn read(&mut self, output: &mut [u8]) -> Result<usize> {
         if output.is_empty() {
             return Ok(0);
         }
@@ -32,7 +35,7 @@ impl Read for InterruptedValueInput {
                 output[0] = 0xac;
                 Ok(1)
             }
-            1 => Err(std::io::Error::from(ErrorKind::WouldBlock)),
+            1 => Err(Error::from(ErrorKind::WouldBlock)),
             2 => {
                 output[0] = 0x02;
                 Ok(1)
@@ -146,7 +149,7 @@ fn test_leb128_reader_exposes_accessors_and_reports_errors() {
 #[test]
 fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
     let bytes = vec![3, b'h', 0xC3, 0xA9];
-    let mut reader = Leb128Reader::<_, NonStrict>::new(std::io::Cursor::new(bytes));
+    let mut reader = Leb128Reader::<_, NonStrict>::new(Cursor::new(bytes));
 
     let text = reader
         .read_utf8_string_usize_non_strict(3)
@@ -158,7 +161,7 @@ fn test_leb128_reader_read_utf8_string_reads_length_prefixed_payload() {
 #[test]
 fn test_leb128_reader_read_utf8_string_u64_reads_portable_length_prefix() {
     let bytes = vec![3, b'h', 0xC3, 0xA9];
-    let mut reader = Leb128Reader::<_, NonStrict>::new(std::io::Cursor::new(bytes));
+    let mut reader = Leb128Reader::<_, NonStrict>::new(Cursor::new(bytes));
 
     let text = reader
         .read_utf8_string_u64_non_strict(3)
@@ -205,9 +208,9 @@ fn test_leb128_reader_read_utf8_string_covers_strict_policy_paths() {
 
 #[test]
 fn test_leb128_reader_read_and_seek_delegate_to_inner_reader() {
-    let mut reader = Leb128Reader::<_, NonStrict>::new(std::io::Cursor::new(vec![1, 2, 3, 4]));
+    let mut reader = Leb128Reader::<_, NonStrict>::new(Cursor::new(vec![1, 2, 3, 4]));
 
-    Seekable::seek_to(&mut reader, std::io::SeekFrom::Start(1)).expect("seeking through Leb128Reader should succeed");
+    Seekable::seek_to(&mut reader, SeekFrom::Start(1)).expect("seeking through Leb128Reader should succeed");
     let mut bytes = [0_u8; 2];
     Input::read_fully(&mut reader, &mut bytes).expect("reading through Leb128Reader should succeed");
 

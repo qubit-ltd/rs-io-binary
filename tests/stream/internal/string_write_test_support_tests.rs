@@ -16,6 +16,8 @@ pub(crate) struct PrefixErrorOutput {
 }
 
 impl PrefixErrorOutput {
+    #[must_use]
+    #[inline]
     pub(crate) fn new(limit: usize) -> Self {
         Self {
             bytes: Vec::new(),
@@ -23,6 +25,8 @@ impl PrefixErrorOutput {
         }
     }
 
+    #[must_use]
+    #[inline]
     pub(crate) fn bytes(&self) -> &[u8] {
         &self.bytes
     }
@@ -42,6 +46,7 @@ impl Write for PrefixErrorOutput {
         Ok(accepted)
     }
 
+    #[inline]
     fn flush(&mut self) -> Result<()> {
         Ok(())
     }

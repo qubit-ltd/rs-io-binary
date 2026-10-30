@@ -144,9 +144,19 @@ fn test_zig_zag_varint_boundary_i128_min() {
     let mut bytes = vec![0xff; 18];
     bytes.push(0x03);
     let mut strict = Cursor::new(bytes.as_slice());
-    assert_eq!(i128::MIN, strict.read_zig_zag_i128_strict().unwrap());
+    assert_eq!(
+        i128::MIN,
+        strict
+            .read_zig_zag_i128_strict()
+            .expect("strict reader should decode the i128 minimum")
+    );
     assert_eq!(19, strict.position());
     let mut loose = Cursor::new(bytes.as_slice());
-    assert_eq!(i128::MIN, loose.read_zig_zag_i128_non_strict().unwrap());
+    assert_eq!(
+        i128::MIN,
+        loose
+            .read_zig_zag_i128_non_strict()
+            .expect("non-strict reader should decode the i128 minimum")
+    );
     assert_eq!(19, loose.position());
 }

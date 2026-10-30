@@ -69,19 +69,31 @@ impl Output for QubitOutput {
 fn test_binary_reader_accepts_input_without_std_read() {
     let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
-    assert!(!reader.is_buffered());
-    assert_eq!(0x1234, reader.read_u16().unwrap());
+    assert!(!reader.is_buffered(), "BinaryReader should remain unbuffered");
+    assert_eq!(
+        0x1234,
+        reader.read_u16().unwrap(),
+        "BinaryReader should decode the input bytes",
+    );
 
     let mut reader = BinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0, 1, b'a', 0, 0, 0, 1, b'b']));
-    assert_eq!("a", reader.read_string_with_u16_len(1).unwrap());
-    assert_eq!("b", reader.read_string_with_u32_len(1).unwrap());
+    assert_eq!(
+        "a",
+        reader.read_string_with_u16_len(1).unwrap(),
+        "u16-length strings should be decoded",
+    );
+    assert_eq!(
+        "b",
+        reader.read_string_with_u32_len(1).unwrap(),
+        "u32-length strings should be decoded",
+    );
 }
 
 #[test]
 fn test_binary_writer_accepts_output_without_std_write() {
     let mut writer = BinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
-    assert!(!writer.is_buffered());
+    assert!(!writer.is_buffered(), "BinaryWriter should remain unbuffered");
     writer.write_u16(0x1234).unwrap();
     writer.write_string_with_u16_len("a").unwrap();
     writer.write_string_with_u32_len("b").unwrap();
@@ -89,6 +101,7 @@ fn test_binary_writer_accepts_output_without_std_write() {
     assert_eq!(
         vec![0x12, 0x34, 0, 1, b'a', 0, 0, 0, 1, b'b'],
         writer.into_inner().bytes,
+        "BinaryWriter should encode integers and length-prefixed strings",
     );
 }
 
@@ -96,19 +109,33 @@ fn test_binary_writer_accepts_output_without_std_write() {
 fn test_buffered_binary_reader_accepts_input_without_std_read() {
     let mut reader = BufferedBinaryReader::<_, BigEndian>::new(QubitInput::new(vec![0x12, 0x34]));
 
-    assert!(reader.is_buffered());
-    assert_eq!(0x1234, reader.read_u16().unwrap());
+    assert!(
+        reader.is_buffered(),
+        "BufferedBinaryReader should retain its buffering mode"
+    );
+    assert_eq!(
+        0x1234,
+        reader.read_u16().unwrap(),
+        "BufferedBinaryReader should decode the input bytes",
+    );
 }
 
 #[test]
 fn test_buffered_binary_writer_accepts_output_without_std_write() {
     let mut writer = BufferedBinaryWriter::<_, BigEndian>::new(QubitOutput::default());
 
-    assert!(writer.is_buffered());
+    assert!(
+        writer.is_buffered(),
+        "BufferedBinaryWriter should retain its buffering mode"
+    );
     writer.write_u16(0x1234).unwrap();
     writer.flush().unwrap();
 
-    assert_eq!(vec![0x12, 0x34], writer.inner().bytes);
+    assert_eq!(
+        vec![0x12, 0x34],
+        writer.inner().bytes,
+        "flush should write buffered bytes to the output",
+    );
 }
 
 #[test]
@@ -144,51 +171,95 @@ fn test_buffered_readers_reject_capacity_overflow() {
 #[test]
 fn test_leb128_readers_accept_input_without_std_read() {
     let mut reader = Leb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
-    assert!(!reader.is_buffered());
-    assert_eq!(300, reader.read_u16_non_strict().unwrap());
+    assert!(!reader.is_buffered(), "Leb128Reader should remain unbuffered");
+    assert_eq!(
+        300,
+        reader.read_u16_non_strict().unwrap(),
+        "Leb128Reader should decode the input value",
+    );
 
     let mut reader = BufferedLeb128Reader::<_, NonStrict>::new(QubitInput::new(vec![0xac, 0x02]));
-    assert!(reader.is_buffered());
-    assert_eq!(300, reader.read_u16_non_strict().unwrap());
+    assert!(
+        reader.is_buffered(),
+        "BufferedLeb128Reader should retain its buffering mode",
+    );
+    assert_eq!(
+        300,
+        reader.read_u16_non_strict().unwrap(),
+        "BufferedLeb128Reader should decode the input value",
+    );
 }
 
 #[test]
 fn test_leb128_writers_accept_output_without_std_write() {
     let mut writer = Leb128Writer::new(QubitOutput::default());
-    assert!(!writer.is_buffered());
+    assert!(!writer.is_buffered(), "Leb128Writer should remain unbuffered");
     writer.write_u16(300).unwrap();
     writer.write_utf8_string_usize("a").unwrap();
     writer.write_utf8_string_u64("b").unwrap();
-    assert_eq!(vec![0xac, 0x02, 1, b'a', 1, b'b'], writer.into_inner().bytes);
+    assert_eq!(
+        vec![0xac, 0x02, 1, b'a', 1, b'b'],
+        writer.into_inner().bytes,
+        "Leb128Writer should encode integers and UTF-8 strings",
+    );
 
     let mut writer = BufferedLeb128Writer::new(QubitOutput::default());
-    assert!(writer.is_buffered());
+    assert!(
+        writer.is_buffered(),
+        "BufferedLeb128Writer should retain its buffering mode",
+    );
     writer.write_u16(300).unwrap();
     writer.flush().unwrap();
-    assert_eq!(vec![0xac, 0x02], writer.inner().bytes);
+    assert_eq!(
+        vec![0xac, 0x02],
+        writer.inner().bytes,
+        "flush should write buffered LEB128 bytes",
+    );
 }
 
 #[test]
 fn test_zig_zag_readers_accept_input_without_std_read() {
     let mut reader = ZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
-    assert!(!reader.is_buffered());
-    assert_eq!(-1, reader.read_i16_non_strict().unwrap());
+    assert!(!reader.is_buffered(), "ZigZagReader should remain unbuffered");
+    assert_eq!(
+        -1,
+        reader.read_i16_non_strict().unwrap(),
+        "ZigZagReader should decode the signed input value",
+    );
 
     let mut reader = BufferedZigZagReader::<_, NonStrict>::new(QubitInput::new(vec![0x01]));
-    assert!(reader.is_buffered());
-    assert_eq!(-1, reader.read_i16_non_strict().unwrap());
+    assert!(
+        reader.is_buffered(),
+        "BufferedZigZagReader should retain its buffering mode",
+    );
+    assert_eq!(
+        -1,
+        reader.read_i16_non_strict().unwrap(),
+        "BufferedZigZagReader should decode the signed input value",
+    );
 }
 
 #[test]
 fn test_zig_zag_writers_accept_output_without_std_write() {
     let mut writer = ZigZagWriter::new(QubitOutput::default());
-    assert!(!writer.is_buffered());
+    assert!(!writer.is_buffered(), "ZigZagWriter should remain unbuffered");
     writer.write_i16(-1).unwrap();
-    assert_eq!(vec![0x01], writer.into_inner().bytes);
+    assert_eq!(
+        vec![0x01],
+        writer.into_inner().bytes,
+        "ZigZagWriter should encode the signed value",
+    );
 
     let mut writer = BufferedZigZagWriter::new(QubitOutput::default());
-    assert!(writer.is_buffered());
+    assert!(
+        writer.is_buffered(),
+        "BufferedZigZagWriter should retain its buffering mode",
+    );
     writer.write_i16(-1).unwrap();
     writer.flush().unwrap();
-    assert_eq!(vec![0x01], writer.inner().bytes);
+    assert_eq!(
+        vec![0x01],
+        writer.inner().bytes,
+        "flush should write buffered ZigZag bytes",
+    );
 }

@@ -79,7 +79,7 @@ mod tests {
     }
 
     #[test]
-    fn extracts_normal_example_and_preserves_comments() {
+    fn test_extracts_normal_example_and_preserves_comments() {
         let source = markdown("```rust\n// ordinary comment\nlet value = 1;\n```");
         assert_eq!(
             extract_quick_start(&source).expect("extract block"),
@@ -88,13 +88,13 @@ mod tests {
     }
 
     #[test]
-    fn normalizes_crlf_and_trims_line_ends() {
+    fn test_normalizes_crlf_and_trims_line_ends() {
         let source = format!("{START}\r\n```rust\r\nlet value = 1;  \r\n```\r\n{END}");
         assert_eq!(extract_quick_start(&source).expect("extract block"), "let value = 1;");
     }
 
     #[test]
-    fn preserves_rustdoc_hidden_prefixes_as_source() {
+    fn test_preserves_rustdoc_hidden_prefixes_as_source() {
         let source = markdown("```rust\n# Ok::<(), Error>(())\n```");
         assert_eq!(
             extract_quick_start(&source).expect("extract block"),
@@ -103,7 +103,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_missing_or_duplicate_markers() {
+    fn test_rejects_missing_or_duplicate_markers() {
         assert_eq!(
             extract_quick_start("no markers").expect_err("missing markers"),
             "expected exactly one start marker"
@@ -123,7 +123,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_reversed_markers() {
+    fn test_rejects_reversed_markers() {
         let source = format!("{END}\n```rust\nx\n```\n{START}");
         assert_eq!(
             extract_quick_start(&source).expect_err("reversed markers"),
@@ -132,7 +132,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_wrong_language_fence() {
+    fn test_rejects_wrong_language_fence() {
         assert_eq!(
             extract_quick_start(&markdown("```text\nx\n```")).expect_err("wrong language"),
             "missing rust fence"
@@ -140,7 +140,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_unclosed_fence() {
+    fn test_rejects_unclosed_fence() {
         assert_eq!(
             extract_quick_start(&markdown("```rust\nx")).expect_err("unclosed fence"),
             "missing closing fence"
@@ -148,7 +148,7 @@ mod tests {
     }
 
     #[test]
-    fn rejects_extra_fence() {
+    fn test_rejects_extra_fence() {
         assert_eq!(
             extract_quick_start(&markdown("```rust\nx\n```\n```rust\ny\n```")).expect_err("extra fence"),
             "unexpected extra fence"

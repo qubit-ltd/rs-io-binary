@@ -8,8 +8,11 @@
 use std::io::Cursor;
 use std::io::Error;
 use std::io::ErrorKind;
+use std::io::Result;
 use std::io::SeekFrom;
 use std::io::Write;
+use std::panic::AssertUnwindSafe;
+use std::panic::catch_unwind;
 
 use qubit_io::BufferedOutputRecovery;
 use qubit_io::Output;
@@ -35,11 +38,11 @@ fn test_seek_current_zero_preserves_pending_bytes() {
 struct FailingWriter;
 
 impl Write for FailingWriter {
-    fn write(&mut self, _buffer: &[u8]) -> std::io::Result<usize> {
+    fn write(&mut self, _buffer: &[u8]) -> Result<usize> {
         Err(Error::other("write failed"))
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> Result<()> {
         Ok(())
     }
 }
@@ -52,13 +55,13 @@ struct PanicOutput {
 impl Output for PanicOutput {
     type Item = u8;
 
-    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> std::io::Result<usize> {
+    unsafe fn write_unchecked(&mut self, input: &[u8], index: usize, count: usize) -> Result<usize> {
         let committed = count.min(1);
         self.bytes.extend_from_slice(&input[index..index + committed]);
         panic!("scripted output panic after committing a prefix");
     }
 
-    fn flush(&mut self) -> std::io::Result<()> {
+    fn flush(&mut self) -> Result<()> {
         Ok(())
     }
 }
@@ -104,7 +107,7 @@ fn test_buffered_zig_zag_writer_accessors_write_all_and_seek() {
     assert_eq!(
         3,
         writer
-            .seek_to(std::io::SeekFrom::Current(0))
+            .seek_to(SeekFrom::Current(0))
             .expect("logical position query should succeed")
     );
 
@@ -122,8 +125,8 @@ fn test_buffered_zig_zag_writer_into_parts_returns_pending_bytes_without_flushin
 
     let (inner, pending) = writer.into_parts();
     let pending = match pending {
-        qubit_io::BufferedOutputRecovery::Pending(buffer) => buffer,
-        qubit_io::BufferedOutputRecovery::Indeterminate(_) => panic!("unexpected indeterminate recovery"),
+        BufferedOutputRecovery::Pending(buffer) => buffer,
+        BufferedOutputRecovery::Indeterminate(_) => panic!("unexpected indeterminate recovery"),
     };
     assert_eq!(b"\xD7\x04", pending.readable());
     assert!(inner.into_inner().is_empty());
@@ -170,10 +173,10 @@ fn test_buffered_zig_zag_writer_flushes_before_encoded_value_when_full() {
 fn test_into_parts_preserves_indeterminate_after_inner_write_panics() {
     let mut writer = BufferedZigZagWriter::new(PanicOutput::default());
     writer.write_i64(-300).expect("the encoded value should be buffered");
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| qubit_io::Output::flush(&mut writer)));
+    let result = catch_unwind(AssertUnwindSafe(|| Output::flush(&mut writer)));
     assert!(result.is_err());
 
     let (inner, recovery) = writer.into_parts();
     assert_eq!([0xD7], inner.bytes.as_slice());
-    assert!(matches!(recovery, qubit_io::BufferedOutputRecovery::Indeterminate(_)));
+    assert!(matches!(recovery, BufferedOutputRecovery::Indeterminate(_)));
 }

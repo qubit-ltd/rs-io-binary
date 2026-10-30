@@ -233,7 +233,13 @@ fn test_async_prefixed_string_write_boundaries() {
                                 StopMode::Zero => ErrorKind::WriteZero,
                                 StopMode::Pending => unreachable!(),
                             };
-                            assert_eq!(kind, error.kind(), "{} at {}", stringify!($method), stop_after);
+                            assert_eq!(
+                                kind,
+                                error.kind(),
+                                "{} at {}",
+                                stringify!($method),
+                                stop_after,
+                            );
                         }
                     }
                     assert_eq!(
@@ -250,7 +256,11 @@ fn test_async_prefixed_string_write_boundaries() {
     check!(write_string_with_u16_len_async, ByteOrder::BigEndian; 130_u16.to_be_bytes().to_vec());
     check!(write_string_with_u16_len_be_async; 130_u16.to_be_bytes().to_vec());
     check!(write_string_with_u16_len_le_async; 130_u16.to_le_bytes().to_vec());
-    check!(write_string_with_u32_len_async, ByteOrder::LittleEndian; 130_u32.to_le_bytes().to_vec());
+    check!(
+        write_string_with_u32_len_async,
+        ByteOrder::LittleEndian;
+        130_u32.to_le_bytes().to_vec()
+    );
     check!(write_string_with_u32_len_be_async; 130_u32.to_be_bytes().to_vec());
     check!(write_string_with_u32_len_le_async; 130_u32.to_le_bytes().to_vec());
 }

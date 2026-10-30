@@ -6,11 +6,14 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
+//! Checks bilingual user-guide examples and generates their compilation fixture.
+
 use std::env;
 use std::fs;
 use std::path::Path;
 use std::path::PathBuf;
 
+/// Normalizes line endings, trailing whitespace, and surrounding blank lines.
 fn normalize(source: &str) -> String {
     source
         .replace("\r\n", "\n")
@@ -63,6 +66,7 @@ fn readme_async_pair(english: &str, chinese: &str) -> Result<String, String> {
     Ok(english)
 }
 
+/// Extracts and normalizes all Rust fenced blocks from a guide.
 fn rust_blocks(markdown: &str) -> Result<Vec<String>, String> {
     let markdown = markdown.replace("\r\n", "\n");
     let mut blocks = Vec::new();
@@ -97,6 +101,7 @@ fn rust_blocks(markdown: &str) -> Result<Vec<String>, String> {
     Ok(blocks.into_iter().map(|block| normalize(&block)).collect())
 }
 
+/// Reads a guide and requires its six documented Rust examples.
 fn read_guide(path: &Path) -> Vec<String> {
     rust_blocks(&fs::read_to_string(path).expect("read user guide"))
         .expect("extract six Rust examples from user guide")

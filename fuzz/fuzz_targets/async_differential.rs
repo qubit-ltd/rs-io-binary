@@ -97,6 +97,8 @@ fn fuzz_scripted_fixed_width(payload: &[u8], chunk_size: usize) {
     check_scripted_fixed_width(&payload[..payload.len().min(16)], chunk_size, value_bytes);
 }
 
+/// Compares scripted read and write outcomes, error kinds, and transferred
+/// bytes.
 fn check_scripted_fixed_width(events: &[u8], chunk_size: usize, value_bytes: [u8; 8]) {
     let chunk_size = chunk_size.clamp(1, 8);
 
@@ -119,6 +121,8 @@ fn check_scripted_fixed_width(events: &[u8], chunk_size: usize, value_bytes: [u8
     assert_eq!(&value_bytes[..write_count], output.bytes.as_slice());
 }
 
+/// Predicts the scripted operation's result and byte count without performing
+/// I/O.
 fn scripted_expected(events: &[u8], chunk_size: usize, writing: bool) -> (Result<(), ErrorKind>, usize) {
     let mut transferred = 0;
     for event in events.iter().take(16).map(|byte| byte % 5) {
@@ -145,6 +149,8 @@ fn scripted_expected(events: &[u8], chunk_size: usize, writing: bool) -> (Result
     (Ok(()), 8)
 }
 
+/// Polls a scripted I/O future until ready or its fixed safety budget is
+/// exhausted.
 fn run_scripted_to_completion<F>(future: F) -> F::Output
 where
     F: Future,
@@ -160,6 +166,8 @@ where
     panic!("scripted fixed-width future exceeded poll budget");
 }
 
+/// Read model that advances through bounded progress, pending, and failure
+/// events.
 struct ScriptedAsyncInput<'a> {
     bytes: Vec<u8>,
     position: usize,
@@ -169,6 +177,7 @@ struct ScriptedAsyncInput<'a> {
 }
 
 impl<'a> ScriptedAsyncInput<'a> {
+    /// Creates a scripted input over the supplied bytes and event sequence.
     fn new(bytes: Vec<u8>, events: &'a [u8], chunk_size: usize) -> Self {
         Self {
             bytes,
@@ -179,6 +188,8 @@ impl<'a> ScriptedAsyncInput<'a> {
         }
     }
 
+    /// Returns the next normalized event, defaulting to progress after
+    /// exhaustion.
     fn next_event(&mut self) -> u8 {
         let event = self.events.get(self.event_index).map_or(0, |byte| byte % 5);
         self.event_index += usize::from(self.event_index < self.events.len());
@@ -225,6 +236,8 @@ impl AsyncInput for ScriptedAsyncInput<'_> {
     }
 }
 
+/// Write model that advances through bounded progress, pending, and failure
+/// events.
 struct ScriptedAsyncOutput<'a> {
     bytes: Vec<u8>,
     events: &'a [u8],
@@ -233,6 +246,7 @@ struct ScriptedAsyncOutput<'a> {
 }
 
 impl<'a> ScriptedAsyncOutput<'a> {
+    /// Creates a scripted output that records accepted bytes.
     fn new(events: &'a [u8], chunk_size: usize) -> Self {
         Self {
             bytes: Vec::new(),
@@ -242,6 +256,8 @@ impl<'a> ScriptedAsyncOutput<'a> {
         }
     }
 
+    /// Returns the next normalized event, defaulting to progress after
+    /// exhaustion.
     fn next_event(&mut self) -> u8 {
         let event = self.events.get(self.event_index).map_or(0, |byte| byte % 5);
         self.event_index += usize::from(self.event_index < self.events.len());
@@ -286,6 +302,7 @@ impl AsyncOutput for ScriptedAsyncOutput<'_> {
         }
     }
 
+    /// Completes flush immediately because this model has no buffered state.
     fn poll_flush(self: Pin<&mut Self>, _cx: &mut Context<'_>) -> Poll<io::Result<()>> {
         Poll::Ready(Ok(()))
     }
@@ -552,7 +569,8 @@ where
     panic!("async differential future exceeded poll budget of {MAX_ASYNC_POLLS}");
 }
 
-/// Converts a result into a value/error-kind signature for exact comparison.
+/// Copies successful values and reduces I/O errors to their kind for
+/// comparison.
 fn result_signature<T>(result: &io::Result<T>) -> Result<T, ErrorKind>
 where
     T: Copy,
@@ -563,7 +581,8 @@ where
     }
 }
 
-/// Converts string results into owned byte signatures for exact comparison.
+/// Clones successful string bytes and reduces I/O errors to their kind for
+/// comparison.
 fn string_signature(result: &io::Result<Vec<u8>>) -> Result<Vec<u8>, ErrorKind> {
     match result {
         Ok(value) => Ok(value.clone()),
