@@ -57,6 +57,21 @@ macro_rules! exercise_input_methods {
         let mut reader = $constructor(vec![0x10, 0x20, 0x30]);
         assert_eq!($buffered, reader.is_buffered());
 
+        let mut empty = [];
+        assert_eq!(0, reader.read(&mut empty).expect("empty read should succeed"));
+        // SAFETY: The zero-length range is valid within the empty destination.
+        assert_eq!(
+            0,
+            unsafe { reader.read_unchecked(&mut empty, 0, 0) }.expect("empty unchecked read should succeed")
+        );
+        let mut remaining = [0; 3];
+        reader
+            .read_exactly(&mut remaining)
+            .expect("empty reads must not consume input");
+        assert_eq!([0x10, 0x20, 0x30], remaining);
+
+        let mut reader = $constructor(vec![0x10, 0x20, 0x30]);
+
         let mut output = [0; 5];
         assert_eq!(
             2,

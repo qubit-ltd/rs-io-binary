@@ -34,7 +34,12 @@ macro_rules! impl_input_methods {
             ///
             /// # Returns
             ///
-            /// Returns the number of bytes read; zero indicates end-of-input.
+            /// Returns the number of bytes read; a successful read may be short.
+            /// For a non-empty request, `Ok(0)` means no bytes were available in this
+            /// call or the input reached its end; it does not promise permanent EOF.
+            /// A successful empty request returns zero without establishing EOF.
+            /// Empty requests may still call the underlying input or return an error.
+            /// See [`qubit_io::Input::read_unchecked`] for the underlying contract.
             ///
             /// # Errors
             ///
@@ -62,7 +67,12 @@ macro_rules! impl_input_methods {
             ///
             /// # Returns
             ///
-            /// Returns the number of bytes read; zero indicates end-of-input.
+            /// Returns the number of bytes read; a successful read may be short.
+            /// For a non-empty request, `Ok(0)` means no bytes were available in this
+            /// call or the input reached its end; it does not promise permanent EOF.
+            /// A successful empty request returns zero without establishing EOF.
+            /// Empty requests may still call the underlying input or return an error.
+            /// See [`qubit_io::Input::read`] for the underlying contract.
             ///
             /// # Errors
             ///
@@ -72,7 +82,7 @@ macro_rules! impl_input_methods {
                 Input::read(self, output)
             }
 
-            /// Reads bytes into an indexed range until it is full or EOF.
+            /// Reads bytes into an indexed range until it is full or a read returns zero.
             ///
             /// # Parameters
             ///
@@ -82,7 +92,8 @@ macro_rules! impl_input_methods {
             ///
             /// # Returns
             ///
-            /// Returns the number of bytes read before the range is full or EOF.
+            /// Returns the number of bytes read before the range is full or a read
+            /// returns zero.
             ///
             /// # Errors
             ///
@@ -102,7 +113,7 @@ macro_rules! impl_input_methods {
                 unsafe { Input::read_fully_unchecked(self, output, index, count) }
             }
 
-            /// Reads bytes into the full output slice until it is full or EOF.
+            /// Reads bytes into the full output slice until it is full or a read returns zero.
             ///
             /// # Parameters
             ///
@@ -110,7 +121,8 @@ macro_rules! impl_input_methods {
             ///
             /// # Returns
             ///
-            /// Returns the number of bytes read before the slice is full or EOF.
+            /// Returns the number of bytes read before the slice is full or a read
+            /// returns zero.
             ///
             /// # Errors
             ///
