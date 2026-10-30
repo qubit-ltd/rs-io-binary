@@ -221,17 +221,29 @@ macro_rules! impl_for_order {
 
             /// Reads a UTF-8 string prefixed by a `u16` byte length.
             ///
+            /// # Parameters
+            ///
+            /// - `max_len`: Maximum UTF-8 payload length in bytes, excluding the length
+            ///   prefix.
+            ///
+            /// # Returns
+            ///
+            /// Returns the decoded UTF-8 string.
+            ///
             /// # Errors
             ///
             /// Returns an input error, or [`std::io::ErrorKind::InvalidData`]
             /// when the byte length exceeds `max_len` or the payload is not
-            /// valid UTF-8.
+            /// valid UTF-8. Also returns an allocation error if reserving the
+            /// payload buffer fails.
             ///
             /// # Stream position
             ///
             /// If the decoded length exceeds `max_len`, the length prefix has been
             /// consumed logically, but the payload has not. If UTF-8 validation
             /// fails, the prefix and complete payload have been consumed logically.
+            /// If reserving the payload buffer fails, the length prefix has been
+            /// consumed logically, but the payload has not.
             /// The underlying input may already have prefetched payload bytes;
             /// its position is not the logical consumption position. These operations
             /// do not roll back; recover only at an outer framing boundary or a
@@ -244,17 +256,29 @@ macro_rules! impl_for_order {
 
             /// Reads a UTF-8 string prefixed by a `u32` byte length.
             ///
+            /// # Parameters
+            ///
+            /// - `max_len`: Maximum UTF-8 payload length in bytes, excluding the length
+            ///   prefix.
+            ///
+            /// # Returns
+            ///
+            /// Returns the decoded UTF-8 string.
+            ///
             /// # Errors
             ///
             /// Returns an input error, or [`std::io::ErrorKind::InvalidData`]
             /// when the byte length does not fit `usize`, exceeds `max_len`,
-            /// or the payload is not valid UTF-8.
+            /// or the payload is not valid UTF-8. Also returns an allocation
+            /// error if reserving the payload buffer fails.
             ///
             /// # Stream position
             ///
             /// If the decoded length exceeds `max_len`, the length prefix has been
             /// consumed logically, but the payload has not. If UTF-8 validation
             /// fails, the prefix and complete payload have been consumed logically.
+            /// If reserving the payload buffer fails, the length prefix has been
+            /// consumed logically, but the payload has not.
             /// The underlying input may already have prefetched payload bytes;
             /// its position is not the logical consumption position. These operations
             /// do not roll back; recover only at an outer framing boundary or a
