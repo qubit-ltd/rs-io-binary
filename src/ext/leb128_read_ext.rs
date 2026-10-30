@@ -17,6 +17,7 @@ use qubit_io::ByteInput;
 
 use crate::util::read_leb128_payload;
 
+/// Generates a typed LEB128 reader body using the selected decode policy.
 macro_rules! read_leb128_value {
     ($reader:expr, $ty:ty, $policy:ty) => {
         read_leb128_payload::<

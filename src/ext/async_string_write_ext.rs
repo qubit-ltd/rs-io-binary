@@ -29,6 +29,9 @@ use crate::util::write_all_async;
 ///
 /// # Examples
 ///
+/// The caller supplies an output that implements [`AsyncOutput`], such as a
+/// file, socket, or in-memory sink:
+///
 /// ```
 /// use qubit_io::AsyncOutput;
 /// use qubit_io_binary::AsyncStringWriteExt;
@@ -37,7 +40,8 @@ use crate::util::write_all_async;
 /// where
 ///     O: AsyncOutput<Item = u8> + Unpin,
 /// {
-///     output.write_string_with_u16_len_be_async("Ada").await
+///     output.write_string_with_u16_len_be_async("Ada").await?;
+///     Ok(())
 /// }
 /// ```
 pub trait AsyncStringWriteExt: AsyncOutput<Item = u8> {

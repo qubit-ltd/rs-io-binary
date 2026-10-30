@@ -21,6 +21,7 @@ pub(crate) trait StreamCodecDecodeError: StdError + Send + Sync + 'static {
     /// # Returns
     ///
     /// Returns the I/O category exposed by stream adapters.
+    #[must_use]
     fn io_error_kind(&self) -> ErrorKind;
 }
 

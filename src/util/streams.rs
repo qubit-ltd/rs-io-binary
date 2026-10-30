@@ -27,12 +27,12 @@ use qubit_utils::try_reserve_vec;
 
 /// Error message used when a UTF-8 byte length does not fit in `u32`.
 const U32_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u32 length";
+/// Error message used when a UTF-8 byte length does not fit in `u64`.
 #[cfg(not(any(
     target_pointer_width = "16",
     target_pointer_width = "32",
     target_pointer_width = "64",
 )))]
-/// Error message used when a UTF-8 byte length does not fit in `u64`.
 const U64_LENGTH_OVERFLOW: &str = "string length exceeds maximum encodable u64 length";
 /// Minimum capacity required by the largest scalar codec payload.
 pub(crate) const MIN_CODEC_BUFFER_CAPACITY: usize = {
@@ -94,6 +94,7 @@ where
 ///
 /// Panics if `C` reports incomplete input despite the caller's completeness
 /// guarantee.
+#[must_use]
 #[inline(always)]
 pub(crate) unsafe fn decode_infallible_unchecked<C>(input: &[u8], index: usize) -> C::Value
 where
@@ -131,6 +132,7 @@ where
 /// The caller must guarantee that `index` is a valid start position in
 /// `output` and that `C::MAX_ENCODE_UNITS_PER_VALUE` bytes can be written from
 /// it.
+#[must_use = "the returned byte count determines the encoded payload range"]
 #[inline(always)]
 pub(crate) unsafe fn encode_infallible_unchecked<C>(value: C::Value, output: &mut [u8], index: usize) -> usize
 where

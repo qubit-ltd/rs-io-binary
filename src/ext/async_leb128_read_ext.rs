@@ -17,6 +17,7 @@ use qubit_io::AsyncInput;
 
 use crate::util::read_leb128_payload_async;
 
+/// Reads one LEB128 payload and decodes it using the selected codec policy.
 macro_rules! read_leb128_value_async {
     ($reader:expr, $ty:ty, $policy:ty) => {
         read_leb128_payload_async::<
@@ -28,6 +29,7 @@ macro_rules! read_leb128_value_async {
     };
 }
 
+/// Defines an asynchronous extension method for one integer type and policy.
 macro_rules! leb128_read_method {
     ($doc:literal, $name:ident, $ty:ty, $policy:ty) => {
         #[doc = $doc]

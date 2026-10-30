@@ -17,6 +17,7 @@ use qubit_io::ByteOutput;
 use crate::util::encode_infallible_unchecked;
 use crate::util::write_all;
 
+/// Encodes a signed integer into a stack buffer and writes its ZigZag payload.
 macro_rules! write_zig_zag_value {
     ($writer:expr, $value:expr, $ty:ty) => {
         write_zig_zag::<{ ZigZagCodec::<$ty, NonStrict>::MAX_ENCODE_UNITS_PER_VALUE }, _, _, _>(

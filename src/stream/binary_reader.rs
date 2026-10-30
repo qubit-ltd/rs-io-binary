@@ -105,7 +105,7 @@ where
     /// # Returns
     ///
     /// Returns the wrapped reader.
-    #[must_use]
+    #[must_use = "the underlying reader must be used or returned to its owner"]
     #[inline(always)]
     pub const fn inner(&self) -> &R {
         &self.inner
@@ -116,7 +116,7 @@ where
     /// # Returns
     ///
     /// Returns mutable access to the wrapped reader.
-    #[must_use]
+    #[must_use = "the underlying reader must be used or returned to its owner"]
     #[inline(always)]
     pub fn inner_mut(&mut self) -> &mut R {
         &mut self.inner
@@ -127,7 +127,7 @@ where
     /// # Returns
     ///
     /// Returns the wrapped reader.
-    #[must_use]
+    #[must_use = "the extracted reader must be used or returned to its owner"]
     #[inline(always)]
     pub fn into_inner(self) -> R {
         self.inner

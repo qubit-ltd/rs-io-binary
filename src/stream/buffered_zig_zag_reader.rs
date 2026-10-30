@@ -159,7 +159,7 @@ where
     /// # Returns
     ///
     /// Returns the wrapped reader.
-    #[must_use]
+    #[must_use = "the wrapped reader position may be ahead of the logical position"]
     #[inline(always)]
     pub const fn inner(&self) -> &R {
         self.input.inner()

@@ -19,6 +19,7 @@ use qubit_io::Input;
 
 use crate::util::decode_infallible_unchecked;
 
+/// Reads a fixed-width value with the specified codec and byte order.
 macro_rules! read_binary_value {
     ($reader:expr, $ty:ty, $order:ty) => {
         read_binary::<{ BinaryCodec::<$ty, $order>::MIN_UNITS_PER_VALUE }, _, _, _>($reader, |bytes| {

@@ -17,6 +17,8 @@ use qubit_io::AsyncInput;
 
 use crate::util::read_leb128_payload_async;
 
+/// Defines an asynchronous read method for one integer type and decoding
+/// policy.
 macro_rules! zig_zag_read_method {
     ($doc:literal, $name:ident, $ty:ty, $policy:ty) => {
         #[doc = $doc]

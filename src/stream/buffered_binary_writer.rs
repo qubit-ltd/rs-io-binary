@@ -243,6 +243,10 @@ macro_rules! impl_for_order {
             /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8
             /// byte length does not fit `u16`, or an output error.
             ///
+            /// # Returns
+            ///
+            /// Returns `()` after the length prefix and string bytes are accepted.
+            ///
             /// # Partial writes
             ///
             /// This operation is not transactional. An I/O error may leave the length
@@ -261,6 +265,10 @@ macro_rules! impl_for_order {
             ///
             /// Returns [`std::io::ErrorKind::InvalidInput`] when the UTF-8
             /// byte length does not fit `u32`, or an output error.
+            ///
+            /// # Returns
+            ///
+            /// Returns `()` after the length prefix and string bytes are accepted.
             ///
             /// # Partial writes
             ///

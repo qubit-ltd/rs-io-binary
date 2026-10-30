@@ -148,6 +148,7 @@ where
     pub const fn inner(&self) -> &W {
         self.output.inner()
     }
+
     /// Recovers the wrapped writer and the status of bytes retained by this
     /// writer.
     ///
