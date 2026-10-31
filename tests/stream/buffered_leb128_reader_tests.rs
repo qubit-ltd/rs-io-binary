@@ -314,9 +314,22 @@ fn test_buffered_leb128_reader_reports_invalid_and_truncated_values() {
 
     let mut reader = BufferedLeb128Reader::<_, Strict>::with_capacity(Cursor::new(vec![0x80, 0x00]), 2);
     let error = reader.read_u16().expect_err("non-canonical value should fail");
-    let source = error.get_ref().expect("decode error should be preserved");
+    let mut source: Option<&dyn std::error::Error> =
+        Some(error.get_ref().expect("decode error should be preserved") as &dyn std::error::Error);
+    let mut preserves_decode_error = false;
+    while let Some(cause) = source {
+        if cause.downcast_ref::<Leb128DecodeError>().is_some() {
+            preserves_decode_error = true;
+            break;
+        }
+        source = cause
+            .downcast_ref::<Error>()
+            .and_then(Error::get_ref)
+            .map(|cause| cause as &dyn std::error::Error)
+            .or_else(|| std::error::Error::source(cause));
+    }
     assert!(
-        source.downcast_ref::<Leb128DecodeError>().is_some(),
+        preserves_decode_error,
         "I/O error should preserve the original LEB128 decode error"
     );
 
