@@ -6,7 +6,8 @@
 //    Licensed under the Apache License, Version 2.0.
 // =============================================================================
 
-//! Checks bilingual user-guide examples and generates their compilation fixture.
+//! Checks bilingual user-guide examples and generates their compilation
+//! fixture.
 
 use std::env;
 use std::fs;
@@ -56,10 +57,8 @@ fn extract_readme_async(markdown: &str) -> Result<String, String> {
 
 /// Requires both README languages to compile the same async source.
 fn readme_async_pair(english: &str, chinese: &str) -> Result<String, String> {
-    let english = extract_readme_async(english)
-        .map_err(|error| format!("English README: {error}"))?;
-    let chinese = extract_readme_async(chinese)
-        .map_err(|error| format!("Chinese README: {error}"))?;
+    let english = extract_readme_async(english).map_err(|error| format!("English README: {error}"))?;
+    let chinese = extract_readme_async(chinese).map_err(|error| format!("Chinese README: {error}"))?;
     if english != chinese {
         return Err("README async code differs between languages".to_owned());
     }
@@ -103,8 +102,7 @@ fn rust_blocks(markdown: &str) -> Result<Vec<String>, String> {
 
 /// Reads a guide and requires its six documented Rust examples.
 fn read_guide(path: &Path) -> Vec<String> {
-    rust_blocks(&fs::read_to_string(path).expect("read user guide"))
-        .expect("extract six Rust examples from user guide")
+    rust_blocks(&fs::read_to_string(path).expect("read user guide")).expect("extract six Rust examples from user guide")
 }
 
 fn main() {
@@ -119,16 +117,17 @@ fn main() {
     let chinese_readme_path = root.join("README.zh_CN.md");
     println!("cargo:rerun-if-changed={}", english_readme_path.display());
     println!("cargo:rerun-if-changed={}", chinese_readme_path.display());
-    let english_readme = fs::read_to_string(&english_readme_path)
-        .expect("read English README for async example");
-    let chinese_readme = fs::read_to_string(&chinese_readme_path)
-        .expect("read Chinese README for async example");
-    let readme_async = readme_async_pair(&english_readme, &chinese_readme)
-        .expect("extract matching README async examples");
+    let english_readme = fs::read_to_string(&english_readme_path).expect("read English README for async example");
+    let chinese_readme = fs::read_to_string(&chinese_readme_path).expect("read Chinese README for async example");
+    let readme_async =
+        readme_async_pair(&english_readme, &chinese_readme).expect("extract matching README async examples");
 
     let english_blocks = read_guide(&english_path);
     let chinese_blocks = read_guide(&chinese_path);
-    assert_eq!(english_blocks, chinese_blocks, "user guide Rust examples differ between languages");
+    assert_eq!(
+        english_blocks, chinese_blocks,
+        "user guide Rust examples differ between languages"
+    );
 
     let mut generated = String::new();
     for (index, source) in english_blocks.iter().enumerate() {
@@ -146,8 +145,7 @@ fn main() {
     generated.push_str("Ok(())\n}\n");
 
     let output = PathBuf::from(env::var_os("OUT_DIR").expect("Cargo output directory"));
-    fs::write(output.join("user_guide_examples.rs"), generated)
-        .expect("write generated user guide examples");
+    fs::write(output.join("user_guide_examples.rs"), generated).expect("write generated user guide examples");
 }
 
 #[cfg(test)]
@@ -183,10 +181,7 @@ mod tests {
                 "async start marker must precede end marker",
             ),
             (valid.replace("```rust", "```text"), "missing async rust fence"),
-            (
-                format!("{START}\n```rust\nx\n{END}"),
-                "missing async closing fence",
-            ),
+            (format!("{START}\n```rust\nx\n{END}"), "missing async closing fence"),
             (markdown("x\n```\n```rust\ny"), "unexpected extra async fence"),
         ];
         for (source, expected) in cases {
@@ -197,10 +192,7 @@ mod tests {
     #[test]
     fn test_checks_bilingual_async_source() {
         let source = markdown("async fn example() {}");
-        assert_eq!(
-            readme_async_pair(&source, &source).unwrap(),
-            "async fn example() {}"
-        );
+        assert_eq!(readme_async_pair(&source, &source).unwrap(), "async fn example() {}");
         let different = markdown("async fn another_example() {}");
         assert_eq!(
             readme_async_pair(&source, &different).unwrap_err(),
