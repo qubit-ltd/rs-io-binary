@@ -196,11 +196,44 @@ impl<T> StringWriteExt for T
 where
     T: ByteOutput + ?Sized,
 {
+    /// Writes the string's UTF-8 bytes without adding a length prefix.
+    ///
+    /// A write failure may occur after some payload bytes have reached the
+    /// underlying output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string whose bytes are written to the output.
+    ///
+    /// # Returns
+    ///
+    /// Returns after all UTF-8 payload bytes have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an I/O error from the underlying output.
     #[inline]
     fn write_utf8_payload(&mut self, value: &str) -> Result<()> {
         write_utf8_payload_impl(self, value)
     }
 
+    /// Writes the UTF-8 byte length as target-width-dependent unsigned LEB128,
+    /// followed by the string bytes.
+    ///
+    /// A failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its target-width-dependent byte
+    ///   length.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns an I/O error from writing the prefix or payload.
     #[inline]
     fn write_utf8_string_uleb_usize(&mut self, value: &str) -> Result<()> {
         let bytes = value.as_bytes();
@@ -208,6 +241,24 @@ where
         write_all(self, bytes)
     }
 
+    /// Writes the UTF-8 byte length as unsigned LEB128 `u64`, then the string
+    /// bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length does not fit in `u64`; a
+    /// write failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its `u64` byte length.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length does not fit in `u64`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_utf8_string_uleb_u64(&mut self, value: &str) -> Result<()> {
         let bytes = value.as_bytes();
@@ -215,31 +266,143 @@ where
         write_all(self, bytes)
     }
 
+    /// Writes a `u16` UTF-8 byte-length prefix in the requested byte order,
+    /// followed by the string bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u16::MAX`; a write
+    /// failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its `u16` byte length.
+    /// - `byte_order`: Byte order used to encode the length prefix.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u16::MAX`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_string_with_u16_len(&mut self, value: &str, byte_order: ByteOrder) -> Result<()> {
         write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16(len, byte_order))
     }
 
+    /// Writes a big-endian `u16` UTF-8 byte-length prefix, then the string
+    /// bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u16::MAX`; a write
+    /// failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its big-endian `u16` byte length.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u16::MAX`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_string_with_u16_len_be(&mut self, value: &str) -> Result<()> {
         write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16_be(len))
     }
 
+    /// Writes a little-endian `u16` UTF-8 byte-length prefix, then the string
+    /// bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u16::MAX`; a write
+    /// failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its little-endian `u16` byte
+    ///   length.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u16::MAX`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_string_with_u16_len_le(&mut self, value: &str) -> Result<()> {
         write_utf8_string_with_u16_len(self, value, |writer, len| writer.write_u16_le(len))
     }
 
+    /// Writes a `u32` UTF-8 byte-length prefix in the requested byte order,
+    /// followed by the string bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u32::MAX`; a write
+    /// failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its `u32` byte length.
+    /// - `byte_order`: Byte order used to encode the length prefix.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u32::MAX`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_string_with_u32_len(&mut self, value: &str, byte_order: ByteOrder) -> Result<()> {
         write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32(len, byte_order))
     }
 
+    /// Writes a big-endian `u32` UTF-8 byte-length prefix, then the string
+    /// bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u32::MAX`; a write
+    /// failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its big-endian `u32` byte length.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u32::MAX`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_string_with_u32_len_be(&mut self, value: &str) -> Result<()> {
         write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32_be(len))
     }
 
+    /// Writes a little-endian `u32` UTF-8 byte-length prefix, then the string
+    /// bytes.
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u32::MAX`; a write
+    /// failure can leave a partial prefix or payload in the output.
+    ///
+    /// # Parameters
+    ///
+    /// - `value`: UTF-8 string to write after its little-endian `u32` byte
+    ///   length.
+    ///
+    /// # Returns
+    ///
+    /// Returns after the length prefix and payload have been written.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidInput` if the byte length exceeds `u32::MAX`, or an
+    /// I/O error while writing.
     #[inline]
     fn write_string_with_u32_len_le(&mut self, value: &str) -> Result<()> {
         write_utf8_string_with_u32_len(self, value, |writer, len| writer.write_u32_le(len))

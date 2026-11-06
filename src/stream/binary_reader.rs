@@ -253,6 +253,7 @@ impl<R, O> Input for BinaryReader<R, O>
 where
     R: ByteInput,
 {
+    /// The byte type yielded by this reader.
     type Item = u8;
 
     /// Reports whether the wrapped input is buffered.
@@ -296,6 +297,7 @@ impl<R, O> Seekable for BinaryReader<R, O>
 where
     R: SeekableByteInput,
 {
+    /// The unit used to measure positions in the wrapped byte stream: bytes.
     type Unit = u8;
 
     /// Seeks the wrapped input.

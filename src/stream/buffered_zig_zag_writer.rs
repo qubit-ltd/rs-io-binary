@@ -103,6 +103,10 @@ where
     ///
     /// Returns a buffered writer whose capacity also satisfies the largest
     /// supported codec payload.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `capacity` exceeds the maximum capacity supported by `Vec`.
     #[must_use]
     #[inline]
     pub fn with_capacity(inner: W, capacity: usize) -> Self {
@@ -168,6 +172,7 @@ where
     }
 }
 
+/// Defines an inherent writer method for one signed integer width.
 macro_rules! impl_write_value {
     ($method:ident, $ty:ty, $doc:literal) => {
         #[doc = $doc]
@@ -186,6 +191,7 @@ macro_rules! impl_write_value {
                  space."]
         #[inline(always)]
         pub fn $method(&mut self, value: $ty) -> Result<()> {
+            /// Codec that maps this integer width to canonical ZigZag bytes.
             type Codec = ZigZagCodec<$ty, NonStrict>;
 
             self.output.write_encoded::<Codec>(value)
@@ -209,6 +215,7 @@ impl<W> Output for BufferedZigZagWriter<W>
 where
     W: ByteOutput,
 {
+    /// Byte type accepted by this writer's output methods.
     type Item = u8;
 
     /// Reports that this adapter buffers output.
@@ -265,6 +272,7 @@ impl<W> Seekable for BufferedZigZagWriter<W>
 where
     W: SeekableByteOutput,
 {
+    /// Position unit used by this byte-oriented writer.
     type Unit = u8;
 
     /// Seeks relative to this writer's logical position.

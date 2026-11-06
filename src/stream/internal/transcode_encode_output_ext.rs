@@ -53,6 +53,34 @@ where
     O: Output,
     O::Item: Copy + Default,
 {
+    /// Encodes a value with a fresh default codec and writes its units to the
+    /// underlying output.
+    ///
+    /// Codec failures are converted to `InvalidData`; output failures are
+    /// propagated unchanged. The codec unit must match the output item type.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `C`: Default codec that encodes the supplied value into output units.
+    ///
+    /// # Parameters
+    ///
+    /// - `self`: Transcoding output adapter receiving the encoded units.
+    /// - `value`: Value to encode and write.
+    ///
+    /// # Returns
+    ///
+    /// Returns `Ok(())` after the encoded units are accepted by the output.
+    ///
+    /// # Errors
+    ///
+    /// Returns `InvalidData` if encoding fails, or the output's error if
+    /// writing fails.
+    ///
+    /// # Panics
+    ///
+    /// Panics if `C::default()` panics, or if the codec violates the encoding
+    /// bounds enforced by the underlying transcoding adapter.
     #[inline(always)]
     fn write_encoded<C>(&mut self, value: C::Value) -> io::Result<()>
     where

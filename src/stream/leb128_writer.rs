@@ -258,6 +258,7 @@ impl<W> Output for Leb128Writer<W>
 where
     W: ByteOutput,
 {
+    /// The byte unit accepted by this writer's output operations.
     type Item = u8;
 
     /// Reports whether the wrapped output is buffered.
@@ -314,6 +315,7 @@ impl<W> Seekable for Leb128Writer<W>
 where
     W: SeekableByteOutput,
 {
+    /// The byte unit used to express seek positions in the wrapped writer.
     type Unit = u8;
 
     /// Seeks the wrapped writer.

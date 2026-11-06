@@ -284,6 +284,7 @@ impl<W> Output for BufferedLeb128Writer<W>
 where
     W: ByteOutput,
 {
+    /// Byte elements accepted by this writer.
     type Item = u8;
 
     /// Reports that this adapter buffers output.
@@ -340,6 +341,7 @@ impl<W> Seekable for BufferedLeb128Writer<W>
 where
     W: SeekableByteOutput,
 {
+    /// Positioning unit used by the byte-oriented seek interface.
     type Unit = u8;
 
     /// Seeks relative to this writer's logical position.

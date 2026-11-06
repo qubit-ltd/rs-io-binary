@@ -293,6 +293,7 @@ impl<W, O> Output for BufferedBinaryWriter<W, O>
 where
     W: ByteOutput,
 {
+    /// The smallest unit accepted by this byte-oriented output adapter.
     type Item = u8;
 
     /// Reports that this adapter buffers output.
@@ -349,6 +350,7 @@ impl<W, O> Seekable for BufferedBinaryWriter<W, O>
 where
     W: SeekableByteOutput,
 {
+    /// The unit used for positions in this seekable byte stream.
     type Unit = u8;
 
     /// Seeks relative to this writer's logical position.

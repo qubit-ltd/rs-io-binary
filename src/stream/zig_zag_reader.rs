@@ -99,21 +99,10 @@ where
     /// # Returns
     ///
     /// Returns the wrapped reader.
-    #[must_use]
+    #[must_use = "use the wrapped reader through the returned reference"]
     #[inline(always)]
     pub const fn inner(&self) -> &R {
         &self.inner
-    }
-
-    /// Returns an exclusive reference to the underlying reader.
-    ///
-    /// # Returns
-    ///
-    /// Returns mutable access to the wrapped reader.
-    #[must_use]
-    #[inline(always)]
-    pub fn inner_mut(&mut self) -> &mut R {
-        &mut self.inner
     }
 
     /// Consumes this wrapper and returns the underlying reader.
@@ -121,10 +110,21 @@ where
     /// # Returns
     ///
     /// Returns the wrapped reader.
-    #[must_use]
+    #[must_use = "use the wrapped reader returned by this method"]
     #[inline(always)]
     pub fn into_inner(self) -> R {
         self.inner
+    }
+
+    /// Returns an exclusive reference to the underlying reader.
+    ///
+    /// # Returns
+    ///
+    /// Returns mutable access to the wrapped reader.
+    #[must_use = "use the wrapped reader through the returned mutable reference"]
+    #[inline(always)]
+    pub fn inner_mut(&mut self) -> &mut R {
+        &mut self.inner
     }
 }
 
@@ -142,6 +142,7 @@ macro_rules! impl_read_value {
                  payload is malformed or violates the selected policy."]
         #[inline(always)]
         pub fn $method(&mut self) -> Result<$ty> {
+            /// Codec that decodes this signed integer using the selected policy.
             type Codec = ZigZagCodec<$ty, $policy>;
 
             read_leb128_from_reader::<{ Codec::MAX_DECODE_UNITS_PER_VALUE }, Codec, _>(
@@ -174,29 +175,30 @@ macro_rules! impl_for_policy {
 impl_for_policy!(
     NonStrict,
     {
-        (read_i8_non_strict, i8, "Reads a ZigZag i8."),
-        (read_i16_non_strict, i16, "Reads a ZigZag i16."),
-        (read_i32_non_strict, i32, "Reads a ZigZag i32."),
-        (read_i64_non_strict, i64, "Reads a ZigZag i64."),
-        (read_i128_non_strict, i128, "Reads a ZigZag i128."),
-        (read_isize_non_strict, isize, "Reads a ZigZag isize."),
+        (read_i8_non_strict, i8, "Reads an i8 encoded as ZigZag and unsigned LEB128."),
+        (read_i16_non_strict, i16, "Reads an i16 encoded as ZigZag and unsigned LEB128."),
+        (read_i32_non_strict, i32, "Reads an i32 encoded as ZigZag and unsigned LEB128."),
+        (read_i64_non_strict, i64, "Reads an i64 encoded as ZigZag and unsigned LEB128."),
+        (read_i128_non_strict, i128, "Reads an i128 encoded as ZigZag and unsigned LEB128."),
+        (read_isize_non_strict, isize, "Reads an isize encoded as ZigZag and unsigned LEB128."),
     },
 );
 impl_for_policy!(
     Strict,
     {
-        (read_i8, i8, "Reads a ZigZag i8."),
-        (read_i16, i16, "Reads a ZigZag i16."),
-        (read_i32, i32, "Reads a ZigZag i32."),
-        (read_i64, i64, "Reads a ZigZag i64."),
-        (read_i128, i128, "Reads a ZigZag i128."),
-        (read_isize, isize, "Reads a ZigZag isize."),
+        (read_i8, i8, "Reads an i8 encoded as ZigZag and unsigned LEB128."),
+        (read_i16, i16, "Reads an i16 encoded as ZigZag and unsigned LEB128."),
+        (read_i32, i32, "Reads an i32 encoded as ZigZag and unsigned LEB128."),
+        (read_i64, i64, "Reads an i64 encoded as ZigZag and unsigned LEB128."),
+        (read_i128, i128, "Reads an i128 encoded as ZigZag and unsigned LEB128."),
+        (read_isize, isize, "Reads an isize encoded as ZigZag and unsigned LEB128."),
     },
 );
 impl<R, P> Input for ZigZagReader<R, P>
 where
     R: ByteInput,
 {
+    /// Byte type produced by reads from the wrapped input.
     type Item = u8;
 
     /// Reports whether the wrapped input is buffered.
@@ -239,6 +241,7 @@ impl<R, P> Seekable for ZigZagReader<R, P>
 where
     R: SeekableByteInput,
 {
+    /// Positioning unit used by the wrapped byte stream.
     type Unit = u8;
 
     /// Seeks the wrapped reader.

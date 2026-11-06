@@ -53,6 +53,24 @@ where
     I: Input,
     I::Item: Copy + Default,
 {
+    /// Decodes one value with a default codec and preserves its I/O error kind.
+    ///
+    /// This adapter uses the strict decode lifecycle; codecs that emit output
+    /// during reset or finish are rejected before input is consumed.
+    ///
+    /// # Type Parameters
+    ///
+    /// - `C`: Codec used to decode the next value.
+    ///
+    /// # Returns
+    ///
+    /// Returns the decoded codec value.
+    ///
+    /// # Errors
+    ///
+    /// Returns I/O errors from the input or codec. Returns
+    /// [`std::io::ErrorKind::Unsupported`] before reading input when the codec
+    /// declares decode lifecycle output.
     #[inline]
     fn read_decoded<C>(&mut self) -> Result<C::Value>
     where

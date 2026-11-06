@@ -252,6 +252,7 @@ impl<W, O> Output for BinaryWriter<W, O>
 where
     W: ByteOutput,
 {
+    /// Byte units accepted and emitted by this writer.
     type Item = u8;
 
     /// Reports whether the wrapped output is buffered.
@@ -309,6 +310,7 @@ impl<W, O> Seekable for BinaryWriter<W, O>
 where
     W: SeekableByteOutput,
 {
+    /// Byte units used to measure seek positions in the wrapped output.
     type Unit = u8;
 
     /// Seeks the wrapped writer.

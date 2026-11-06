@@ -369,6 +369,27 @@ where
 ///
 /// The helper performs length validation, fallible capacity reservation, and
 /// exact input transfer but leaves UTF-8 validation to its caller.
+///
+/// # Type Parameters
+///
+/// - `R`: Source Qubit input.
+///
+/// # Parameters
+///
+/// - `reader`: Source of the payload bytes.
+/// - `bytes`: Destination buffer, cleared before a permitted read and resized
+///   to the payload length.
+/// - `len`: Payload length in bytes.
+/// - `max_len`: Maximum accepted payload length in bytes.
+///
+/// # Returns
+///
+/// Returns after exactly `len` bytes have been transferred into `bytes`.
+///
+/// # Errors
+///
+/// Returns an invalid-data error when `len` exceeds `max_len`, an allocation
+/// error when capacity reservation fails, or an I/O error from `reader`.
 fn read_utf8_payload_bytes<R>(reader: &mut R, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()>
 where
     R: ByteInput + ?Sized,

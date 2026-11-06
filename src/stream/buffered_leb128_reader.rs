@@ -358,6 +358,7 @@ impl<R, P> Input for BufferedLeb128Reader<R, P>
 where
     R: ByteInput,
 {
+    /// Byte type yielded by the buffered input adapter.
     type Item = u8;
 
     /// Reports that this adapter buffers input.
@@ -400,6 +401,7 @@ impl<R, P> Seekable for BufferedLeb128Reader<R, P>
 where
     R: SeekableByteInput,
 {
+    /// Unit type used for seeking in the byte stream.
     type Unit = u8;
 
     /// Seeks relative to this reader's logical position. Relative seeks within

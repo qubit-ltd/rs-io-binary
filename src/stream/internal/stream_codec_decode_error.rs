@@ -26,6 +26,10 @@ pub(crate) trait StreamCodecDecodeError: StdError + Send + Sync + 'static {
 }
 
 impl StreamCodecDecodeError for Infallible {
+    /// Returns no error kind because an `Infallible` value cannot exist.
+    ///
+    /// This implementation is unreachable for valid Rust values and only
+    /// satisfies the shared decoding-error interface.
     #[inline(always)]
     fn io_error_kind(&self) -> ErrorKind {
         match *self {}
@@ -33,6 +37,8 @@ impl StreamCodecDecodeError for Infallible {
 }
 
 impl StreamCodecDecodeError for Leb128DecodeError {
+    /// Maps an incomplete LEB128 value to end-of-input and other decode
+    /// failures to invalid data for stream I/O callers.
     #[inline]
     fn io_error_kind(&self) -> ErrorKind {
         if Leb128DecodeError::is_incomplete(*self) {

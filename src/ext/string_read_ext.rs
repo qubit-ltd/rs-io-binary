@@ -305,28 +305,65 @@ impl<T> StringReadExt for T
 where
     T: ByteInput + ?Sized,
 {
+    /// Reads a validated UTF-8 payload into the caller's reusable byte buffer.
+    ///
+    /// The buffer contents and error behavior follow the contract documented
+    /// on [`StringReadExt::read_utf8_payload_into`].
+    ///
+    /// # Parameters
+    ///
+    /// - `bytes`: Reusable destination buffer for the received payload.
+    /// - `len`: UTF-8 payload length in bytes.
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_utf8_payload_into(&mut self, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()> {
         read_utf8_payload_into_impl(self, bytes, len, max_len)
     }
 
+    /// Reads and validates a UTF-8 payload whose byte length is already known.
+    ///
+    /// Length limits and input-consumption behavior follow the contract
+    /// documented on [`StringReadExt::read_utf8_payload`].
+    ///
+    /// # Parameters
+    ///
+    /// - `len`: UTF-8 payload length in bytes.
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_utf8_payload(&mut self, len: usize, max_len: usize) -> Result<String> {
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Decodes a non-strict `usize` ULEB128 length and reads that UTF-8
+    /// payload.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_utf8_string_uleb_usize(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_uleb_usize_non_strict()?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Decodes a canonical `usize` ULEB128 length and reads that UTF-8 payload.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_utf8_string_uleb_usize_strict(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_uleb_usize_strict()?;
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Decodes a non-strict `u64` ULEB128 length and reads that UTF-8 payload.
+    ///
+    /// Returns an invalid-data error if the length cannot fit in `usize`.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_utf8_string_uleb_u64(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_uleb_u64_non_strict()?;
@@ -337,6 +374,14 @@ where
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Decodes a canonical `u64` ULEB128 length and reads that UTF-8 payload.
+    ///
+    /// Returns an invalid-data error for a malformed prefix or a length that
+    /// cannot fit in `usize`.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_utf8_string_uleb_u64_strict(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_uleb_u64_strict()?;
@@ -347,24 +392,48 @@ where
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Reads a UTF-8 payload preceded by a `u16` length in the selected byte
+    /// order.
+    ///
+    /// # Parameters
+    ///
+    /// - `byte_order`: Byte order used by the length prefix.
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_string_with_u16_len(&mut self, byte_order: ByteOrder, max_len: usize) -> Result<String> {
         let len = usize::from(self.read_u16(byte_order)?);
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Reads a UTF-8 payload preceded by a big-endian `u16` length.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_string_with_u16_len_be(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_u16_be()? as usize;
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Reads a UTF-8 payload preceded by a little-endian `u16` length.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_string_with_u16_len_le(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_u16_le()? as usize;
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Reads a UTF-8 payload preceded by a `u32` length in the selected byte
+    /// order.
+    ///
+    /// # Parameters
+    ///
+    /// - `byte_order`: Byte order used by the length prefix.
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_string_with_u32_len(&mut self, byte_order: ByteOrder, max_len: usize) -> Result<String> {
         let len = self.read_u32(byte_order)?;
@@ -375,6 +444,11 @@ where
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Reads a UTF-8 payload preceded by a big-endian `u32` length.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_string_with_u32_len_be(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_u32_be()?;
@@ -385,6 +459,11 @@ where
         read_utf8_payload_impl(self, len, max_len)
     }
 
+    /// Reads a UTF-8 payload preceded by a little-endian `u32` length.
+    ///
+    /// # Parameters
+    ///
+    /// - `max_len`: Maximum accepted UTF-8 payload length in bytes.
     #[inline]
     fn read_string_with_u32_len_le(&mut self, max_len: usize) -> Result<String> {
         let len = self.read_u32_le()?;

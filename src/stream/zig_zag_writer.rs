@@ -186,6 +186,7 @@ impl<W> Output for ZigZagWriter<W>
 where
     W: ByteOutput,
 {
+    /// The byte item type emitted by this ZigZag writer.
     type Item = u8;
 
     /// Reports whether the wrapped output is buffered.
@@ -242,6 +243,7 @@ impl<W> Seekable for ZigZagWriter<W>
 where
     W: SeekableByteOutput,
 {
+    /// The byte unit used to measure positions in the wrapped writer.
     type Unit = u8;
 
     /// Seeks the wrapped writer.

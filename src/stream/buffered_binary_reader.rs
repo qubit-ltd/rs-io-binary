@@ -303,6 +303,7 @@ impl<R, O> Input for BufferedBinaryReader<R, O>
 where
     R: ByteInput,
 {
+    /// The byte unit produced by this input adapter.
     type Item = u8;
 
     /// Reports that this adapter buffers input.
@@ -345,6 +346,7 @@ impl<R, O> Seekable for BufferedBinaryReader<R, O>
 where
     R: SeekableByteInput,
 {
+    /// The byte unit used to report positions for this seekable adapter.
     type Unit = u8;
 
     /// Seeks relative to this reader's logical position. Relative seeks within

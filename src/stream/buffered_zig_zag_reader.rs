@@ -249,6 +249,7 @@ impl<R, P> Input for BufferedZigZagReader<R, P>
 where
     R: ByteInput,
 {
+    /// Byte values produced when reading from the buffered input.
     type Item = u8;
 
     /// Reports that this adapter buffers input.
@@ -291,6 +292,7 @@ impl<R, P> Seekable for BufferedZigZagReader<R, P>
 where
     R: SeekableByteInput,
 {
+    /// The unit used for positions in the underlying byte stream.
     type Unit = u8;
 
     /// Seeks relative to this reader's logical position. Relative seeks within

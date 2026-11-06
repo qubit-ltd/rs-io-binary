@@ -312,6 +312,7 @@ impl<R, P> Input for Leb128Reader<R, P>
 where
     R: ByteInput,
 {
+    /// Byte element produced by this reader.
     type Item = u8;
 
     /// Reports whether the wrapped input is buffered.
@@ -354,6 +355,7 @@ impl<R, P> Seekable for Leb128Reader<R, P>
 where
     R: SeekableByteInput,
 {
+    /// Unit used to address positions in the wrapped byte stream.
     type Unit = u8;
 
     /// Seeks the wrapped reader.

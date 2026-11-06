@@ -217,6 +217,17 @@ where
 ///
 /// The helper performs length validation, fallible capacity reservation, and
 /// exact input transfer but leaves UTF-8 validation to its caller.
+///
+/// # Type Parameters
+///
+/// - `R`: Runtime-neutral asynchronous byte input.
+///
+/// # Parameters
+///
+/// - `reader`: Source from which exactly `len` bytes are read after validation.
+/// - `bytes`: Destination buffer, cleared before the permitted read.
+/// - `len`: Payload length in bytes; values above `max_len` are rejected.
+/// - `max_len`: Maximum payload length accepted by this helper.
 async fn read_utf8_payload_bytes_async<R>(reader: &mut R, bytes: &mut Vec<u8>, len: usize, max_len: usize) -> Result<()>
 where
     R: AsyncInput<Item = u8> + Unpin + ?Sized,
