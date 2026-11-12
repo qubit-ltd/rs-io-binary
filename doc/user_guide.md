@@ -177,22 +177,51 @@ can be retried.
 
 Async counterparts add an `_async` suffix. They only require `Unpin` in addition
 to the relevant async trait and do not impose a runtime or `Send` requirement.
+To use Tokio streams, enable the `tokio` feature on `qubit-io`; its adapters
+convert Tokio I/O types to the `AsyncInput` and `AsyncOutput` traits used here.
+The binary crate stays runtime-neutral, while your application supplies Tokio's
+runtime and I/O utilities.
+
+In a standalone project, add these dependencies to `Cargo.toml`:
+
+```toml
+[dependencies]
+qubit-io-binary = "0.8.4"
+qubit-io = { version = "0.19", features = ["tokio"] }
+tokio = { version = "1.54", default-features = false, features = ["rt", "io-util"] }
+```
+
+Save the following as `src/main.rs` and run `cargo run`. It uses a current-thread
+Tokio runtime and a 64-byte in-memory duplex stream. The example sends one
+4-byte value, flushes it, reads it back, and asserts equality. Since the payload
+is smaller than the duplex capacity, writing before reading does not need a
+concurrent task. A successful run exits with code 0 and prints nothing. Replace
+the duplex endpoints with your Tokio streams when connecting a real transport.
+If your application already runs inside an async runtime, await this async body
+directly instead of starting another runtime or calling `block_on`.
+A successful `flush_async` only reflects the local output adapter; it does not
+confirm that the peer processed the value or persisted it.
 
 ```rust
-use qubit_io::{AsyncInput, AsyncOutput};
+use qubit_io::{AsyncOutput, TokioInput, TokioOutput};
 use qubit_io_binary::{AsyncBinaryReadExt, AsyncBinaryWriteExt};
 
-async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
-where
-    I: AsyncInput<Item = u8> + Unpin,
-    O: AsyncOutput<Item = u8> + Unpin,
-{
-    let marker = input.read_u32_be_async().await?;
-    output.write_u32_be_async(marker).await
+fn main() -> std::io::Result<()> {
+    let runtime = tokio::runtime::Builder::new_current_thread().build()?;
+    runtime.block_on(async {
+        let (sender, receiver) = tokio::io::duplex(64);
+        let mut output = TokioOutput::new(sender);
+        let mut input = TokioInput::new(receiver);
+        output.write_u32_be_async(0x1234_5678).await?;
+        output.flush_async().await?;
+        assert_eq!(input.read_u32_be_async().await?, 0x1234_5678);
+        Ok(())
+    })
 }
 ```
 
-This is a compile-only async function example. Call it from an executor in your application; the guide fixture does not run it.
+For the corresponding `futures-io` adapters and feature, see the upstream
+[`qubit-io` guide's futures-io section](https://github.com/qubit-ltd/rs-io/blob/main/doc/user_guide.md#connect-futures-io).
 
 These high-level operations are not cancellation safe. Cancelling a pending
 read can leave part of a value consumed; cancelling a pending write can leave a

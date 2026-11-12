@@ -158,23 +158,46 @@ fn main() -> std::io::Result<()> {
 ## 异步流程
 
 异步 API 在方法名后加 `_async`。除实现相应异步 trait 外，流只需实现 `Unpin`，
-不额外要求运行时或 `Send`。
+不额外要求运行时或 `Send`。接入 Tokio 流时，在 `qubit-io` 上启用 `tokio` feature；
+其中的 adapter 会把 Tokio I/O 类型转换为本示例使用的 `AsyncInput` 和 `AsyncOutput`。
+二进制 crate 不绑定运行时，Tokio runtime 与 I/O utilities 由应用提供。
+
+在独立项目的 `Cargo.toml` 中添加以下依赖：
+
+```toml
+[dependencies]
+qubit-io-binary = "0.8.4"
+qubit-io = { version = "0.19", features = ["tokio"] }
+tokio = { version = "1.54", default-features = false, features = ["rt", "io-util"] }
+```
+
+将下方代码保存为 `src/main.rs` 并执行 `cargo run`。示例使用 current-thread Tokio
+runtime 和容量为 64 字节的内存 duplex 流，发送一个 4 字节值、flush 后再读回并断言相等。
+payload 小于 duplex 容量，因此先写后读无需并发任务。成功运行时退出码为 0，且不打印内容。
+连接真实传输时，可将 duplex 两端替换为你的 Tokio 流。如果应用已经运行在 async runtime
+中，应直接 await 下面的异步主体，不要再次启动 runtime 或调用 `block_on`。
+`flush_async` 成功只表示本地输出 adapter 已完成 flush，不代表对端已经处理该值或将其持久化。
 
 ```rust
-use qubit_io::{AsyncInput, AsyncOutput};
+use qubit_io::{AsyncOutput, TokioInput, TokioOutput};
 use qubit_io_binary::{AsyncBinaryReadExt, AsyncBinaryWriteExt};
 
-async fn relay<I, O>(input: &mut I, output: &mut O) -> std::io::Result<()>
-where
-    I: AsyncInput<Item = u8> + Unpin,
-    O: AsyncOutput<Item = u8> + Unpin,
-{
-    let marker = input.read_u32_be_async().await?;
-    output.write_u32_be_async(marker).await
+fn main() -> std::io::Result<()> {
+    let runtime = tokio::runtime::Builder::new_current_thread().build()?;
+    runtime.block_on(async {
+        let (sender, receiver) = tokio::io::duplex(64);
+        let mut output = TokioOutput::new(sender);
+        let mut input = TokioInput::new(receiver);
+        output.write_u32_be_async(0x1234_5678).await?;
+        output.flush_async().await?;
+        assert_eq!(input.read_u32_be_async().await?, 0x1234_5678);
+        Ok(())
+    })
 }
 ```
 
-这是仅用于编译检查的异步函数示例。应用应从自己的 executor 调用它；指南 fixture 不会运行此函数。
+关于 `futures-io` adapter 与 feature，请参阅上游
+[`qubit-io` 指南中的 futures-io 章节](https://github.com/qubit-ltd/rs-io/blob/main/doc/user_guide.zh_CN.md#接入-futures-io)。
 
 这些高层操作不具备取消安全性。取消 pending read 可能已经消费一个值的部分字节；取消
 pending write 可能已经向输出写入前缀。只有在传输或 framing 保证安全时才能整体重试。

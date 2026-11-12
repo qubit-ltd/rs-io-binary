@@ -132,14 +132,12 @@ fn main() {
     let mut generated = String::new();
     for (index, source) in english_blocks.iter().enumerate() {
         generated.push_str(&format!("mod example_{index} {{\n{source}\n"));
-        if index != 4 {
-            generated.push_str("pub fn run() -> std::io::Result<()> { main() }\n");
-        }
+        generated.push_str("pub fn run() -> std::io::Result<()> { main() }\n");
         generated.push_str("}\n");
     }
     generated.push_str(&format!("mod readme_async_example {{\n{readme_async}\n}}\n"));
     generated.push_str("fn main() -> std::io::Result<()> {\n");
-    for index in [0, 1, 2, 3, 5] {
+    for index in 0..6 {
         generated.push_str(&format!("example_{index}::run()?;\n"));
     }
     generated.push_str("Ok(())\n}\n");
