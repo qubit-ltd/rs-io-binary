@@ -14,10 +14,10 @@ rust-version = "1.94"
 publish = false
 
 [dependencies]
-qubit-io-binary = { path = "../../.." }
-qubit-codec = { version = "0.17", features = ["io"] }
+qubit-io-binary = { path = "../../../", version = "^0.8" }
+qubit-codec = { version = "^0.17", features = ["io"] }
 qubit-codec-binary = { version = "^0.9" }
-qubit-io = { version = "0.19.1", features = ["tokio"] }
+qubit-io = { version = "^0.19", features = ["tokio"] }
 tokio = { version = "1.54", default-features = false, features = ["rt", "io-util"] }
 
 [[test]]

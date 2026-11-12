@@ -16,7 +16,7 @@ qubit-codec-binary = "^0.9"
 
 qubit-io = "^0.19"
 
-qubit-io-binary = { path = ".." }
+qubit-io-binary = { path = "../", version = "^0.8" }
 
 [[bin]]
 name = "stream_differential"

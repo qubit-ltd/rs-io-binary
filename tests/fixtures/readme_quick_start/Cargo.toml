@@ -5,7 +5,7 @@ edition = "2024"
 publish = false
 
 [dependencies]
-qubit-io-binary = { path = "../../.." }
+qubit-io-binary = { path = "../../../", version = "^0.8" }
 
 [[test]]
 name = "readme_extractor_tests"
