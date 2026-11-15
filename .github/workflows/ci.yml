@@ -80,7 +80,5 @@ jobs:
           rustup toolchain install 1.94.0 --profile minimal --target i686-unknown-linux-gnu
           sudo apt-get update
           sudo apt-get install -y gcc-multilib
-      - name: Prepare local path dependencies
-        run: ./.infra/bin/prepare-local-path-dependencies.sh
       - name: Execute length conversion tests on i686
         run: cargo +1.94.0 test --locked --target i686-unknown-linux-gnu --test length_conversion_tests -- --nocapture
